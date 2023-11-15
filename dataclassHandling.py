@@ -39,7 +39,8 @@ class PSMolecule:
 
 entryOne = PSMolecule(smiles="N1N=NN=C1C1=CC=CC=C1 |c:1,3,8,10,t:6|", HEG=1, mp=136.7, TE=242.8)
 RDMol = Chem.MolFromSmiles(entryOne.smiles)
-cmpdMW = Descriptors.ExactMolWt(RDMol)
+#cmpdMW = Descriptors.ExactMolWt(RDMol) # gives exact weight
+cmpdMW = Descriptors.MolWt(RDMol)
 
 print(RDMol)
 
@@ -63,5 +64,5 @@ matchList = Mol.GetSubstructMatches(RDMol, testSubstructure)
 print(matchList)
 print(len(matchList))
 
-Draw.ShowMol(RDMol)
-Draw.ShowMol(testSubstructure)
+#Draw.ShowMol(RDMol)
+#Draw.ShowMol(testSubstructure)
