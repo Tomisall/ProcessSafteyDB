@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from rdkit import Chem
 from rdkit.Chem import Draw
 from rdkit.Chem import Descriptors
+from rdkit.Chem import Mol
 import csv
 
 @dataclass
@@ -56,4 +57,11 @@ def writetoCSV(PSDBList: list):
 
 writetoCSV(listforDB)
 
+testSubstructure = Chem.MolFromSmiles("N1C=NN=N1 |c:1,3|")
+matchList = Mol.GetSubstructMatches(RDMol, testSubstructure)
+
+print(matchList)
+print(len(matchList))
+
 Draw.ShowMol(RDMol)
+Draw.ShowMol(testSubstructure)
