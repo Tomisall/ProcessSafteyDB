@@ -64,5 +64,16 @@ matchList = Mol.GetSubstructMatches(RDMol, testSubstructure)
 print(matchList)
 print(len(matchList))
 
+
+fullMatch = 0
+with open("HighEnergyGroups.csv", "r") as HEGroups:
+	for line in HEGroups:
+		print(line)
+		HeSubstructure = Chem.MolFromSmiles(line)
+		fullmatchList = Mol.GetSubstructMatches(RDMol, HeSubstructure)
+		fullMatch += len(fullmatchList)
+
+print(fullMatch)
+
 #Draw.ShowMol(RDMol)
 #Draw.ShowMol(testSubstructure)
