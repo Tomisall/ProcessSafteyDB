@@ -8,43 +8,49 @@ import csv
 @dataclass
 class PSMolecule:
 	smiles: str = None
+	name: str = None
 	HEG: int = None
 	mp: float = None
 	MW: float = None
 	TE: float = None
+	proj: str = None
 
 	def toIterable(self):
 		return iter(
 			[
 				self.smiles,
+				self.name,
 				self.HEG,
 				self.mp,
 				self.MW,
 				self.TE,
+				self.proj
 			]
 	)
 
 	def toHeader(self):
 		return [
 			"Molecule",
+			"Name",
 			"Number of High Energy Groups",
 			"Melting point",
 			"Molecular Weight",
 			"Thermal Event",
+			"Project",
 			]
 
 
 
 
 
-entryOne = PSMolecule(smiles="N1N=NN=C1C1=CC=CC=C1 |c:1,3,8,10,t:6|", HEG=1, mp=136.7, TE=242.8)
+entryOne = PSMolecule(smiles="N1N=NN=C1C1=CC=CC=C1 |c:1,3,8,10,t:6|", name="TestMol", HEG=1, mp=136.7, TE=242.8, proj="testProject")
 RDMol = Chem.MolFromSmiles(entryOne.smiles)
 #cmpdMW = Descriptors.ExactMolWt(RDMol) # gives exact weight
 cmpdMW = Descriptors.MolWt(RDMol)
 
 print(RDMol)
 
-entryOne = PSMolecule(smiles="N1N=NN=C1C1=CC=CC=C1 |c:1,3,8,10,t:6|", HEG=1, mp=136.7, MW=cmpdMW, TE=242.8)
+#entryOne = PSMolecule(smiles="N1N=NN=C1C1=CC=CC=C1 |c:1,3,8,10,t:6|", HEG=1, mp=136.7, MW=cmpdMW, TE=242.8)
 print(entryOne)
 
 listforDB = [entryOne]
