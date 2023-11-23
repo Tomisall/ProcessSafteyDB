@@ -120,7 +120,7 @@ class MolDrawer(QWidget):
         def show_result(self):
              #print(self)
              if self.df is not None and not self.df.empty:
-                  print(self.current_index)
+                  #print(self.current_index)
                   current_row = self.df.iloc[self.current_index]
                   result_text = f"SMILES: {current_row['Molecule']}\nName: {current_row['Name']}\nHEG: {current_row['Number of High Energy Groups']}\nmp: {current_row['Melting point']}\nMW: {current_row['Molecular Weight']}\nTE: {current_row['Thermal Event']}\nProject: {current_row['Project']}"
                   result_label.setText(result_text)
@@ -132,22 +132,20 @@ class MolDrawer(QWidget):
         def prev_result(self):
              if self.current_index > 0:
                   self.current_index -= 1
-                  self.show_result()
+                  show_result(self)
 
         def next_result(self):
-             print(self)
-             print(self.current_index)
              if self.df is not None:
                   if self.current_index < len(self.df) - 1:
                        self.current_index += 1
-                       self.show_result()
+                       show_result(self)
 
         # Search Buttons
         btn_search = QPushButton('Search', clicked=search_database)
         prev_button = QPushButton('Previous')
         next_button = QPushButton('Next')
-        #self.prev_button.clicked.connect(next_result(self))
-        #self.next_button.clicked.connect(prev_result(self))
+        prev_button.clicked.connect(lambda: prev_result(self))
+        next_button.clicked.connect(lambda: next_result(self))
 
         search_layout.addWidget(lbl_search)
         search_layout.addWidget(entry_search)
