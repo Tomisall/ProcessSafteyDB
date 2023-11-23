@@ -60,10 +60,10 @@ class MolDrawer(QWidget):
         molecule_layout.addWidget(self.mol_display)
 
 	#Add labels for calculated values
-        test = 'MW: '
-        self.mwLabel = QLabel(test)
+        self.mwLabel = QLabel('MW: ')
         molecule_layout.addWidget(self.mwLabel)
-        molecule_layout.addWidget(QLabel('Number of High Energy Groups:'))
+        self.HEGlabel = QLabel('Number of High Energy Groups:')
+        molecule_layout.addWidget(self.HEGlabel)
 
         molecule_layout.addWidget(QHLine())
 
@@ -234,6 +234,10 @@ class MolDrawer(QWidget):
         TE = self.TE_input.text()
         proj = self.proj_input.text()
         writeSmiles = '"'+smiles+'"' #repr(str(smiles))
+        writeName = '"'+name+'"'
+        writemp = '"'+mp+'"'
+        writeTE = '"'+TE+'"'
+        writeProj = '"'+proj+'"'
 
         # Create an RDKit molecule from the SMILES string
         if smiles != '' and smiles is not None:
@@ -261,8 +265,18 @@ class MolDrawer(QWidget):
             cmpdMW = Descriptors.MolWt(mol)
             mwStr = "{:.2f}".format(cmpdMW)
             self.mwLabel.setText('MW: ' + mwStr)
+            fullMatch = 0
+            with open("HighEnergyGroups.csv", "r") as HEGroups:
+               for line in HEGroups:
+                    #print(line)
+                    HeSubstructure = Chem.MolFromSmiles(line)
+                    fullmatchList = Mol.GetSubstructMatches(mol, HeSubstructure)
+                    fullMatch += len(fullmatchList)
+
+            HEG = str(fullMatch)
+            self.HEGlabel.setText('Number of High Energy Groups: ' + HEG)
             addMol = open(defaultDB, 'a')
-            addMol.write(writeSmiles + ',' + name + ',' + 'tbd' + ',' + mp + ',' + mwStr + ',' + TE + ',' + proj + '\n')
+            addMol.write(writeSmiles + ',' + writeName + ',' + HEG + ',' + writemp + ',' + mwStr + ',' + writeTE + ',' + writeProj + '\n')
 
 
         else:
