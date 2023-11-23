@@ -2,6 +2,8 @@ import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTabWidget
 from rdkit import Chem
 from rdkit.Chem import Draw
+from rdkit.Chem import Descriptors
+from rdkit.Chem import Mol
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 from io import BytesIO
@@ -239,6 +241,7 @@ class MolDrawer(QWidget):
 
         else:
             mol = None
+        
         test = 'hi'
 
         if mol is not None:
@@ -255,9 +258,11 @@ class MolDrawer(QWidget):
             scene = QGraphicsScene()
             scene.addPixmap(pixmap)
             self.mol_display.setScene(scene)
-            self.mwLabel.setText(test)
+            cmpdMW = Descriptors.MolWt(mol)
+            mwStr = "{:.2f}".format(cmpdMW)
+            self.mwLabel.setText('MW: ' + mwStr)
             addMol = open(defaultDB, 'a')
-            addMol.write(writeSmiles + ',' + name + ',' + 'tbd' + ',' + mp + ',' + test + ',' + TE + ',' + proj + '\n')
+            addMol.write(writeSmiles + ',' + name + ',' + 'tbd' + ',' + mp + ',' + mwStr + ',' + TE + ',' + proj + '\n')
 
 
         else:
