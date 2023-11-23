@@ -39,6 +39,7 @@ class MolDrawer(QWidget):
         self.df = None
         #current_index = 0
         self.current_index = 0
+        self.result_smiles = None
         # Set up the main layout
         layout = QVBoxLayout()
 
@@ -122,25 +123,102 @@ class MolDrawer(QWidget):
              if self.df is not None and not self.df.empty:
                   #print(self.current_index)
                   current_row = self.df.iloc[self.current_index]
+                  #print(self.result_smiles)
+                  self.result_smiles = current_row['Molecule']
+                  #print(self.result_smiles)
                   result_text = f"SMILES: {current_row['Molecule']}\nName: {current_row['Name']}\nHEG: {current_row['Number of High Energy Groups']}\nmp: {current_row['Melting point']}\nMW: {current_row['Molecular Weight']}\nTE: {current_row['Thermal Event']}\nProject: {current_row['Project']}"
                   result_label.setText(result_text)
                   counter_label.setText(f"Result {self.current_index + 1} of {len(self.df)}")
                   search_layout.addWidget(prev_button)
                   search_layout.addWidget(next_button)
-                  print(self.current_index)
+                  #print(self.current_index)
+
+                  # Display area for the molecular drawing
+               #   self.mol_result_display = QGraphicsView(self)
+               #   self.molLabel = QLabel('Molecule:')
+               #   search_layout.addWidget(self.molLabel)
+               #   search_layout.addWidget(self.mol_result_display)
+
+
+          	  #Add labels for calculated values
+                 # newtest = 'MW: '
+                 # self.searchmwLabel = QLabel(newtest)
+                 # search_layout.addWidget(self.searchmwLabel)
+                 # search_layout.addWidget(QLabel('Number of High Energy Groups:'))
+
+                 # search_layout.addWidget(QHLine())
+          
+                  # Input field for SMILES string
+                 # self.smiles_search = QLineEdit(self)
+                 # search_layout.addWidget(QLabel('Enter SMILES String:'))
+                 # search_layout.addWidget(self.smiles_search)
+
+                  # Input field for Name string
+                #  self.name_search = QLineEdit(self)
+                # search_layout.addWidget(QLabel('Name:'))
+                #  search_layout.addWidget(self.name_search)
+          
+                  # Input field for mp string
+                #  self.mp_search = QLineEdit(self)
+                #  search_layout.addWidget(QLabel('m.p.:'))
+                #  search_layout.addWidget(self.mp_search)
+
+                  # Input field for TE string
+#                  self.TE_search = QLineEdit(self)
+ #                 search_layout.addWidget(QLabel('Thermal Event:'))
+  #                search_layout.addWidget(self.TE_search)
+
+                  # Input field for proj string
+#                  self.proj_search = QLineEdit(self)
+ #                 search_layout.addWidget(QLabel('Project:'))
+  #                search_layout.addWidget(self.proj_search)
+
+                  #smiles = self.smiles_search.text()
+
+                  if self.result_smiles is not None:
+                      mol = Chem.MolFromSmiles(self.result_smiles)
+
+                  else: 
+                      mol = None
+
+                  if mol is not None:
+                      # Generate a molecular drawing as a PNG image
+                      img = Draw.MolToImage(mol)
+
+                      # Convert the image to a byte array
+                      byte_array = BytesIO()
+                      img.save(byte_array, format='PNG')
+
+                      # Convert the byte array to a QPixmap and display it
+                      pixmap = QPixmap()
+                      pixmap.loadFromData(byte_array.getvalue())
+                      scene = QGraphicsScene()
+                      scene.addPixmap(pixmap)
+                      self.mol_result_display.setScene(scene)
 
         def prev_result(self):
              if self.current_index > 0:
+                  #search_layout.removeWidget(self.mol_result_display)
+                  #search_layout.removeWidget(self.molLabel)
                   self.current_index -= 1
                   show_result(self)
 
         def next_result(self):
              if self.df is not None:
                   if self.current_index < len(self.df) - 1:
+                       #search_layout.removeWidget(self.mol_result_display)
+                       #search_layout.removeWidget(self.molLabel)
                        self.current_index += 1
                        show_result(self)
 
+
         # Search Buttons
+       # Display area for the molecular drawing
+        self.mol_result_display = QGraphicsView(self)
+        self.molLabel = QLabel('Molecule:')
+        search_layout.addWidget(self.molLabel)
+        search_layout.addWidget(self.mol_result_display)
+
         btn_search = QPushButton('Search', clicked=search_database)
         prev_button = QPushButton('Previous')
         next_button = QPushButton('Next')
