@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdi
 from rdkit import Chem
 from rdkit.Chem import Draw
 from PyQt5.QtGui import QPixmap
+from PyQt5.QtCore import Qt
 from io import BytesIO
 import pandas as pd
 
@@ -40,6 +41,7 @@ class MolDrawer(QWidget):
         #current_index = 0
         self.current_index = 0
         self.result_smiles = None
+        self.error_flag = None
         # Set up the main layout
         layout = QVBoxLayout()
 
@@ -94,7 +96,7 @@ class MolDrawer(QWidget):
         molecule_layout.addWidget(render_button)
 
         molecule_tab.setLayout(molecule_layout)
-        tab_widget.addTab(molecule_tab, "Molecule")
+        tab_widget.addTab(molecule_tab, "Add")
 
 
         # Tab for Search
@@ -120,6 +122,11 @@ class MolDrawer(QWidget):
 
         def show_result(self):
              #print(self)
+             layout = self.layout()
+             if self.error_flag is not None:
+                  self.error_message.setText('')
+                  layout.removeWidget(self.error_message)
+                  self.error_flag = None
              if self.df is not None and not self.df.empty:
                   #print(self.current_index)
                   current_row = self.df.iloc[self.current_index]
@@ -128,52 +135,11 @@ class MolDrawer(QWidget):
                   #print(self.result_smiles)
                   result_text = f"SMILES: {current_row['Molecule']}\nName: {current_row['Name']}\nHEG: {current_row['Number of High Energy Groups']}\nmp: {current_row['Melting point']}\nMW: {current_row['Molecular Weight']}\nTE: {current_row['Thermal Event']}\nProject: {current_row['Project']}"
                   result_label.setText(result_text)
+                  result_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
                   counter_label.setText(f"Result {self.current_index + 1} of {len(self.df)}")
                   search_layout.addWidget(prev_button)
                   search_layout.addWidget(next_button)
                   #print(self.current_index)
-
-                  # Display area for the molecular drawing
-               #   self.mol_result_display = QGraphicsView(self)
-               #   self.molLabel = QLabel('Molecule:')
-               #   search_layout.addWidget(self.molLabel)
-               #   search_layout.addWidget(self.mol_result_display)
-
-
-          	  #Add labels for calculated values
-                 # newtest = 'MW: '
-                 # self.searchmwLabel = QLabel(newtest)
-                 # search_layout.addWidget(self.searchmwLabel)
-                 # search_layout.addWidget(QLabel('Number of High Energy Groups:'))
-
-                 # search_layout.addWidget(QHLine())
-          
-                  # Input field for SMILES string
-                 # self.smiles_search = QLineEdit(self)
-                 # search_layout.addWidget(QLabel('Enter SMILES String:'))
-                 # search_layout.addWidget(self.smiles_search)
-
-                  # Input field for Name string
-                #  self.name_search = QLineEdit(self)
-                # search_layout.addWidget(QLabel('Name:'))
-                #  search_layout.addWidget(self.name_search)
-          
-                  # Input field for mp string
-                #  self.mp_search = QLineEdit(self)
-                #  search_layout.addWidget(QLabel('m.p.:'))
-                #  search_layout.addWidget(self.mp_search)
-
-                  # Input field for TE string
-#                  self.TE_search = QLineEdit(self)
- #                 search_layout.addWidget(QLabel('Thermal Event:'))
-  #                search_layout.addWidget(self.TE_search)
-
-                  # Input field for proj string
-#                  self.proj_search = QLineEdit(self)
- #                 search_layout.addWidget(QLabel('Project:'))
-  #                search_layout.addWidget(self.proj_search)
-
-                  #smiles = self.smiles_search.text()
 
                   if self.result_smiles is not None:
                       mol = Chem.MolFromSmiles(self.result_smiles)
@@ -212,8 +178,7 @@ class MolDrawer(QWidget):
                        show_result(self)
 
 
-        # Search Buttons
-       # Display area for the molecular drawing
+        # Search Buttons & display area for the molecular drawing
         self.mol_result_display = QGraphicsView(self)
         self.molLabel = QLabel('Molecule:')
         search_layout.addWidget(self.molLabel)
@@ -253,9 +218,13 @@ class MolDrawer(QWidget):
         # Set up the main window
         self.setLayout(layout)
         self.setGeometry(100, 100, 400, 700)
-        self.setWindowTitle('Molecule Drawer')
+        self.setWindowTitle('ThermalDex')
 
     def render_molecule(self):
+        layout = self.layout()
+        if self.error_flag is not None:
+            self.error_message.setText('')
+            layout.removeWidget(self.error_message)
         # Get the SMILES string from the input field
         smiles = self.smiles_input.text()
         name = self.name_input.text()
@@ -265,7 +234,11 @@ class MolDrawer(QWidget):
         writeSmiles = '"'+smiles+'"' #repr(str(smiles))
 
         # Create an RDKit molecule from the SMILES string
-        mol = Chem.MolFromSmiles(smiles)
+        if smiles != '' and smiles is not None:
+            mol = Chem.MolFromSmiles(smiles)
+
+        else:
+            mol = None
         test = 'hi'
 
         if mol is not None:
@@ -289,9 +262,10 @@ class MolDrawer(QWidget):
 
         else:
             # Display an error message if the SMILES string is invalid
-            error_message = QLabel('Invalid SMILES string. Please enter a valid SMILES.')
-            layout = self.layout()
-            layout.addWidget(error_message)
+            self.error_message = QLabel('Invalid SMILES string. Please enter a valid SMILES.')
+            #layout = self.layout()
+            layout.addWidget(self.error_message)
+            self.error_flag = 100
 
 if __name__ == '__main__':
     defaultDB, highEnergyGroups = importConfig()
