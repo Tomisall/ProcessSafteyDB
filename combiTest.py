@@ -2,12 +2,13 @@ import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTabWidget
 from rdkit import Chem
 from rdkit.Chem import Draw
-from rdkit.Chem import Descriptors
+from rdkit.Chem import Descriptors, rdMolDescriptors
 from rdkit.Chem import Mol
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 from io import BytesIO
 import pandas as pd
+import re
 
 def importConfig():
     conf = open('ThermalDex.config', 'r')
@@ -277,6 +278,12 @@ class MolDrawer(QWidget):
 
             HEG = str(fullMatch)
             self.HEGlabel.setText('Number of High Energy Groups: ' + HEG)
+            chemForm = rdMolDescriptors.CalcMolFormula(mol)
+            print(chemForm)
+            match = re.findall(r"[A-Z][a-z]?\d*|\((?:[^()]*(?:\(.*\))?[^()]*)+\)\d+", chemForm, re.I) #re.findall(r"([a-z]+)([0-9]+)", chemForm, re.I) #match
+            if match:
+               items = match #match.groups()
+            print(items)
             addMol = open(defaultDB, 'a')
             addMol.write(writeSmiles + ',' + writeName + ',' + HEG + ',' + writemp + ',' + mwStr + ',' + writeTE + ',' + writeProj + '\n')
 
