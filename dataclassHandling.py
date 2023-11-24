@@ -43,7 +43,7 @@ class PSMolecule:
 
 
 
-entryOne = PSMolecule(smiles="N1N=NN=C1C1=CC=CC=C1 |c:1,3,8,10,t:6|", name="TestMol", HEG=1, mp=136.7, TE=242.8, proj="testProject")
+entryOne = PSMolecule(smiles="O[C@@H]([C@H](O)C(O)=O)C(O)=O |r|", name="TestMol", HEG=1, mp=136.7, TE=242.8, proj="testProject") #"N1N=NN=C1C1=CC=CC=C1 |c:1,3,8,10,t:6|", name="TestMol", HEG=1, mp=136.7, TE=242.8, proj="testProject")
 RDMol = Chem.MolFromSmiles(entryOne.smiles)
 #cmpdMW = Descriptors.ExactMolWt(RDMol) # gives exact weight
 cmpdMW = Descriptors.MolWt(RDMol)

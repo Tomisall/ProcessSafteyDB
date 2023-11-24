@@ -61,8 +61,10 @@ class MolDrawer(QWidget):
 
 	#Add labels for calculated values
         self.mwLabel = QLabel('MW: ')
+        self.mwLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
         molecule_layout.addWidget(self.mwLabel)
         self.HEGlabel = QLabel('Number of High Energy Groups:')
+        self.HEGlabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
         molecule_layout.addWidget(self.HEGlabel)
 
         molecule_layout.addWidget(QHLine())
