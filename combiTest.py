@@ -67,6 +67,9 @@ class MolDrawer(QWidget):
         self.HEGlabel = QLabel('Number of High Energy Groups:')
         self.HEGlabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
         molecule_layout.addWidget(self.HEGlabel)
+        self.eleLabel = QLabel('Elemental Composition: ')
+        self.eleLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        molecule_layout.addWidget(self.eleLabel)
 
         molecule_layout.addWidget(QHLine())
 
@@ -222,7 +225,7 @@ class MolDrawer(QWidget):
 
         # Set up the main window
         self.setLayout(layout)
-        self.setGeometry(100, 100, 400, 700)
+        self.setGeometry(100, 100, 400, 750)
         self.setWindowTitle('ThermalDex')
 
     def render_molecule(self):
@@ -280,10 +283,30 @@ class MolDrawer(QWidget):
             self.HEGlabel.setText('Number of High Energy Groups: ' + HEG)
             chemForm = rdMolDescriptors.CalcMolFormula(mol)
             print(chemForm)
+            eleComp = ""
+            eleCompList = []
+            eleList = []
+            niceList = []
             match = re.findall(r"[A-Z][a-z]?\d*|\((?:[^()]*(?:\(.*\))?[^()]*)+\)\d+", chemForm, re.I) #re.findall(r"([a-z]+)([0-9]+)", chemForm, re.I) #match
             if match:
                items = match #match.groups()
-            print(items)
+            for ele in match:
+                ment = re.findall(r"([a-z]+)([0-9]+)?", ele, re.I)
+                #print(ment)
+                matchedEleComp = ment[0]
+                #print(matchedEleComp)
+                eleList += [matchedEleComp]
+            
+            for compostion in eleList:
+               #print(compostion)
+               eleCompList += compostion[::-1]
+               niceList += [('').join(compostion[::-1])]
+   
+            eleComp = (', ').join(niceList)
+            #print(eleCompList)
+            print(eleList)
+            print(eleComp)
+            self.eleLabel.setText('Elemental Composition: ' + eleComp)
             addMol = open(defaultDB, 'a')
             addMol.write(writeSmiles + ',' + writeName + ',' + HEG + ',' + writemp + ',' + mwStr + ',' + writeTE + ',' + writeProj + '\n')
 
