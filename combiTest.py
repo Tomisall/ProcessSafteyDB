@@ -70,6 +70,12 @@ class MolDrawer(QWidget):
         self.eleLabel = QLabel('Elemental Composition: ')
         self.eleLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
         molecule_layout.addWidget(self.eleLabel)
+        self.RoSLabel = QLabel('Rule of Six: ')
+        self.RoSLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        molecule_layout.addWidget(self.RoSLabel)
+        self.obLabel = QLabel('Oxygen Balance: ')
+        self.obLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        molecule_layout.addWidget(self.obLabel)
 
         molecule_layout.addWidget(QHLine())
 
@@ -281,16 +287,25 @@ class MolDrawer(QWidget):
 
             HEG = str(fullMatch)
             self.HEGlabel.setText('Number of High Energy Groups: ' + HEG)
+            #carbonAtoms = len(Mol.GetSubstructMatches(mol, Chem.MolFromSmarts("[C]")))
+            #print(carbonAtoms)
             chemForm = rdMolDescriptors.CalcMolFormula(mol)
             print(chemForm)
             eleComp = ""
             eleCompList = []
             eleList = []
             niceList = []
-            match = re.findall(r"[A-Z][a-z]?\d*|\((?:[^()]*(?:\(.*\))?[^()]*)+\)\d+", chemForm, re.I) #re.findall(r"([a-z]+)([0-9]+)", chemForm, re.I) #match
+            #match = re.findall(r"[A-Z][a-z]?\d*|\((?:[^()]*(?:\(.*\))?[^()]*)+\)\d+", chemForm, re.I) #re.findall(r"([a-z]+)([0-9]+)", chemForm, re.I) #match
+            #match = re.findall(r"[A-Z][a-z]?\d?", chemForm, re.I) #re.findall(r"([a-z]+)([0-9]+)", chemForm, re.I) #match
+            #match = re.findall(r"[A-Za-z]\d?", chemForm, re.I)
+            #match = re.findall(r"[A-Z][0-9]+?[a-z]?[0-9]+?", chemForm, re.I)
+            #match = re.findall(r"[A-Z][a-z]\d+?|[A-Z]\d+?", chemForm, re.I)
+            atomPattern = r"Cl\d*|H\d*|O\d*|N\d*|S\d*|F\d*|Cs\d*|Br\d*|I\d*|B\d*|Al\d*|Na\d*|K\d*|Mg\d*|Zn\d*|Ti\d*|Pd\d*|C\d*"
+            match = re.findall(atomPattern, chemForm, re.I)
             if match:
                items = match #match.groups()
             for ele in match:
+                print(ele)
                 ment = re.findall(r"([a-z]+)([0-9]+)?", ele, re.I)
                 #print(ment)
                 matchedEleComp = ment[0]
@@ -307,6 +322,52 @@ class MolDrawer(QWidget):
             print(eleList)
             print(eleComp)
             self.eleLabel.setText('Elemental Composition: ' + eleComp)
+            carbonAtoms = [ele[1] for ele in eleList if "C" in ele[0]]
+            hydrogenAtoms = [ele[1] for ele in eleList if "H" in ele[0]]
+            oxygenAtoms = [ele[1] for ele in eleList if "O" in ele[0]]
+            print(oxygenAtoms)
+            if carbonAtoms == []:
+                Catoms = 0
+            elif carbonAtoms[0] == '':
+                Catoms = 1
+            else:
+                Catoms = int(carbonAtoms[0])
+            if hydrogenAtoms == []:
+                Hatoms = 0
+            elif hydrogenAtoms[0] == '':
+                Hatoms = 1
+            else:
+                Hatoms = int(hydrogenAtoms[0])
+            if oxygenAtoms == []:
+                Oatoms = 0
+            elif oxygenAtoms[0] == '':
+                Oatoms = 1
+            else:
+                Oatoms = int(oxygenAtoms[0])
+            #print(int(carbonAtoms[0]))
+            print(Catoms)
+            ruleSixCrit = 6*int(HEG) - Catoms #int(carbonAtoms[0])
+            print(ruleSixCrit)
+            if ruleSixCrit > 0:
+                ruleSix = "Explosive"
+            else:
+                ruleSix = "Not Explosive"
+            self.RoSLabel.setText('Rule of Six: ' + ruleSix)
+            #oxygenBalance = (-1600*((2*int(carbonAtoms[0]))+(int(hydrogenAtoms[0])/2)-int(oxygenAtoms[0])))/cmpdMW
+            oxygenBalance = (-1600*((2*Catoms)+(Hatoms/2)-Oatoms))/cmpdMW
+            print(oxygenBalance)
+            obStr = "{:.2f}".format(oxygenBalance)
+            if oxygenBalance > 160:
+                obRisk = "(Low Risk)"
+            elif oxygenBalance > 80 and oxygenBalance <= 160:
+                obRisk = "(Medium Risk)"
+            elif oxygenBalance >= -120 and oxygenBalance <= 80:
+                obRisk = "(High Risk)"
+            elif oxygenBalance >= -240 and oxygenBalance < -120:
+                obRisk = "(Medium Risk)"
+            elif oxygenBalance < -240:
+                obRisk = "(Low Risk)"
+            self.obLabel.setText('Oxygen Balance: ' + obStr + ' ' + obRisk)
             addMol = open(defaultDB, 'a')
             addMol.write(writeSmiles + ',' + writeName + ',' + HEG + ',' + writemp + ',' + mwStr + ',' + writeTE + ',' + writeProj + '\n')
 
