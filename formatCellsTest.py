@@ -14,11 +14,15 @@ class MyWindow(QWidget):
         layout = QVBoxLayout()
 
         # Create a table with 1 row and 3 columns
-        title_label = QLabel('Assessment of Hazard by Scale')
+        title_label = QLabel('Assessment of Hazard by Scale:')
         layout.addWidget(title_label)
         self.table = QTableWidget(1, 4)
         self.table.setHorizontalHeaderLabels(['<5 g', '5 to <100 g', '100 to 500 g', '>500 g'])
+        self.table.verticalHeader().setVisible(False)
+        #self.table.setStyleSheet("QTableWidget::item { border-bottom: 2px solid black; }")
+        self.table.setMaximumHeight(52)
         layout.addWidget(self.table)
+
 
         # Create a button
         self.button = QPushButton('Fill Table')

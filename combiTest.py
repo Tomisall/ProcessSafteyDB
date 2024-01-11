@@ -1,10 +1,10 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTabWidget
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTableWidget, QTableWidgetItem, QTabWidget, QToolTip, QGraphicsPixmapItem
 from rdkit import Chem
 from rdkit.Chem import Draw
 from rdkit.Chem import Descriptors, rdMolDescriptors
 from rdkit.Chem import Mol
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap, QColor, QIcon, QCursor
 from PyQt5.QtCore import Qt
 from io import BytesIO
 import pandas as pd
@@ -76,6 +76,18 @@ class MolDrawer(QWidget):
         self.obLabel = QLabel('Oxygen Balance: ')
         self.obLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
         molecule_layout.addWidget(self.obLabel)
+
+        molecule_layout.addWidget(QHLine())
+
+        self.tableLabel = QLabel('Assessment of Hazard by Scale:')
+        molecule_layout.addWidget(self.tableLabel)
+        self.table = QTableWidget(1, 4)
+        self.table.setHorizontalHeaderLabels(['<5 g', '5 to <100 g', '100 to 500 g', '>500 g'])
+        self.table.verticalHeader().setVisible(False)
+        #self.table.setStyleSheet("QTableWidget::item { border-bottom: 2px solid black; }")
+        self.table.setMaximumHeight(52)
+        molecule_layout.addWidget(self.table)
+
 
         molecule_layout.addWidget(QHLine())
 
@@ -215,12 +227,51 @@ class MolDrawer(QWidget):
 
 
         # Tab for "About" information
+
+        def hover(url):
+            if url:
+                QToolTip.showText(QCursor.pos(), titles.get(url, url))
+            else:
+                QToolTip.hideText()
+
         about_tab = QWidget()
         about_layout = QVBoxLayout()
+        about_title = QLabel("<b>About ThermalDex</b>\n\n")
+        about_blank = QLabel("\n\n")
+        about_text = QLabel("\n\nThis is a simple tool for assessing and recording the potential thermal hazards assoicated with a molecule. It uses the <b>'O.R.E.O.S.'</b> assement scale and other ideas that can be read about in <a href=\"https://pubs.acs.org/doi/10.1021/acs.oprd.0c00467\">Org. Process Res. Dev. 2021, 25, 2, 212–224</a> by Jeffrey B. Sperry et. al.")
+        iconLabel = QLabel()
+        iconImage = QPixmap("ThermalDexIcon.jpg")
+        scaledIcon = iconImage.scaled(400, 400, Qt.KeepAspectRatio)
+        iconLabel.setText("test") #.setPixmap(scaledIcon)
+        
+        scene = QGraphicsScene()
+        pic = QGraphicsPixmapItem()
+        pic.setPixmap(scaledIcon) #QPixmap.fromImage(iconImage))
+        scene.setSceneRect(0, 0, 400, 400)
+        scene.addItem(pic)
+        view = QGraphicsView()
+        view.setScene(scene)
+        view.setStyleSheet("border: 0px")
 
-        about_text = QLabel("This is a simple molecule drawer using PyQt5 and RDKit.")
+        moreabout_text = QLabel("\n\n" + "This tool has been developed by Tom Sheridan and Matt Mulheir using PyQt5 and RDKit.")
         #about_text.setAlignment(QtCore.Qt.AlignCenter)
+        about_layout.addWidget(about_title)
         about_layout.addWidget(about_text)
+        about_layout.addWidget(about_blank)
+        about_layout.addWidget(view) #iconLabel)
+        about_layout.addWidget(moreabout_text)
+        about_text.setTextFormat(Qt.RichText)
+        about_text.setOpenExternalLinks(True)
+        about_text.setTextInteractionFlags(Qt.LinksAccessibleByMouse)
+        #about_text.linkHovered.connect(hover)
+        about_text.setWordWrap(True) 
+        moreabout_text.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        moreabout_text.setWordWrap(True)
+
+        #abouttestLabel = QLabel("<a href=\"http://www.google.com\">'Click this link to go to Google'</a>")
+        #about_layout.addWidget(abouttestLabel)
+        #abouttestLabel.setOpenExternalLinks(True)
+        #abouttestLabel.setTextInteractionFlags(Qt.LinksAccessibleByMouse)
 
         about_tab.setLayout(about_layout)
         tab_widget.addTab(about_tab, "About")
@@ -231,8 +282,19 @@ class MolDrawer(QWidget):
 
         # Set up the main window
         self.setLayout(layout)
-        self.setGeometry(100, 100, 400, 750)
+        self.setGeometry(100, 100, 448, 850)
         self.setWindowTitle('ThermalDex')
+
+    def getColorForValue(self, hazardClass):
+        # Example color-coding logic
+        if hazardClass == 'High Hazard':
+            return QColor(255, 0, 0)  # Red
+        elif hazardClass == 'Medium Hazard':
+            return QColor(255, 255, 0)  # Yellow
+        elif hazardClass == 'Low Hazard':
+            return QColor(0, 255, 0)  # Green
+        else:
+            return QColor(0, 0, 255)  # Blue
 
     def render_molecule(self):
         layout = self.layout()
@@ -397,8 +459,20 @@ class MolDrawer(QWidget):
                     hazardList.append(oreosHazard)
                 elif scale >= 22:
                     oreosHazard = "High Hazard"
-                    hazardList.(oreosHazard)
+                    hazardList.append(oreosHazard)
             print(hazardList)
+            self.table.clearContents()
+            # Add values to cells
+
+
+            for i, hazardClass in enumerate(hazardList):
+                item = QTableWidgetItem(hazardClass)
+                self.table.setItem(0, i, item)
+
+                # Color code cells based on values
+                classColor = self.getColorForValue(hazardClass)
+                print(classColor)
+                item.setBackground(classColor)
 
             addMol = open(defaultDB, 'a')
             addMol.write(writeSmiles + ',' + writeName + ',' + HEG + ',' + writemp + ',' + mwStr + ',' + writeTE + ',' + writeProj + '\n')
@@ -414,6 +488,7 @@ class MolDrawer(QWidget):
 if __name__ == '__main__':
     defaultDB, highEnergyGroups = importConfig()
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon('ThermalDexIcon.jpg'))
     window = MolDrawer()
     window.show()
     sys.exit(app.exec_())
