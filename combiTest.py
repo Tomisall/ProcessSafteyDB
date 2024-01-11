@@ -274,6 +274,7 @@ class MolDrawer(QWidget):
             scene = QGraphicsScene()
             scene.addPixmap(pixmap)
             self.mol_display.setScene(scene)
+            oreo = 1 #for no explosive groups. correct to 0 when list is being imported.
             cmpdMW = Descriptors.MolWt(mol)
             mwStr = "{:.2f}".format(cmpdMW)
             self.mwLabel.setText('MW: ' + mwStr)
@@ -350,8 +351,10 @@ class MolDrawer(QWidget):
             print(ruleSixCrit)
             if ruleSixCrit > 0:
                 ruleSix = "Explosive"
+                oreo += 8
             else:
                 ruleSix = "Not Explosive"
+                oreo += 2
             self.RoSLabel.setText('Rule of Six: ' + ruleSix)
             #oxygenBalance = (-1600*((2*int(carbonAtoms[0]))+(int(hydrogenAtoms[0])/2)-int(oxygenAtoms[0])))/cmpdMW
             oxygenBalance = (-1600*((2*Catoms)+(Hatoms/2)-Oatoms))/cmpdMW
@@ -359,15 +362,44 @@ class MolDrawer(QWidget):
             obStr = "{:.2f}".format(oxygenBalance)
             if oxygenBalance > 160:
                 obRisk = "(Low Risk)"
+                oreo += 2
             elif oxygenBalance > 80 and oxygenBalance <= 160:
                 obRisk = "(Medium Risk)"
+                oreo += 4
             elif oxygenBalance >= -120 and oxygenBalance <= 80:
                 obRisk = "(High Risk)"
+                oreo += 8
             elif oxygenBalance >= -240 and oxygenBalance < -120:
                 obRisk = "(Medium Risk)"
+                oreo += 4
             elif oxygenBalance < -240:
                 obRisk = "(Low Risk)"
+                oreo += 2
             self.obLabel.setText('Oxygen Balance: ' + obStr + ' ' + obRisk)
+            
+            # Calculation of O.R.E.O.S. Safe Scale
+            print(oreo)
+
+            largeScaleSafety = oreo + 8
+            hundsScaleSafety = oreo + 4
+            tensScaleSafety = oreo + 2
+            smallScaleSafety = oreo + 1
+
+            scaleList = [smallScaleSafety, tensScaleSafety, hundsScaleSafety, largeScaleSafety]
+            hazardList = []
+
+            for scale in scaleList:
+                if scale <= 14:
+                    oreosHazard = "Low Hazard"
+                    hazardList.append(oreosHazard)
+                elif scale in range(15, 22):
+                    oreosHazard = "Medium Hazard"
+                    hazardList.append(oreosHazard)
+                elif scale >= 22:
+                    oreosHazard = "High Hazard"
+                    hazardList.(oreosHazard)
+            print(hazardList)
+
             addMol = open(defaultDB, 'a')
             addMol.write(writeSmiles + ',' + writeName + ',' + HEG + ',' + writemp + ',' + mwStr + ',' + writeTE + ',' + writeProj + '\n')
 
