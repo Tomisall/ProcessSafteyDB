@@ -67,6 +67,9 @@ class MolDrawer(QWidget):
         self.HEGlabel = QLabel('Number of High Energy Groups:')
         self.HEGlabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
         molecule_layout.addWidget(self.HEGlabel)
+        self.EFGlabel = QLabel('Number of Explosive Functional Groups:')
+        self.EFGlabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        molecule_layout.addWidget(self.EFGlabel)
         self.eleLabel = QLabel('Elemental Composition: ')
         self.eleLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
         molecule_layout.addWidget(self.eleLabel)
@@ -162,6 +165,7 @@ class MolDrawer(QWidget):
                   result_text = f"SMILES: {current_row['Molecule']}\nName: {current_row['Name']}\nHEG: {current_row['Number of High Energy Groups']}\nmp: {current_row['Melting point']}\nMW: {current_row['Molecular Weight']}\nTE: {current_row['Thermal Event']}\nProject: {current_row['Project']}"
                   result_label.setText(result_text)
                   result_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+                  result_label.setWordWrap(True) 
                   counter_label.setText(f"Result {self.current_index + 1} of {len(self.df)}")
                   search_layout.addWidget(prev_button)
                   search_layout.addWidget(next_button)
@@ -339,7 +343,6 @@ class MolDrawer(QWidget):
             scene = QGraphicsScene()
             scene.addPixmap(pixmap)
             self.mol_display.setScene(scene)
-            oreo = 1 #for no explosive groups. correct to 0 when list is being imported.
             cmpdMW = Descriptors.MolWt(mol)
             mwStr = "{:.2f}".format(cmpdMW)
             self.mwLabel.setText('MW: ' + mwStr)
@@ -352,7 +355,31 @@ class MolDrawer(QWidget):
                     fullMatch += len(fullmatchList)
 
             HEG = str(fullMatch)
+            expMatch = 0
+            with open("ExplosiveGroups.csv", "r") as expGroups:
+               for line in expGroups:
+                    #print(line)
+                    expSubstructure = Chem.MolFromSmiles(line)
+                    expmatchList = Mol.GetSubstructMatches(mol, expSubstructure)
+                    #print('\n')
+                    #print(expmatchList)
+                    #print('\n')
+                    expMatch += len(expmatchList)
+
+            EFG = str(expMatch)
+
+            print('Explosive Groups =' + ' ' + EFG)
+
             self.HEGlabel.setText('Number of High Energy Groups: ' + HEG)
+            self.EFGlabel.setText('Number of Explosive Functional Groups: ' + EFG)
+            oreo = 0 # Initiallise O.R.E.O.S. calculation. Lack of 's' in var name is deliberate, as Scale is factored in later.
+            # O.R.E.O.S. check for EFG:
+            if int(EFG) >= 1:
+                oreo += 8
+            elif int(EFG) == 0:
+                oreo += 1
+            else:
+                print("Error: O.R.E.O.S. EFG number gives unexpected value: " + EFG)
             #carbonAtoms = len(Mol.GetSubstructMatches(mol, Chem.MolFromSmarts("[C]")))
             #print(carbonAtoms)
             chemForm = rdMolDescriptors.CalcMolFormula(mol)
