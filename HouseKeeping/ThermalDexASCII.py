@@ -17,7 +17,7 @@ except:
     pass
 
 def importConfig():
-    conf = open('.\\_core\\ThermalDex.config', 'r')
+    conf = open('ThermalDex.config', 'r')
     confCounter = 0
     for line in conf:
         #print(confCounter)
@@ -27,14 +27,11 @@ def importConfig():
         elif confCounter == 8:
            highEnergyGroups = line.strip("\n")
            confCounter += 1
-        elif confCounter == 12:
-           expEnergyGroups = line.strip("\n")
-           confCounter += 1
         else:
            confCounter += 1
 
     #print(defaultDB)
-    return defaultDB, highEnergyGroups, expEnergyGroups
+    return defaultDB, highEnergyGroups
 
 class QHLine(QFrame):
     def __init__(self):
@@ -250,10 +247,10 @@ class MolDrawer(QWidget):
         about_tab = QWidget()
         about_layout = QVBoxLayout()
         about_title = QLabel("<b>About ThermalDex</b>\n\n")
-        about_blank = QLabel("\nVersion: 0.2.0  (This is currently an alpha build)\n")
-        about_text = QLabel("\n\nThis is a simple tool for assessing and recording the potential thermal hazards assoicated with a molecule. It uses the <b>'O.R.E.O.S.'</b> assement scale and other ideas that can be read about in <a href=\"https://pubs.acs.org/doi/10.1021/acs.oprd.0c00467\"><em>Org. Process Res. Dev.</em> 2021, 25, 2, 212–224</a> by Jeffrey B. Sperry et. al.")
+        about_blank = QLabel("\nVersion: 0.1.0  (This is currently an alpha build)\n")
+        about_text = QLabel("\n\nThis is a simple tool for assessing and recording the potential thermal hazards assoicated with a molecule. It uses the <b>'O.R.E.O.S.'</b> assement scale and other ideas that can be read about in <a href=\"https://pubs.acs.org/doi/10.1021/acs.oprd.0c00467\"><em>Org. Process Res. Dev.</em> 2021, 25, 2, 212?224</a> by Jeffrey B. Sperry et. al.")
         iconLabel = QLabel()
-        iconImage = QPixmap(".\\_core\\ThermalDexIcon.jpg")
+        iconImage = QPixmap("ThermalDexIcon.jpg")
         scaledIcon = iconImage.scaled(400, 400, Qt.KeepAspectRatio)
         iconLabel.setText("test") #.setPixmap(scaledIcon)
         
@@ -356,7 +353,7 @@ class MolDrawer(QWidget):
             mwStr = "{:.2f}".format(cmpdMW)
             self.mwLabel.setText('MW: ' + mwStr)
             fullMatch = 0
-            with open(highEnergyGroups, "r") as HEGroups: #"HighEnergyGroups.csv", "r") as HEGroups:
+            with open("HighEnergyGroups.csv", "r") as HEGroups:
                for line in HEGroups:
                     #print(line)
                     HeSubstructure = Chem.MolFromSmiles(line)
@@ -367,7 +364,7 @@ class MolDrawer(QWidget):
 
             HEG = str(fullMatch)
             expMatch = 0
-            with open(expEnergyGroups, "r") as expGroups: #"ExplosiveGroups.csv", "r") as expGroups:
+            with open("ExplosiveGroups.csv", "r") as expGroups:
                for line in expGroups:
                     #print(line)
                     expSubstructure = Chem.MolFromSmiles(line)
@@ -553,9 +550,9 @@ class MolDrawer(QWidget):
             self.error_flag = 100
 
 if __name__ == '__main__':
-    defaultDB, highEnergyGroups, expEnergyGroups = importConfig()
+    defaultDB, highEnergyGroups = importConfig()
     app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon('.\\_core\\ThermalDexIcon.ico'))
+    app.setWindowIcon(QIcon('ThermalDexIcon.ico'))
     window = MolDrawer()
     window.show()
     sys.exit(app.exec_())
