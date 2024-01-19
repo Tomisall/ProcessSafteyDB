@@ -1,11 +1,9 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTableWidget, QTableWidgetItem, QTabWidget, QToolTip, QGraphicsPixmapItem
-from rdkit import Chem
-from rdkit.Chem import Draw
-from rdkit.Chem import Descriptors, rdMolDescriptors
-from rdkit.Chem import Mol
-from PyQt5.QtGui import QPixmap, QColor, QIcon, QCursor
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTableWidget, QTableWidgetItem, QTabWidget, QGraphicsPixmapItem #, QToolTip
+from PyQt5.QtGui import QPixmap, QColor, QIcon #, QCursor
 from PyQt5.QtCore import Qt
+#from PyQt5.QtCore import Qt.TextSelectableByMouse, Qt.KeepAspectRatio, Qt.AlignCenter, Qt.RichText, Qt.LinksAccessibleByMouse
+from rdkit.Chem import Draw, Descriptors, rdMolDescriptors, Mol, MolFromSmiles, MolFromSmarts
 from io import BytesIO
 import pandas as pd
 import re
@@ -181,7 +179,7 @@ class MolDrawer(QWidget):
                   #print(self.current_index)
 
                   if self.result_smiles is not None:
-                      mol = Chem.MolFromSmiles(self.result_smiles)
+                      mol = MolFromSmiles(self.result_smiles)
 
                   else: 
                       mol = None
@@ -241,11 +239,11 @@ class MolDrawer(QWidget):
 
         # Tab for "About" information
 
-        def hover(url):
-            if url:
-                QToolTip.showText(QCursor.pos(), titles.get(url, url))
-            else:
-                QToolTip.hideText()
+        #def hover(url):
+        #    if url:
+        #        QToolTip.showText(QCursor.pos(), titles.get(url, url))
+        #    else:
+        #        QToolTip.hideText()
 
         about_tab = QWidget()
         about_layout = QVBoxLayout()
@@ -267,7 +265,7 @@ class MolDrawer(QWidget):
         view.setStyleSheet("border: 0px")
         altNames_text = QLabel("The alternative name for this project is <b>C.O.O.K.I.E.S.</b> which stands for <em>C</em>alculation <em>O</em>f <em>O</em>.R.E.O.S., <em>K</em>illing <em>I</em>nelegant <em>E</em>xcel <em>S</em>olutions. This would be the offical relase name, but it felt a bit glib.")
         moreabout_text = QLabel("This tool has been developed by Tom Sheridan and Matt Mulheir using PyQt5 and RDKit. You can contribute to this project on <a href=\"https://github.com/Tomisall/ProcessSafteyDB\">GitHub</a>.")
-        #about_text.setAlignment(QtCore.Qt.AlignCenter)
+        #about_text.setAlignment(Qt.AlignCenter)
         about_layout.addWidget(about_title)
         about_layout.addWidget(about_text)
         about_layout.addWidget(about_blank)
@@ -331,7 +329,7 @@ class MolDrawer(QWidget):
 
         # Create an RDKit molecule from the SMILES string
         if smiles != '' and smiles is not None:
-            mol = Chem.MolFromSmiles(smiles)
+            mol = MolFromSmiles(smiles)
 
         else:
             mol = None
@@ -359,7 +357,7 @@ class MolDrawer(QWidget):
             with open(highEnergyGroups, "r") as HEGroups: #"HighEnergyGroups.csv", "r") as HEGroups:
                for line in HEGroups:
                     #print(line)
-                    HeSubstructure = Chem.MolFromSmiles(line)
+                    HeSubstructure = MolFromSmiles(line)
                     fullmatchList = Mol.GetSubstructMatches(mol, HeSubstructure)
                     if len(fullmatchList) > 0:
                         print('High Energy Group Found: ' + line)
@@ -370,7 +368,7 @@ class MolDrawer(QWidget):
             with open(expEnergyGroups, "r") as expGroups: #"ExplosiveGroups.csv", "r") as expGroups:
                for line in expGroups:
                     #print(line)
-                    expSubstructure = Chem.MolFromSmiles(line)
+                    expSubstructure = MolFromSmiles(line)
                     expmatchList = Mol.GetSubstructMatches(mol, expSubstructure)
                     #print('\n')
                     #print(expmatchList)
@@ -393,7 +391,7 @@ class MolDrawer(QWidget):
                 oreo += 1
             else:
                 print("Error: O.R.E.O.S. EFG number gives unexpected value: " + EFG)
-            #carbonAtoms = len(Mol.GetSubstructMatches(mol, Chem.MolFromSmarts("[C]")))
+            #carbonAtoms = len(Mol.GetSubstructMatches(mol, MolFromSmarts("[C]")))
             #print(carbonAtoms)
             chemForm = rdMolDescriptors.CalcMolFormula(mol)
             print(chemForm)
