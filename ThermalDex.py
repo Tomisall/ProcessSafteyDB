@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTableWidget, QTableWidgetItem, QTabWidget, QGraphicsPixmapItem #, QToolTip
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTableWidget, QTableWidgetItem, QTabWidget, QGraphicsPixmapItem  #, QTableView, QToolTip
 from PyQt5.QtGui import QPixmap, QColor, QIcon #, QCursor
 from PyQt5.QtCore import Qt
 from rdkit.Chem import Draw, Descriptors, rdMolDescriptors, Mol, MolFromSmiles, MolFromSmarts
@@ -40,6 +40,12 @@ class QHLine(QFrame):
         self.setFrameShape(QFrame.HLine)
         self.setFrameShadow(QFrame.Sunken)
 
+class QVLine(QFrame):
+    def __init__(self):
+        super(QVLine, self).__init__()
+        self.setFrameShape(QFrame.VLine)
+        self.setFrameShadow(QFrame.Sunken)
+
 class MolDrawer(QWidget):
     def __init__(self):
         super().__init__()
@@ -67,38 +73,62 @@ class MolDrawer(QWidget):
         molecule_layout.addWidget(QLabel('Molecule:'))
         molecule_layout.addWidget(self.mol_display)
 
+        ResultsContainLayout = QHBoxLayout()
+        ResultsLeftLayout = QVBoxLayout()
+        ResultsRightLayout = QVBoxLayout()
+
 	#Add labels for calculated values
         self.mwLabel = QLabel('MW: ')
         self.mwLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        molecule_layout.addWidget(self.mwLabel)
+        ResultsLeftLayout.addWidget(self.mwLabel)
         self.HEGlabel = QLabel('Number of High Energy Groups:')
         self.HEGlabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        molecule_layout.addWidget(self.HEGlabel)
+        ResultsLeftLayout.addWidget(self.HEGlabel)
         self.EFGlabel = QLabel('Number of Explosive Functional Groups:')
         self.EFGlabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        molecule_layout.addWidget(self.EFGlabel)
+        ResultsLeftLayout.addWidget(self.EFGlabel)
         self.eleLabel = QLabel('Elemental Composition: ')
         self.eleLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        molecule_layout.addWidget(self.eleLabel)
+        ResultsLeftLayout.addWidget(self.eleLabel)
         self.RoSLabel = QLabel('Rule of Six: ')
         self.RoSLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        molecule_layout.addWidget(self.RoSLabel)
+        ResultsRightLayout.addWidget(self.RoSLabel)
         self.obLabel = QLabel('Oxygen Balance: ')
         self.obLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        molecule_layout.addWidget(self.obLabel)
+        ResultsRightLayout.addWidget(self.obLabel)
+        self.ISLabel = QLabel('Yoshida Impact Sensitivity: ')
+        self.ISLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        ResultsRightLayout.addWidget(self.ISLabel)
+        self.EPLabel = QLabel('Yoshida Explosive Propagation: ')
+        self.EPLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        ResultsRightLayout.addWidget(self.EPLabel)
+        self.Td24Label = QLabel('T<sub>D24</sub>: ')
+        self.Td24Label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        ResultsRightLayout.addWidget(self.Td24Label)
 
+        ResultsContainLayout.addWidget(QVLine())
+        ResultsContainLayout.addLayout(ResultsLeftLayout)
+        ResultsContainLayout.addWidget(QVLine())
+        ResultsContainLayout.addLayout(ResultsRightLayout)
+        ResultsContainLayout.addWidget(QVLine())
+        molecule_layout.addLayout(ResultsContainLayout)
         molecule_layout.addWidget(QHLine())
 
         self.tableLabel = QLabel('O.R.E.O.S. Assessment of Hazard by Scale:')
         molecule_layout.addWidget(self.tableLabel)
+        tableLayout = QHBoxLayout()
         self.table = QTableWidget(1, 4)
         self.table.setHorizontalHeaderLabels(['<5 g', '5 to <100 g', '100 to 500 g', '>500 g'])
         self.table.verticalHeader().setVisible(False)
         #self.table.setStyleSheet("QTableWidget::item { border-bottom: 2px solid black; }")
-        self.table.setMaximumHeight(52)
-        molecule_layout.addWidget(self.table)
+        self.table.setMaximumHeight(53)
+        self.table.setMaximumWidth(402)
+        self.table.setMinimumHeight(53)
+        self.table.setMinimumWidth(402)
+        #self.table.setAlignment(Qt.AlignVCenter)
+        tableLayout.addWidget(self.table)
 
-
+        molecule_layout.addLayout(tableLayout)
         molecule_layout.addWidget(QHLine())
 
         # Input field for SMILES string
@@ -258,7 +288,7 @@ class MolDrawer(QWidget):
         about_tab = QWidget()
         about_layout = QVBoxLayout()
         about_title = QLabel("<b>About ThermalDex</b>\n\n")
-        about_blank = QLabel("\nVersion: 0.2.1  (This is currently an alpha build)\n")
+        about_blank = QLabel("\nVersion: 0.3.0  (This is currently an alpha build)\n")
         about_text = QLabel("\n\nThis is a simple tool for assessing and recording the potential thermal hazards assoicated with a molecule. It uses the <b>'O.R.E.O.S.'</b> assement scale and other ideas that can be read about in <a href=\"https://pubs.acs.org/doi/10.1021/acs.oprd.0c00467\"><em>Org. Process Res. Dev.</em> 2021, 25, 2, 212–224</a> by Jeffrey B. Sperry et. al.")
         iconLabel = QLabel()
         iconImage = QPixmap(".\\_core\\ThermalDexIcon.jpg")
@@ -306,7 +336,7 @@ class MolDrawer(QWidget):
 
         # Set up the main window
         self.setLayout(layout)
-        self.setGeometry(100, 100, 448, 850)
+        self.setGeometry(100, 100, 600, 850)
         self.setWindowTitle('ThermalDex')
 
     def getColorForValue(self, hazardClass):
@@ -567,6 +597,18 @@ class MolDrawer(QWidget):
                 # Explosive Propagation (EP)
                 exProp = log10(deltaH) - 0.38*(log10(onsetTemp-25)) - 1.67
                 print('EP = ' + str(exProp))
+                if impactSens >= 0:
+                   impact = ' (Impact Sensitive)'
+                elif impactSens < 0:
+                   impact = ' (Not Impact Sensitive)'
+                if impactSens >= 0:
+                   explos = ' (Propagates)'
+                elif impactSens < 0:
+                   explos = ' (Should Not Propagate)'
+                isStr = "{:.2f}".format(impactSens)
+                self.ISLabel.setText('Yoshida Impact Sensitivity: ' + isStr + impact)
+                epStr = "{:.2f}".format(exProp)
+                self.EPLabel.setText('Yoshida Explosive Propagation: ' + epStr + explos)
 
             # Estimation of Maximum Recommended Process Temperature To Avoid Hazardous Thermal Decomposition
             # Onset temp adjustment
@@ -575,6 +617,8 @@ class MolDrawer(QWidget):
                 print('Tinit given as ' + Tinit)
                 d24Temp = 0.7*initTemp - 46
                 print('T_D24 =' + str(d24Temp))
+                d24Str = "{:.1f}".format(d24Temp)
+                self.Td24Label.setText('T<sub>D24</sub>: ' + d24Str + ' °' + 'C')
 
             addMol = open(defaultDB, 'a')
             addMol.write(writeSmiles + ',' + writeName + ',' + HEG + ',' + writemp + ',' + mwStr + ',' + writeTE + ',' + writeProj + '\n')
