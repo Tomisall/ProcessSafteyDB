@@ -2,9 +2,9 @@ import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTableWidget, QTableWidgetItem, QTabWidget, QGraphicsPixmapItem #, QToolTip
 from PyQt5.QtGui import QPixmap, QColor, QIcon #, QCursor
 from PyQt5.QtCore import Qt
-#from PyQt5.QtCore import Qt.TextSelectableByMouse, Qt.KeepAspectRatio, Qt.AlignCenter, Qt.RichText, Qt.LinksAccessibleByMouse
 from rdkit.Chem import Draw, Descriptors, rdMolDescriptors, Mol, MolFromSmiles, MolFromSmarts
 from io import BytesIO
+from numpy import log10
 import pandas as pd
 import re
 
@@ -116,10 +116,20 @@ class MolDrawer(QWidget):
         molecule_layout.addWidget(QLabel('m.p.:'))
         molecule_layout.addWidget(self.mp_input)
 
+        # Input field for mp string
+        self.Qdsc_input = QLineEdit(self)
+        molecule_layout.addWidget(QLabel('Q<sub>DSC</sub>:'))
+        molecule_layout.addWidget(self.Qdsc_input)
+
         # Input field for Onset string
         self.TE_input = QLineEdit(self)
         molecule_layout.addWidget(QLabel('Onset Temperature:'))
         molecule_layout.addWidget(self.TE_input)
+
+        # Input field for Onset string
+        self.Tinit_input = QLineEdit(self)
+        molecule_layout.addWidget(QLabel('Initiation Temperature:'))
+        molecule_layout.addWidget(self.Tinit_input)
 
         # Input field for proj string
         self.proj_input = QLineEdit(self)
@@ -248,7 +258,7 @@ class MolDrawer(QWidget):
         about_tab = QWidget()
         about_layout = QVBoxLayout()
         about_title = QLabel("<b>About ThermalDex</b>\n\n")
-        about_blank = QLabel("\nVersion: 0.2.0  (This is currently an alpha build)\n")
+        about_blank = QLabel("\nVersion: 0.2.1  (This is currently an alpha build)\n")
         about_text = QLabel("\n\nThis is a simple tool for assessing and recording the potential thermal hazards assoicated with a molecule. It uses the <b>'O.R.E.O.S.'</b> assement scale and other ideas that can be read about in <a href=\"https://pubs.acs.org/doi/10.1021/acs.oprd.0c00467\"><em>Org. Process Res. Dev.</em> 2021, 25, 2, 212–224</a> by Jeffrey B. Sperry et. al.")
         iconLabel = QLabel()
         iconImage = QPixmap(".\\_core\\ThermalDexIcon.jpg")
@@ -319,7 +329,9 @@ class MolDrawer(QWidget):
         smiles = self.smiles_input.text()
         name = self.name_input.text()
         mp = self.mp_input.text()
+        Qdsc = self.Qdsc_input.text()
         TE = self.TE_input.text()
+        Tinit = self.Tinit_input.text()
         proj = self.proj_input.text()
         writeSmiles = '"'+smiles+'"' #repr(str(smiles))
         writeName = '"'+name+'"'
@@ -347,8 +359,10 @@ class MolDrawer(QWidget):
             # Convert the byte array to a QPixmap and display it
             pixmap = QPixmap()
             pixmap.loadFromData(byte_array.getvalue())
+            scaledPixmap = pixmap.scaled(300, 300, Qt.KeepAspectRatio)
             scene = QGraphicsScene()
-            scene.addPixmap(pixmap)
+            #scene.setSceneRect(0, 0, 400, 400)
+            scene.addPixmap(pixmap) #scaledPixmap) #pixmap)
             self.mol_display.setScene(scene)
             cmpdMW = Descriptors.MolWt(mol)
             mwStr = "{:.2f}".format(cmpdMW)
@@ -483,8 +497,8 @@ class MolDrawer(QWidget):
             # Calculation of O.R.E.O.S. Safe Scale
             # Onset temp adjustment
             if TE != 'nan' and TE != '':
-                onsetTemp = int(TE)
-                print('Onset Temperature given as' + TE)
+                onsetTemp = float(TE)
+                print('Onset Temperature given as ' + TE)
                 if onsetTemp <= 125:
                     oreo += 8
                 elif onsetTemp in range(126,200):
@@ -538,6 +552,29 @@ class MolDrawer(QWidget):
                 classColor = self.getColorForValue(hazardClass)
                 print(classColor)
                 item.setBackground(classColor)
+
+
+            # Yoshida Correlations
+            # Onset temp adjustment
+            if TE != 'nan' and TE != '' and Qdsc != 'nan' and Qdsc != '':
+                onsetTemp = float(TE)
+                print('Onset Temperature given as ' + TE)
+                deltaH = float(Qdsc)
+                print('Qdsc given as ' + Qdsc)
+                # Impact Sensitvity (IS)
+                impactSens = log10(deltaH) - 0.72*(log10(onsetTemp-25)) - 0.98
+                print('IS = ' + str(impactSens))
+                # Explosive Propagation (EP)
+                exProp = log10(deltaH) - 0.38*(log10(onsetTemp-25)) - 1.67
+                print('EP = ' + str(exProp))
+
+            # Estimation of Maximum Recommended Process Temperature To Avoid Hazardous Thermal Decomposition
+            # Onset temp adjustment
+            if Tinit != 'nan' and Tinit != '':
+                initTemp = float(Tinit)
+                print('Tinit given as ' + Tinit)
+                d24Temp = 0.7*initTemp - 46
+                print('T_D24 =' + str(d24Temp))
 
             addMol = open(defaultDB, 'a')
             addMol.write(writeSmiles + ',' + writeName + ',' + HEG + ',' + writemp + ',' + mwStr + ',' + writeTE + ',' + writeProj + '\n')
