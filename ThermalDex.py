@@ -1,7 +1,7 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTableWidget, QTableWidgetItem, QTabWidget, QGraphicsPixmapItem  #, QTableView, QToolTip
-from PyQt5.QtGui import QPixmap, QColor, QIcon #, QCursor
-from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap, QColor, QIcon, QRegExpValidator #QValidator #, QCursor
+from PyQt5.QtCore import Qt, QRegExp
 from rdkit.Chem import Draw, Descriptors, rdMolDescriptors, Mol, MolFromSmiles, MolFromSmarts
 from io import BytesIO
 from numpy import log10
@@ -136,35 +136,78 @@ class MolDrawer(QWidget):
         molecule_layout.addWidget(QLabel('Enter SMILES String:'))
         molecule_layout.addWidget(self.smiles_input)
 
+        InputContainLayout = QHBoxLayout()
+        InputLeftLayout = QVBoxLayout()
+        InputRightLayout = QVBoxLayout()
+        validator = QRegExpValidator(QRegExp(r'[-]?\d+[.]?\d*'))
+
         # Input field for Name string
         self.name_input = QLineEdit(self)
-        molecule_layout.addWidget(QLabel('Name:'))
-        molecule_layout.addWidget(self.name_input)
+        InputLeftLayout.addWidget(QLabel('Name:'))
+        nameUnitsSubLayout = QHBoxLayout()
+        nameUnitsSubLayout.addWidget(self.name_input)
+        nameUnitLabel = QLabel('°C    ')
+        nameUnitLabel.setStyleSheet('color: white')
+        nameUnitsSubLayout.addWidget(nameUnitLabel)
+        InputLeftLayout.addLayout(nameUnitsSubLayout)
 
         # Input field for mp string
         self.mp_input = QLineEdit(self)
-        molecule_layout.addWidget(QLabel('m.p.:'))
-        molecule_layout.addWidget(self.mp_input)
+        self.mp_input.setMaximumWidth(110)
+        self.mp_input.setValidator(validator)
+        self.mpEnd_input = QLineEdit(self)
+        self.mpEnd_input.setMaximumWidth(110)
+        self.mpEnd_input.setValidator(validator)
+        InputLeftLayout.addWidget(QLabel('m.p.:'))
+        mpUnitsSubLayout = QHBoxLayout()
+        mpUnitsSubLayout.addWidget(self.mp_input)
+        mpUnitsSubLayout.addWidget(QLabel('  to  '))
+        mpUnitsSubLayout.addWidget(self.mpEnd_input)
+        mpUnitsSubLayout.addWidget(QLabel('°C    '))
+        InputLeftLayout.addLayout(mpUnitsSubLayout)
 
-        # Input field for mp string
+        # Input field for Q_DSC string
         self.Qdsc_input = QLineEdit(self)
-        molecule_layout.addWidget(QLabel('Q<sub>DSC</sub>:'))
-        molecule_layout.addWidget(self.Qdsc_input)
+        self.Qdsc_input.setValidator(validator)
+        InputRightLayout.addWidget(QLabel('Q<sub>DSC</sub>:'))
+        QUnitsSubLayout = QHBoxLayout()
+        QUnitsSubLayout.addWidget(self.Qdsc_input)
+        QUnitsSubLayout.addWidget(QLabel('cal g<sup>-1</sup> '))
+        InputRightLayout.addLayout(QUnitsSubLayout)
 
         # Input field for Onset string
         self.TE_input = QLineEdit(self)
-        molecule_layout.addWidget(QLabel('Onset Temperature:'))
-        molecule_layout.addWidget(self.TE_input)
+        self.TE_input.setValidator(validator)
+        InputRightLayout.addWidget(QLabel('Onset Temperature:'))
+        TEUnitsSubLayout = QHBoxLayout()
+        TEUnitsSubLayout.addWidget(self.TE_input)
+        TEUnitsSubLayout.addWidget(QLabel('°C       '))
+        InputRightLayout.addLayout(TEUnitsSubLayout)
 
-        # Input field for Onset string
+        # Input field for Init string
         self.Tinit_input = QLineEdit(self)
-        molecule_layout.addWidget(QLabel('Initiation Temperature:'))
-        molecule_layout.addWidget(self.Tinit_input)
+        self.Tinit_input.setValidator(validator)
+        InputRightLayout.addWidget(QLabel('Initiation Temperature:'))
+        TinitUnitsSubLayout = QHBoxLayout()
+        TinitUnitsSubLayout.addWidget(self.Tinit_input)
+        TinitUnitsSubLayout.addWidget(QLabel('°C       '))
+        InputRightLayout.addLayout(TinitUnitsSubLayout)
 
         # Input field for proj string
         self.proj_input = QLineEdit(self)
-        molecule_layout.addWidget(QLabel('Project:'))
-        molecule_layout.addWidget(self.proj_input)
+        InputLeftLayout.addWidget(QLabel('Project:'))
+        projUnitsSubLayout = QHBoxLayout()
+        projUnitsSubLayout.addWidget(self.proj_input)
+        projUnitLabel = QLabel('°C    ')
+        projUnitLabel.setStyleSheet('color: white')
+        projUnitsSubLayout.addWidget(projUnitLabel)
+        InputLeftLayout.addLayout(projUnitsSubLayout)
+
+        InputContainLayout.addLayout(InputLeftLayout)
+        #ResultsContainLayout.addWidget(QVLine())
+        InputContainLayout.addLayout(InputRightLayout)
+        #ResultsContainLayout.addWidget(QVLine())
+        molecule_layout.addLayout(InputContainLayout)
 
         # Button to render the molecule
         render_button = QPushButton('Evaluate Molecule', self)
@@ -336,7 +379,7 @@ class MolDrawer(QWidget):
 
         # Set up the main window
         self.setLayout(layout)
-        self.setGeometry(100, 100, 600, 850)
+        self.setGeometry(100, 100, 600, 825)
         self.setWindowTitle('ThermalDex')
 
     def getColorForValue(self, hazardClass):
@@ -392,7 +435,7 @@ class MolDrawer(QWidget):
             scaledPixmap = pixmap.scaled(300, 300, Qt.KeepAspectRatio)
             scene = QGraphicsScene()
             #scene.setSceneRect(0, 0, 400, 400)
-            scene.addPixmap(pixmap) #scaledPixmap) #pixmap)
+            scene.addPixmap(scaledPixmap) #pixmap)
             self.mol_display.setScene(scene)
             cmpdMW = Descriptors.MolWt(mol)
             mwStr = "{:.2f}".format(cmpdMW)
