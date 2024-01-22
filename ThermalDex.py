@@ -540,30 +540,30 @@ class MolDrawer(QWidget):
             ruleSixCrit = 6*int(HEG) - Catoms #int(carbonAtoms[0])
             print(ruleSixCrit)
             if ruleSixCrit > 0:
-                ruleSix = "Explosive"
+                ruleSix = " <b>(Explosive)</b>"
                 oreo += 8
             else:
-                ruleSix = "Not Explosive"
+                ruleSix = " <b>(Not Explosive)</b>"
                 oreo += 2
-            self.RoSLabel.setText('Rule of Six: ' + ruleSix)
+            self.RoSLabel.setText('Rule of Six: ' + str(ruleSixCrit) + ruleSix)
             #oxygenBalance = (-1600*((2*int(carbonAtoms[0]))+(int(hydrogenAtoms[0])/2)-int(oxygenAtoms[0])))/cmpdMW
             oxygenBalance = (-1600*((2*Catoms)+(Hatoms/2)-Oatoms))/cmpdMW
             print(oxygenBalance)
             obStr = "{:.2f}".format(oxygenBalance)
             if oxygenBalance > 160:
-                obRisk = "(Low Risk)"
+                obRisk = "<b>(Low Risk)</b>"
                 oreo += 2
             elif oxygenBalance > 80 and oxygenBalance <= 160:
-                obRisk = "(Medium Risk)"
+                obRisk = "<b>(Medium Risk)</b>"
                 oreo += 4
             elif oxygenBalance >= -120 and oxygenBalance <= 80:
-                obRisk = "(High Risk)"
+                obRisk = "<b>(High Risk)</b>"
                 oreo += 8
             elif oxygenBalance >= -240 and oxygenBalance < -120:
-                obRisk = "(Medium Risk)"
+                obRisk = "<b>(Medium Risk)</b>"
                 oreo += 4
             elif oxygenBalance < -240:
-                obRisk = "(Low Risk)"
+                obRisk = "<b>(Low Risk)</b>"
                 oreo += 2
             self.obLabel.setText('Oxygen Balance: ' + obStr + ' ' + obRisk)
             
@@ -641,13 +641,13 @@ class MolDrawer(QWidget):
                 exProp = log10(deltaH) - 0.38*(log10(onsetTemp-25)) - 1.67
                 print('EP = ' + str(exProp))
                 if impactSens >= 0:
-                   impact = ' (Impact Sensitive)'
+                   impact = ' <b>(Impact Sensitive)</b>'
                 elif impactSens < 0:
-                   impact = ' (Not Impact Sensitive)'
+                   impact = ' <b>(Not Impact Sensitive)</b>'
                 if impactSens >= 0:
-                   explos = ' (Propagates)'
+                   explos = ' <b>(Propagates)</b>'
                 elif impactSens < 0:
-                   explos = ' (Should Not Propagate)'
+                   explos = ' <b>(Should Not Propagate)</b>'
                 isStr = "{:.2f}".format(impactSens)
                 self.ISLabel.setText('Yoshida Impact Sensitivity: ' + isStr + impact)
                 epStr = "{:.2f}".format(exProp)
@@ -661,7 +661,7 @@ class MolDrawer(QWidget):
                 d24Temp = 0.7*initTemp - 46
                 print('T_D24 =' + str(d24Temp))
                 d24Str = "{:.1f}".format(d24Temp)
-                self.Td24Label.setText('T<sub>D24</sub>: ' + d24Str + ' °' + 'C')
+                self.Td24Label.setText('T<sub>D24</sub>: ' + '<b>' + d24Str + ' °' + 'C' + '</b>')
 
             addMol = open(defaultDB, 'a')
             addMol.write(writeSmiles + ',' + writeName + ',' + HEG + ',' + writemp + ',' + mwStr + ',' + writeTE + ',' + writeProj + '\n')
