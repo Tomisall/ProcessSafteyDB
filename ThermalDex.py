@@ -78,31 +78,41 @@ class MolDrawer(QWidget):
         ResultsRightLayout = QVBoxLayout()
 
 	#Add labels for calculated values
-        self.mwLabel = QLabel('MW: ')
+        self.mwText = 'MW: '
+        self.HEGText = 'Number of High Energy Groups:'
+        self.EFGText = 'Number of Explosive Functional Groups:'
+        self.eleText = 'Elemental Composition: '
+        self.RoSText = 'Rule of Six: '
+        self.obText = 'Oxygen Balance: '
+        self.ISText = 'Yoshida Impact Sensitivity: '
+        self.EPText = 'Yoshida Explosive Propagation: '
+        self.Td24Text = 'T<sub>D24</sub>: '
+
+        self.mwLabel = QLabel(self.mwText)
         self.mwLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
         ResultsLeftLayout.addWidget(self.mwLabel)
-        self.HEGlabel = QLabel('Number of High Energy Groups:')
+        self.HEGlabel = QLabel(self.HEGText)
         self.HEGlabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
         ResultsLeftLayout.addWidget(self.HEGlabel)
-        self.EFGlabel = QLabel('Number of Explosive Functional Groups:')
+        self.EFGlabel = QLabel(self.EFGText)
         self.EFGlabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
         ResultsLeftLayout.addWidget(self.EFGlabel)
-        self.eleLabel = QLabel('Elemental Composition: ')
+        self.eleLabel = QLabel(self.eleText)
         self.eleLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
         ResultsLeftLayout.addWidget(self.eleLabel)
-        self.RoSLabel = QLabel('Rule of Six: ')
+        self.RoSLabel = QLabel(self.RoSText)
         self.RoSLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
         ResultsRightLayout.addWidget(self.RoSLabel)
-        self.obLabel = QLabel('Oxygen Balance: ')
+        self.obLabel = QLabel(self.obText)
         self.obLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
         ResultsRightLayout.addWidget(self.obLabel)
-        self.ISLabel = QLabel('Yoshida Impact Sensitivity: ')
+        self.ISLabel = QLabel(self.ISText)
         self.ISLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
         ResultsRightLayout.addWidget(self.ISLabel)
-        self.EPLabel = QLabel('Yoshida Explosive Propagation: ')
+        self.EPLabel = QLabel(self.EPText)
         self.EPLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
         ResultsRightLayout.addWidget(self.EPLabel)
-        self.Td24Label = QLabel('T<sub>D24</sub>: ')
+        self.Td24Label = QLabel(self.Td24Text)
         self.Td24Label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         ResultsRightLayout.addWidget(self.Td24Label)
 
@@ -139,7 +149,8 @@ class MolDrawer(QWidget):
         InputContainLayout = QHBoxLayout()
         InputLeftLayout = QVBoxLayout()
         InputRightLayout = QVBoxLayout()
-        validator = QRegExpValidator(QRegExp(r'[-]?\d+[.]?\d*'))
+        numValidator = QRegExpValidator(QRegExp(r'[-]?\d+[.]?\d*'))
+        posNumValidator = QRegExpValidator(QRegExp(r'\d+[.]?\d*'))
 
         # Input field for Name string
         self.name_input = QLineEdit(self)
@@ -154,10 +165,10 @@ class MolDrawer(QWidget):
         # Input field for mp string
         self.mp_input = QLineEdit(self)
         self.mp_input.setMaximumWidth(110)
-        self.mp_input.setValidator(validator)
+        self.mp_input.setValidator(numValidator)
         self.mpEnd_input = QLineEdit(self)
         self.mpEnd_input.setMaximumWidth(110)
-        self.mpEnd_input.setValidator(validator)
+        self.mpEnd_input.setValidator(numValidator)
         InputLeftLayout.addWidget(QLabel('m.p.:'))
         mpUnitsSubLayout = QHBoxLayout()
         mpUnitsSubLayout.addWidget(self.mp_input)
@@ -168,7 +179,7 @@ class MolDrawer(QWidget):
 
         # Input field for Q_DSC string
         self.Qdsc_input = QLineEdit(self)
-        self.Qdsc_input.setValidator(validator)
+        self.Qdsc_input.setValidator(posNumValidator)
         InputRightLayout.addWidget(QLabel('Q<sub>DSC</sub>:'))
         QUnitsSubLayout = QHBoxLayout()
         QUnitsSubLayout.addWidget(self.Qdsc_input)
@@ -177,7 +188,7 @@ class MolDrawer(QWidget):
 
         # Input field for Onset string
         self.TE_input = QLineEdit(self)
-        self.TE_input.setValidator(validator)
+        self.TE_input.setValidator(numValidator)
         InputRightLayout.addWidget(QLabel('Onset Temperature:'))
         TEUnitsSubLayout = QHBoxLayout()
         TEUnitsSubLayout.addWidget(self.TE_input)
@@ -186,7 +197,7 @@ class MolDrawer(QWidget):
 
         # Input field for Init string
         self.Tinit_input = QLineEdit(self)
-        self.Tinit_input.setValidator(validator)
+        self.Tinit_input.setValidator(numValidator)
         InputRightLayout.addWidget(QLabel('Initiation Temperature:'))
         TinitUnitsSubLayout = QHBoxLayout()
         TinitUnitsSubLayout.addWidget(self.Tinit_input)
@@ -209,10 +220,20 @@ class MolDrawer(QWidget):
         #ResultsContainLayout.addWidget(QVLine())
         molecule_layout.addLayout(InputContainLayout)
 
-        # Button to render the molecule
+        # Buttons
+        buttonSpacerLabel = QLabel('hidden spacer')
+        buttonSpacerLabel.setStyleSheet('color: white')
+        molecule_layout.addWidget(buttonSpacerLabel)
+        buttonContainLayout = QHBoxLayout()
         render_button = QPushButton('Evaluate Molecule', self)
         render_button.clicked.connect(self.render_molecule)
-        molecule_layout.addWidget(render_button)
+        render_button.setMaximumWidth(180)
+        buttonContainLayout.addWidget(render_button)
+        clear_button = QPushButton('Clear Sheet', self)
+        clear_button.clicked.connect(self.resetToDefaultState)
+        clear_button.setMaximumWidth(180)
+        buttonContainLayout.addWidget(clear_button)
+        molecule_layout.addLayout(buttonContainLayout)
 
         molecule_tab.setLayout(molecule_layout)
         tab_widget.addTab(molecule_tab, "Add")
@@ -331,7 +352,7 @@ class MolDrawer(QWidget):
         about_tab = QWidget()
         about_layout = QVBoxLayout()
         about_title = QLabel("<b>About ThermalDex</b>\n\n")
-        about_blank = QLabel("\nVersion: 0.3.0  (This is currently an alpha build)\n")
+        about_blank = QLabel("\nVersion: 0.4.1  (This is currently an alpha build)\n")
         about_text = QLabel("\n\nThis is a simple tool for assessing and recording the potential thermal hazards assoicated with a molecule. It uses the <b>'O.R.E.O.S.'</b> assement scale and other ideas that can be read about in <a href=\"https://pubs.acs.org/doi/10.1021/acs.oprd.0c00467\"><em>Org. Process Res. Dev.</em> 2021, 25, 2, 212–224</a> by Jeffrey B. Sperry et. al.")
         iconLabel = QLabel()
         iconImage = QPixmap(".\\_core\\ThermalDexIcon.jpg")
@@ -382,6 +403,38 @@ class MolDrawer(QWidget):
         self.setGeometry(100, 100, 600, 825)
         self.setWindowTitle('ThermalDex')
 
+    def clearTheCalcdValues(self):
+        scene = QGraphicsScene()
+        self.mol_display.setScene(scene)
+        self.mwLabel.setText(self.mwText)
+        self.HEGlabel.setText(self.HEGText)
+        self.EFGlabel.setText(self.EFGText)
+        self.eleLabel.setText(self.eleText)
+        self.RoSLabel.setText(self.RoSText)
+        self.obLabel.setText(self.obText)
+        self.ISLabel.setText(self.ISText)
+        self.EPLabel.setText(self.EPText)
+        self.Td24Label.setText(self.Td24Text)
+        clearEntry = ['', '', '', '']
+        for i, entry in enumerate(clearEntry):
+            clear = QTableWidgetItem(entry)
+            self.table.setItem(0, i, clear)
+            clear.setBackground(QColor(255, 255, 255))
+
+    def clearUserValues(self):
+        self.smiles_input.setText('')
+        self.name_input.setText('')
+        self.mp_input.setText('')
+        self.mpEnd_input.setText('')
+        self.Qdsc_input.setText('')
+        self.TE_input.setText('')
+        self.Tinit_input.setText('')
+        self.proj_input.setText('')
+
+    def resetToDefaultState(self):
+        self.clearTheCalcdValues()
+        self.clearUserValues()
+
     def getColorForValue(self, hazardClass):
         # Example color-coding logic
         if hazardClass == 'High Hazard':
@@ -422,6 +475,8 @@ class MolDrawer(QWidget):
         test = 'hi'
 
         if mol is not None:
+            self.clearTheCalcdValues()
+
             # Generate a molecular drawing as a PNG image
             img = Draw.MolToImage(mol)
 
