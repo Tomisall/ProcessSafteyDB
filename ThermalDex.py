@@ -434,6 +434,10 @@ class MolDrawer(QWidget):
     def resetToDefaultState(self):
         self.clearTheCalcdValues()
         self.clearUserValues()
+        layout = self.layout()
+        if self.error_flag is not None:
+            self.error_message.setText('')
+            layout.removeWidget(self.error_message)
 
     def getColorForValue(self, hazardClass):
         # Example color-coding logic
@@ -690,10 +694,10 @@ class MolDrawer(QWidget):
                 deltaH = float(Qdsc)
                 print('Qdsc given as ' + Qdsc)
                 # Impact Sensitvity (IS)
-                impactSens = log10(deltaH) - 0.72*(log10(onsetTemp-25)) - 0.98
+                impactSens = log10(deltaH) - 0.72*(log10(abs(onsetTemp-25))) - 0.98
                 print('IS = ' + str(impactSens))
                 # Explosive Propagation (EP)
-                exProp = log10(deltaH) - 0.38*(log10(onsetTemp-25)) - 1.67
+                exProp = log10(deltaH) - 0.38*(log10(abs(onsetTemp-25))) - 1.67
                 print('EP = ' + str(exProp))
                 if impactSens >= 0:
                    impact = ' <b>(Impact Sensitive)</b>'
@@ -707,6 +711,10 @@ class MolDrawer(QWidget):
                 self.ISLabel.setText('Yoshida Impact Sensitivity: ' + isStr + impact)
                 epStr = "{:.2f}".format(exProp)
                 self.EPLabel.setText('Yoshida Explosive Propagation: ' + epStr + explos)
+                if onsetTemp <= 24.99:
+                    self.error_message = QLabel('Sub-Ambient Onset Temperature? Are you sure? Yoshida values will not be accurate.')
+                    layout.addWidget(self.error_message)
+                    self.error_flag = 201
 
             # Estimation of Maximum Recommended Process Temperature To Avoid Hazardous Thermal Decomposition
             # Onset temp adjustment
@@ -717,6 +725,10 @@ class MolDrawer(QWidget):
                 print('T_D24 =' + str(d24Temp))
                 d24Str = "{:.1f}".format(d24Temp)
                 self.Td24Label.setText('T<sub>D24</sub>: ' + '<b>' + d24Str + ' °' + 'C' + '</b>')
+                if initTemp <= 24.99:
+                    self.error_message = QLabel('Sub-Ambient Initiation Temperature? Are you sure? Yoshida values will not be accurate.')
+                    layout.addWidget(self.error_message)
+                    self.error_flag = 202
 
             addMol = open(defaultDB, 'a')
             addMol.write(writeSmiles + ',' + writeName + ',' + HEG + ',' + writemp + ',' + mwStr + ',' + writeTE + ',' + writeProj + '\n')
