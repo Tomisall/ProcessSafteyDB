@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTableWidget, QTableWidgetItem, QTabWidget, QGraphicsPixmapItem  #, QTableView, QToolTip
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTableWidget, QTableWidgetItem, QTabWidget, QGraphicsPixmapItem,  QMessageBox #, QTableView, QToolTip
 from PyQt5.QtGui import QPixmap, QColor, QIcon, QRegExpValidator #QValidator #, QCursor
 from PyQt5.QtCore import Qt, QRegExp
 from rdkit.Chem import Draw, Descriptors, rdMolDescriptors, Mol, MolFromSmiles, MolFromSmarts
@@ -233,6 +233,11 @@ class MolDrawer(QWidget):
         clear_button.clicked.connect(self.resetToDefaultState)
         clear_button.setMaximumWidth(180)
         buttonContainLayout.addWidget(clear_button)
+        #molecule_layout.addLayout(buttonContainLayout)
+        msg_button = QPushButton('Error Message Test', self)
+        msg_button.clicked.connect(self.errorTestingTool)
+        msg_button.setMaximumWidth(180)
+        buttonContainLayout.addWidget(msg_button)
         molecule_layout.addLayout(buttonContainLayout)
 
         molecule_tab.setLayout(molecule_layout)
@@ -402,6 +407,18 @@ class MolDrawer(QWidget):
         self.setLayout(layout)
         self.setGeometry(100, 100, 600, 825)
         self.setWindowTitle('ThermalDex')
+
+    def showErrorMessage(self, errorCode):
+        self.msg = QMessageBox()
+        self.msg.setIcon(QMessageBox.Warning)
+        self.msg.setText("An error has occured")
+        self.msg.setInformativeText("The source of the problem seems to be with: " + errorCode + "\nTry again and contact developer if the problem persists.")
+        self.msg.setWindowTitle("ThermalDex Error")
+        self.msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        returnValue = self.msg.exec()
+
+    def errorTestingTool(self):
+        self.showErrorMessage("This is an Alternative test method for error handling")
 
     def clearTheCalcdValues(self):
         scene = QGraphicsScene()
