@@ -542,9 +542,8 @@ class MolDrawer(QWidget):
             mwStr = "{:.2f}".format(cmpdMW)
             self.mwLabel.setText('MW: ' + mwStr)
             fullMatch = 0
-            with open(highEnergyGroups, "r") as HEGroups: #"HighEnergyGroups.csv", "r") as HEGroups:
+            with open(highEnergyGroups, "r") as HEGroups: 
                for line in HEGroups:
-                    #print(line)
                     HeSubstructure = MolFromSmiles(line)
                     fullmatchList = Mol.GetSubstructMatches(mol, HeSubstructure)
                     if len(fullmatchList) > 0:
