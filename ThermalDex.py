@@ -1,12 +1,15 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTableWidget, QTableWidgetItem, QTabWidget, QGraphicsPixmapItem,  QMessageBox #, QTableView, QToolTip
 from PyQt5.QtGui import QPixmap, QColor, QIcon, QRegExpValidator #QValidator #, QCursor
-from PyQt5.QtCore import Qt, QRegExp
-from rdkit.Chem import Draw, Descriptors, rdMolDescriptors, Mol, MolFromSmiles, MolFromSmarts
+from PyQt5.QtCore import Qt, QRegExp, pyqtSignal
+from rdkit.Chem import Draw, Descriptors, rdMolDescriptors, Mol, MolFromSmiles, MolFromSmarts, rdmolfiles
 from io import BytesIO
 from numpy import log10
 import pandas as pd
 import re
+import pyperclip
+
+versionNumber = "0.4.6"
 
 try:
     import pyi_splash
@@ -45,6 +48,13 @@ class QVLine(QFrame):
         super(QVLine, self).__init__()
         self.setFrameShape(QFrame.VLine)
         self.setFrameShadow(QFrame.Sunken)
+
+class ClickableLineEdit(QLineEdit):
+    clicked = pyqtSignal() # signal when the text entry is left clicked
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton: self.clicked.emit()
+        else: super().mousePressEvent(event)
 
 class MolDrawer(QWidget):
     def __init__(self):
@@ -142,7 +152,9 @@ class MolDrawer(QWidget):
         molecule_layout.addWidget(QHLine())
 
         # Input field for SMILES string
-        self.smiles_input = QLineEdit(self)
+        #self.smiles_input = QLineEdit(self)
+        self.smiles_input = ClickableLineEdit(self)
+        self.smiles_input.clicked.connect(self.mrvToSMILES)
         molecule_layout.addWidget(QLabel('Enter SMILES String:'))
         molecule_layout.addWidget(self.smiles_input)
 
@@ -265,6 +277,7 @@ class MolDrawer(QWidget):
              self.df = pd.read_csv(defaultDB, encoding='mbcs')
              show_result(self)
 
+
         def show_result(self):
              #print(self)
              layout = self.layout()
@@ -357,7 +370,7 @@ class MolDrawer(QWidget):
         about_tab = QWidget()
         about_layout = QVBoxLayout()
         about_title = QLabel("<b>About ThermalDex</b>\n\n")
-        about_blank = QLabel("\nVersion: 0.4.1  (This is currently an alpha build)\n")
+        about_blank = QLabel("\nVersion: " + versionNumber + " (This is currently an alpha build)\n")
         about_text = QLabel("\n\nThis is a simple tool for assessing and recording the potential thermal hazards assoicated with a molecule. It uses the <b>'O.R.E.O.S.'</b> assement scale and other ideas that can be read about in <a href=\"https://pubs.acs.org/doi/10.1021/acs.oprd.0c00467\"><em>Org. Process Res. Dev.</em> 2021, 25, 2, 212–224</a> by Jeffrey B. Sperry et. al.")
         iconLabel = QLabel()
         iconImage = QPixmap(".\\_core\\ThermalDexIcon.jpg")
@@ -407,6 +420,18 @@ class MolDrawer(QWidget):
         self.setLayout(layout)
         self.setGeometry(100, 100, 600, 825)
         self.setWindowTitle('ThermalDex')
+
+    def mrvToSMILES(self):
+        try:
+            copyMolXML = pyperclip.paste()
+            copyMolReal = rdmolfiles.MolFromMrvBlock(copyMolXML)
+            #Draw.ShowMol(copyMolReal)
+            smilesFromMarvin = rdmolfiles.MolToSmiles(copyMolReal)
+            print(smilesFromMarvin)
+            pyperclip.copy(smilesFromMarvin)
+
+        except:
+            print("107")
 
     def showErrorMessage(self, errorCode):
         self.msg = QMessageBox()
