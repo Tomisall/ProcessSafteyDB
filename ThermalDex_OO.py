@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTableWidget, QTableWidgetItem, QTabWidget, QGraphicsPixmapItem,  QMessageBox #, QTableView, QToolTip
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTableWidget, QTableWidgetItem, QTabWidget, QGraphicsPixmapItem,  QMessageBox, QComboBox #, QTableView, QToolTip
 from PyQt5.QtGui import QPixmap, QColor, QIcon, QRegExpValidator #QValidator #, QCursor
 from PyQt5.QtCore import Qt, QRegExp, pyqtSignal
 from rdkit.Chem import Draw, Descriptors, rdMolDescriptors, Mol, MolFromSmiles, MolFromSmarts, rdmolfiles
@@ -11,7 +11,7 @@ import pandas as pd
 import re
 import pyperclip
 
-versionNumber = "0.5.2"
+versionNumber = "0.5.3"
 
 try:
     import pyi_splash
@@ -312,10 +312,12 @@ class thermalDexMolecule:
                 # Convert Qdsc to cal/g if needed
                 print('Qdsc given as ' + str(self.Q_dsc) + ' ' + self.Qunits)
                 self.Q_dsc = float(self.Q_dsc)
-                if self.Qunits == 'J g<sup>-1</sup>':
+                if self.Qunits == 'J g<sup>-1</sup>' or self.Qunits == 'J g⁻¹':
                     calQ = self.Q_dsc/4.184
-                elif self.Qunits == 'cal g<sup>-1</sup>':
-                    calQ == self.Q_dsc
+                elif self.Qunits == 'cal g<sup>-1</sup>' or self.Qunits == 'cal g⁻¹':
+                    calQ = self.Q_dsc
+
+                print(calQ)
              
                 # Impact Sensitvity (IS)
                 impactSens = log10(calQ) - ISConstant*(log10(abs(self.onsetT-25))) - 0.98
@@ -589,7 +591,10 @@ class MolDrawer(QWidget):
         InputRightLayout.addWidget(QLabel('Q<sub>DSC</sub>:'))
         QUnitsSubLayout = QHBoxLayout()
         QUnitsSubLayout.addWidget(self.Qdsc_input)
-        QUnitsSubLayout.addWidget(QLabel('cal g<sup>-1</sup> '))
+        #QUnitsSubLayout.addWidget(QLabel('cal g<sup>-1</sup> '))
+        self.QUnitsSelection = QComboBox(self)
+        self.QUnitsSelection.addItems(['J g⁻¹', 'cal g⁻¹'])
+        QUnitsSubLayout.addWidget(self.QUnitsSelection)
         InputRightLayout.addLayout(QUnitsSubLayout)
 
         # Input field for Onset string
@@ -896,6 +901,7 @@ class MolDrawer(QWidget):
         name = self.name_input.text()
         mp = self.mp_input.text()
         Qdsc = self.Qdsc_input.text()
+        QUnits = self.QUnitsSelection.currentText()
         TE = self.TE_input.text()
         Tinit = self.Tinit_input.text()
         proj = self.proj_input.text()
@@ -908,7 +914,7 @@ class MolDrawer(QWidget):
         writeProj = '"'+proj+'"'
 
         # Create an RDKit molecule from the SMILES string
-        addedMolecule = thermalDexMolecule(SMILES=smiles, name=name, mp=mp, Q_dsc=Qdsc, onsetT=TE, initT=Tinit, proj=proj)
+        addedMolecule = thermalDexMolecule(SMILES=smiles, name=name, mp=mp, Q_dsc=Qdsc, Qunits=QUnits, onsetT=TE, initT=Tinit, proj=proj)
         if smiles != '' and smiles is not None:
             addedMolecule.mol = MolFromSmiles(smiles)
 

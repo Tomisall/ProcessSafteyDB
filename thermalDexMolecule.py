@@ -55,8 +55,12 @@ class thermalDexMolecule:
     CAS_no: str = ''
  
     # Internal Processing Values
-    molPixmap: any = None
     mol: any = None
+    molPixmap: any = None
+    mwStr: str = None
+    obStr: str = None
+    isStr: str = None
+    epStr: str = None
     eleList: any = None
     Catoms: int = None
     Hatoms: int = None
@@ -85,6 +89,7 @@ class thermalDexMolecule:
     def mwFromMol(self):
         cmpdMW = Descriptors.MolWt(self.mol)
         self.MW = cmpdMW
+        self.mwStr = "{:.2f}".format(cmpdMW)
 
     def HEGFromMol(self):
         fullMatch = 0
@@ -205,10 +210,12 @@ class thermalDexMolecule:
             self.oreo += 2
         self.OB_val = oxygenBalance
         self.OB_des = obRisk
+        self.obStr = "{:.2f}".format(oxygenBalance)
 
     def oreoOnsetTadjustment(self):
         if self.onsetT != 'nan' and self.onsetT != '' and self.onsetT != None:
             print('Onset Temperature given as ' + str(self.onsetT))
+            self.onsetT = float(self.onsetT)
             if self.onsetT <= 125:
                 self.oreo += 8
             elif self.onsetT in range(126,200):
@@ -250,6 +257,16 @@ class thermalDexMolecule:
         print(hazardList)
         self.oreoSmallScale_des,self.oreoTensScale_des,self.oreoHundsScale_des,self.oreoLargeScale_des = hazardList
 
+
+    def Td24FromThermalProps(self):
+        # Estimation of Maximum Recommended Process Temperature To Avoid Hazardous Thermal Decomposition
+        if self.initT != 'nan' and self.initT != '' and self.initT != None:
+            print('Tinit given as ' + str(self.initT))
+            d24Temp = 0.7*self.initT - 46
+            print('T_D24 =' + str(d24Temp))
+
+            self.Td24 = d24Temp
+
     def yoshidaFromThermalProps(self):
         # Determin if Original Yoshida calculation is to be used or if Pfizer modification is to be used.
         if self.yoshidaMethod == 'Yoshida':
@@ -265,6 +282,7 @@ class thermalDexMolecule:
         if T_yoshida != 'nan' and T_yoshida != '' and T_yoshida != None and self.Q_dsc != 'nan' and self.Q_dsc != '' and self.Q_dsc != None:
                 # Convert Qdsc to cal/g if needed
                 print('Qdsc given as ' + str(self.Q_dsc) + ' ' + self.Qunits)
+                self.Q_dsc = float(self.Q_dsc)
                 if self.Qunits == 'J g<sup>-1</sup>':
                     calQ = self.Q_dsc/4.184
                 elif self.Qunits == 'cal g<sup>-1</sup>':
@@ -293,15 +311,9 @@ class thermalDexMolecule:
                 self.IS_des = impact
                 self.EP_val = exProp
                 self.EP_des = explos
+                self.isStr = "{:.2f}".format(impactSens)
+                self.epStr = "{:.2f}".format(exProp)
 
-    def Td24FromThermalProps(self):
-        # Estimation of Maximum Recommended Process Temperature To Avoid Hazardous Thermal Decomposition
-        if self.initT != 'nan' and self.initT != '' and self.initT != None:
-            print('Tinit given as ' + str(self.initT))
-            d24Temp = 0.7*self.initT - 46
-            print('T_D24 =' + str(d24Temp))
-
-            self.Td24 = d24Temp
 
     def IUPACNameFromSMILES(self):
         foundNames = get_compounds(self.SMILES, namespace='smiles')
@@ -329,6 +341,20 @@ class thermalDexMolecule:
     def genAllValues(self):
         self.genCoreValues()
         self.genAdditionalValues()
+
+    def genCoreValuesFromMol(self):
+        self.mwFromMol()
+        self.HEGFromMol()
+        self.EFGFromMol()
+        self.eleCompFromMol()
+        self.CHOFromEleComp()
+        self.RoSFromEleComp()
+        self.OBFromEleComp()
+        self.oreoOnsetTadjustment()
+        self.oreoSafeScaleCal()
+        self.yoshidaFromThermalProps()
+        self.Td24FromThermalProps()
+
 
 nicatinamide = thermalDexMolecule(SMILES="ClC(=O)C1=CC=NC=C1 |c:5,7,t:3|",onsetT=80.63,Q_dsc=670,initT=93.72,yoshidaMethod='Yoshida')
 nicatinamide.genAllValues()
