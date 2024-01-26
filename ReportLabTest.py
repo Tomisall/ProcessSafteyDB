@@ -6,7 +6,7 @@ def create_pdf(results, interpretation):
 
     # Create the PDF
     c = canvas.Canvas(filename, pagesize=letter)
-    
+
     # Add title
     c.setFont("Helvetica", 16)
     c.drawCentredString(300, 750, "Thermal Hazard Assessment Report")
@@ -14,7 +14,7 @@ def create_pdf(results, interpretation):
     # Add results section
     c.setFont("Helvetica", 12)
     c.drawString(50, 720, "Results:")
-    
+
     # Add the actual results from your assessment
     for i, (key, value) in enumerate(results.items()):
         c.drawString(70, 700 - i * 20, f"{key}: {value}")
@@ -28,6 +28,11 @@ def create_pdf(results, interpretation):
         " You can customize this based on your specific assessment."
     )
     c.drawParagraph(interpretation_text, 70, 580)
+
+    # Add footer with disclaimer
+    c.setFont("Helvetica", 8)
+    disclaimer_text = "This report may contain confidential information."
+    c.drawCentredString(300, 30, disclaimer_text)
 
     # Save the PDF
     c.save()
