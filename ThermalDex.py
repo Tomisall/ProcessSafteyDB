@@ -744,9 +744,9 @@ class MolDrawer(QWidget):
                    impact = ' <b>(Impact Sensitive)</b>'
                 elif impactSens < 0:
                    impact = ' <b>(Not Impact Sensitive)</b>'
-                if impactSens >= 0:
+                if exProp >= 0:
                    explos = ' <b>(Propagates)</b>'
-                elif impactSens < 0:
+                elif exProp < 0:
                    explos = ' <b>(Should Not Propagate)</b>'
                 isStr = "{:.2f}".format(impactSens)
                 self.ISLabel.setText('Yoshida Impact Sensitivity: ' + isStr + impact)
