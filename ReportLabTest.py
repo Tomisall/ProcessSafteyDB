@@ -15,7 +15,7 @@ alignment=0
 )
 
 
-def create_pdf(results, interpretation, image_path):
+def create_pdf(Name, results, interpretation, image_path):
     filename = "thermal_assessment_report.pdf"
 
     # Create the PDF
@@ -23,29 +23,34 @@ def create_pdf(results, interpretation, image_path):
 
     # Add title
     c.setFont("Helvetica", 16)
-    c.drawCentredString(300, 750, "Thermal Hazard Assessment Report")
+    c.drawCentredString(300, 775, "Thermal Hazard Assessment Report")
+    
+
+    # Name Molecule
+    c.setFont("Helvetica", 14)
+    c.drawString(50, 725, Name)
 
     # Add image at the top center
     if image_path:
-        c.drawInlineImage(image_path, 150, 580, width=300, height=100)
+        c.drawInlineImage(image_path, 150, 405, width=300, height=300)
 
     # Add results section
     c.setFont("Helvetica", 12)
-    c.drawString(50, 520, "Results:")
+    c.drawString(50, 370, "Results:")
 
     # Add the actual results from your assessment
     for i, (key, value) in enumerate(results.items()):
-        c.drawString(70, 500 - i * 20, f"{key}: {value}")
+        c.drawString(70, 350 - i * 20, f"{key}: {value}")
 
     # Add interpretation section
-    c.drawString(50, 400, "Interpretation:")
+    c.drawString(50, 200, "Interpretation:")
     c.setFont("Helvetica", 12)
     # Add your interpretation text
     interpretation_text = interpretation
     # interpPara = Paragraph(interpretation_text, my_Style)
     # interpPara.drawOn(c, 70, 480)
 
-    i = 380
+    i = 180
     for line in interpretation_text:
         c.drawString(70, i, line)
         i -= 20
@@ -60,8 +65,9 @@ def create_pdf(results, interpretation, image_path):
     print(f"PDF report generated: {filename}")
 
 # Example usage:
+Name = "Dave"
 results = {"Parameter1": "Value1", "Parameter2": "Value2", "Parameter3": "Value3"}
 interpretation = ["This is my assessment of the molecule", "On balance:", "Confrimed to be deadly"]
 image_path = "./_core/ThermalDexIcon.jpg"
 
-create_pdf(results, interpretation, image_path)
+create_pdf(Name, results, interpretation, image_path)
