@@ -3,7 +3,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 from reportlab.lib.styles import ParagraphStyle
-from reportlab.platypus import Paragraph
+from reportlab.platypus import Paragraph, Table #, TableStyles
 from thermDex.thermDexMolecule import thermalDexMolecule
 from dataclasses import asdict
 
@@ -50,7 +50,7 @@ def create_pdf(Name, results, interpretation, image_path):
 
     # Add image at the top center
     if image_path:
-        c.drawInlineImage(image_path, 185, 500, width=225, height=225) #262.5, 297.5
+        c.drawInlineImage(image_path, 147.5, 565, width=300, height=150) #for 297.5 centre A4 of 225 width img pos = 185, 500
 
     startOfText = 490
     # Add properties section
@@ -84,45 +84,79 @@ def create_pdf(Name, results, interpretation, image_path):
     # Add the actual results from your assessment
     # for i, (key, value) in enumerate(results.items()):
     #    c.drawString(70, 315 - i * 20, f"{key}: {value}")
-    c.drawString(70, startOfText-130, "High Energy Groups =  " + str(results["HEG"]) + " (" + ", ".join(results["HEG_list"]) + ")")
-    c.drawString(70, startOfText-150, "Explosive  Groups =  " + str(results["HEG"]) + " (" + ", ".join(results["HEG_list"]) + ")")
-
-    textobject = c.beginText()
-    textobject.setTextOrigin(70, startOfText-170)
-    textobject.textOut("Q")   
-    apply_scripting(textobject, "DSC", -4)
-    textobject.textOut(" = " + str(results["Q_dsc"]))
-    c.drawText(textobject)
-
-    textobject = c.beginText()
-    textobject.setTextOrigin(250, startOfText-170)
-    textobject.textOut("T")   
-    apply_scripting(textobject, "onset", -4)
-    textobject.textOut(" = " + str(results["onsetT"]))
-    c.drawText(textobject)
-
-    textobject = c.beginText()
-    textobject.setTextOrigin(430, startOfText-170)
-    textobject.textOut("T")   
-    apply_scripting(textobject, "init", -4)
-    textobject.textOut(" = " + str(results["initT"]))
-    c.drawText(textobject)
+    c.drawString(70, startOfText-130, "High Energy Groups =  " + str(results["HEG"]) + " "  + ", ".join(results["HEG_list"]))
+    c.drawString(70, startOfText-150, "Explosive  Groups =  " + str(results["EFG"]) + " " + ", ".join(results["HEG_list"]))
 
     textobject = c.beginText()
     textobject.setTextOrigin(70, startOfText-190)
+    textobject.textOut("Q")   
+    apply_scripting(textobject, "DSC", -4)
+    textobject.textOut(" = " + "{:.2f}".format(results["Q_dsc"]))
+    textobject.textOut(" " + str(results["Qunits"]))
+    c.drawText(textobject)
+
+    textobject = c.beginText()
+    textobject.setTextOrigin(250, startOfText-190)
+    textobject.textOut("T")   
+    apply_scripting(textobject, "onset", -4)
+    textobject.textOut(" = " + "{:.2f}".format(results["onsetT"]))
+    textobject.textOut(" °C")
+    c.drawText(textobject)
+
+    textobject = c.beginText()
+    textobject.setTextOrigin(430, startOfText-190)
+    textobject.textOut("T")   
+    apply_scripting(textobject, "init", -4)
+    textobject.textOut(" = " + "{:.2f}".format(results["initT"]))
+    textobject.textOut(" °C")
+    c.drawText(textobject)
+
+    textobject = c.beginText()
+    textobject.setTextOrigin(70, startOfText-170)
     textobject.textOut("Rule of Six")   
     #apply_scripting(textobject, "init", -4)
     textobject.textOut(" = " + str(results["RoS_val"]))
     c.drawText(textobject)
 
     textobject = c.beginText()
-    textobject.setTextOrigin(250, startOfText-190)
+    textobject.setTextOrigin(250, startOfText-170)
     textobject.textOut("Oxygen Balance")   
     #apply_scripting(textobject, "init", -4)
-    textobject.textOut(" = " + str(results["OB_val"]))
+    textobject.textOut(" = " + "{:.2f}".format(results["OB_val"]))
+    c.drawText(textobject)
+
+    textobject = c.beginText()
+    textobject.setTextOrigin(70, startOfText-210)
+    textobject.textOut("Impact Sensitivity")   
+    #apply_scripting(textobject, "init", -4)
+    textobject.textOut(" = " + "{:.2f}".format(results["IS_val"]))
+    c.drawText(textobject)
+
+    textobject = c.beginText()
+    textobject.setTextOrigin(250, startOfText-210)
+    textobject.textOut("Explosive Propagation")   
+    #apply_scripting(textobject, "init", -4)
+    textobject.textOut(" = " + "{:.2f}".format(results["EP_val"]))
+    c.drawText(textobject)
+
+    textobject = c.beginText()
+    textobject.setTextOrigin(430, startOfText-210)
+    textobject.textOut("T")   
+    apply_scripting(textobject, "D24", -4)
+    #d24Str = "{:.1f}".format(d24Temp)
+    textobject.textOut(" = " + "{:.1f}".format(results["Td24"]))
+    textobject.textOut(" °C")
     c.drawText(textobject)
 
 
+    oreoSmall = results["oreoSmallScale_des"]
+    oreoTens = results["oreoTensScale_des"]
+    oreosHund = results["oreoHundsScale_des"]
+    oreosLarge = results["oreoLargeScale_des"]
+    oreosData = [["<5 g", "5 to 100 g", "100 to 500 g", ">500 g"], [oreoSmall, oreoTens, oreosHund, oreosLarge]]
+    oreosTable = Table(oreosData)
+    oreosTable.wrapOn(c, 0, 0)
+    oreosTable.drawOn(c, 170, startOfText-270)
 
     # Add interpretation section
     c.drawString(50, 200, "Interpretation:")
@@ -147,8 +181,8 @@ def create_pdf(Name, results, interpretation, image_path):
     print(f"PDF report generated: {filename}")
 
 # Example usage:
-molecule = thermalDexMolecule(SMILES='CCCC1=NN(C2=C1N=C(NC2=O)C3=C(C=CC(=C3)S(=O)(=O)N4CCN(CC4)C)OCC)C',  name='Sildenafil', Q_dsc=770.26, onsetT=90.14, initT=74.62, proj='PDF_Test') 
-#molecule = thermalDexMolecule(SMILES='CC1=C(C=C(C=C1[N+](=O)[O-])[N+](=O)[O-])[N+](=O)[O-]', name='TNT', Q_dsc=770.26, onsetT=90.14, initT=74.62, proj='PDF_Test')
+molecule = thermalDexMolecule(SMILES='CCCC1=NN(C2=C1N=C(NC2=O)C3=C(C=CC(=C3)S(=O)(=O)N4CCN(CC4)C)OCC)C',  name='Sildenafil', Q_dsc=770.26, Qunits='J g⁻¹', onsetT=90.14, initT=74.62, proj='PDF_Test') 
+#molecule = thermalDexMolecule(SMILES='CC1=C(C=C(C=C1[N+](=O)[O-])[N+](=O)[O-])[N+](=O)[O-]', name='TNT', Q_dsc=770.26, Qunits='J g⁻¹', onsetT=90.14, initT=74.62, proj='PDF_Test')
 molecule.genAllValues()
 Name = molecule.name
 results = asdict(molecule) #{"Parameter1": "Value1", "Parameter2": "Value2", "Parameter3": "Value3"}

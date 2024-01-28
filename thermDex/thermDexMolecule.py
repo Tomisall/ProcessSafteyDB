@@ -72,11 +72,13 @@ class thermalDexMolecule:
 
     def molToQPixmap(self):
         # Generate a molecular drawing as a PNG image
-        img = Draw.MolToImage(self.mol)
+        opts = Draw.MolDrawOptions()
+        opts.bondLineWidth = 5.
+        img = Draw.MolToImage(self.mol, size=(1200, 600), options=opts)
 
         # Convert the image to a byte array
-        byte_array = BytesIO()
-        img.save(byte_array, format='PNG')
+        #byte_array = BytesIO()
+        #img.save(byte_array, format='PNG')
 
         # Convert the byte array to a QPixmap and display it
         # pixmap = QPixmap()
