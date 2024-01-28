@@ -50,71 +50,73 @@ def create_pdf(Name, results, interpretation, image_path):
 
     # Add image at the top center
     if image_path:
-        c.drawInlineImage(image_path, 150, 490, width=225, height=225)
+        c.drawInlineImage(image_path, 185, 500, width=225, height=225) #262.5, 297.5
 
+    startOfText = 490
     # Add properties section
     c.setFont(memoFont, 11)
-    c.drawString(50, 455, "Properties:")
+    c.drawString(50, startOfText, "Properties:")
 
     # Add the actual properties from your assessment
-    c.drawString(70, 435, "SMILES: " + results["SMILES"])
+    c.drawString(70, startOfText-20, "SMILES: " + results["SMILES"])
     try:
-        c.drawString(70, 415, "Name: " + results["name"])
+        c.drawString(70, startOfText-40, "Name: " + results["name"])
     except:
-        c.drawString(70, 415, "Name: ")
+        c.drawString(70, startOfText-40, "Name: ")
     try:
-        c.drawString(70, 395, "Formular: " + results["molForm"])
+        c.drawString(70, startOfText-60, "Formular: " + results["molForm"])
     except:
-        c.drawString(70, 395, "Formular: ")   
+        c.drawString(70, startOfText-60, "Formular: ")   
     try:
-        c.drawString(70, 375, "mp: " + str(results["mp"]) + " to " +  str(results["mpEnd"]))
-        textobject = c.beginText()
-        textobject.setTextOrigin(200, 375)
-        textobject.textOut('37')
-        apply_scripting(textobject, '%', -4)
-        c.drawText(textobject)
+        c.drawString(70, startOfText-80, "mp: " + str(results["mp"]) + " to " +  str(results["mpEnd"]))
+#        textobject = c.beginText()
+#        textobject.setTextOrigin(200, 375)
+#        textobject.textOut('37')
+#        apply_scripting(textobject, '%', -4)
+#        c.drawText(textobject)
     except:
-        c.drawString(70, 375, "mp: " + " " + " to " + " ")
+        c.drawString(70, startOfText-80, "mp: " + " " + " to " + " ")
 
     # Add results section
     c.setFont(memoFont, 11)
-    c.drawString(50, 335, "Results:")
+    c.drawString(50, startOfText-110, "Results:")
 
     # Add the actual results from your assessment
     # for i, (key, value) in enumerate(results.items()):
     #    c.drawString(70, 315 - i * 20, f"{key}: {value}")
-    c.drawString(70, 315, "High Energy Groups =  " + str(results["HEG"]) + " (" + ", ".join(results["HEG_list"]) + ")")
+    c.drawString(70, startOfText-130, "High Energy Groups =  " + str(results["HEG"]) + " (" + ", ".join(results["HEG_list"]) + ")")
+    c.drawString(70, startOfText-150, "Explosive  Groups =  " + str(results["HEG"]) + " (" + ", ".join(results["HEG_list"]) + ")")
 
     textobject = c.beginText()
-    textobject.setTextOrigin(70, 295)
+    textobject.setTextOrigin(70, startOfText-170)
     textobject.textOut("Q")   
     apply_scripting(textobject, "DSC", -4)
     textobject.textOut(" = " + str(results["Q_dsc"]))
     c.drawText(textobject)
 
     textobject = c.beginText()
-    textobject.setTextOrigin(250, 295)
+    textobject.setTextOrigin(250, startOfText-170)
     textobject.textOut("T")   
     apply_scripting(textobject, "onset", -4)
     textobject.textOut(" = " + str(results["onsetT"]))
     c.drawText(textobject)
 
     textobject = c.beginText()
-    textobject.setTextOrigin(430, 295)
+    textobject.setTextOrigin(430, startOfText-170)
     textobject.textOut("T")   
     apply_scripting(textobject, "init", -4)
     textobject.textOut(" = " + str(results["initT"]))
     c.drawText(textobject)
 
     textobject = c.beginText()
-    textobject.setTextOrigin(70, 275)
+    textobject.setTextOrigin(70, startOfText-190)
     textobject.textOut("Rule of Six")   
     #apply_scripting(textobject, "init", -4)
     textobject.textOut(" = " + str(results["RoS_val"]))
     c.drawText(textobject)
 
     textobject = c.beginText()
-    textobject.setTextOrigin(250, 275)
+    textobject.setTextOrigin(250, startOfText-190)
     textobject.textOut("Oxygen Balance")   
     #apply_scripting(textobject, "init", -4)
     textobject.textOut(" = " + str(results["OB_val"]))
@@ -145,11 +147,12 @@ def create_pdf(Name, results, interpretation, image_path):
     print(f"PDF report generated: {filename}")
 
 # Example usage:
-TNT = thermalDexMolecule(SMILES='CC1=C(C=C(C=C1[N+](=O)[O-])[N+](=O)[O-])[N+](=O)[O-]', name='TNT', Q_dsc=770.26, onsetT=90.14, initT=74.62, proj='PDF_Test')
-TNT.genAllValues()
-Name = TNT.name
-results = asdict(TNT) #{"Parameter1": "Value1", "Parameter2": "Value2", "Parameter3": "Value3"}
+molecule = thermalDexMolecule(SMILES='CCCC1=NN(C2=C1N=C(NC2=O)C3=C(C=CC(=C3)S(=O)(=O)N4CCN(CC4)C)OCC)C',  name='Sildenafil', Q_dsc=770.26, onsetT=90.14, initT=74.62, proj='PDF_Test') 
+#molecule = thermalDexMolecule(SMILES='CC1=C(C=C(C=C1[N+](=O)[O-])[N+](=O)[O-])[N+](=O)[O-]', name='TNT', Q_dsc=770.26, onsetT=90.14, initT=74.62, proj='PDF_Test')
+molecule.genAllValues()
+Name = molecule.name
+results = asdict(molecule) #{"Parameter1": "Value1", "Parameter2": "Value2", "Parameter3": "Value3"}
 interpretation = ["This is my assessment of the molecule", "On balance:", "Confrimed to be deadly"]
-image_path = TNT.molPixmap #"./_core/ThermalDexIcon.jpg"
+image_path = molecule.molPixmap #"./_core/ThermalDexIcon.jpg"
 
 create_pdf(Name, results, interpretation, image_path)
