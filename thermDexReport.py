@@ -71,18 +71,56 @@ def create_pdf(Name, results, interpretation, image_path):
         textobject = c.beginText()
         textobject.setTextOrigin(200, 375)
         textobject.textOut('37')
-        apply_scripting(textobject, '%', 4)
+        apply_scripting(textobject, '%', -4)
         c.drawText(textobject)
     except:
         c.drawString(70, 375, "mp: " + " " + " to " + " ")
 
     # Add results section
-    c.setFont(memoFont, 12)
+    c.setFont(memoFont, 11)
     c.drawString(50, 335, "Results:")
 
     # Add the actual results from your assessment
-    for i, (key, value) in enumerate(results.items()):
-        c.drawString(70, 315 - i * 20, f"{key}: {value}")
+    # for i, (key, value) in enumerate(results.items()):
+    #    c.drawString(70, 315 - i * 20, f"{key}: {value}")
+    c.drawString(70, 315, "High Energy Groups =  " + str(results["HEG"]) + " (" + ", ".join(results["HEG_list"]) + ")")
+
+    textobject = c.beginText()
+    textobject.setTextOrigin(70, 295)
+    textobject.textOut("Q")   
+    apply_scripting(textobject, "DSC", -4)
+    textobject.textOut(" = " + str(results["Q_dsc"]))
+    c.drawText(textobject)
+
+    textobject = c.beginText()
+    textobject.setTextOrigin(250, 295)
+    textobject.textOut("T")   
+    apply_scripting(textobject, "onset", -4)
+    textobject.textOut(" = " + str(results["onsetT"]))
+    c.drawText(textobject)
+
+    textobject = c.beginText()
+    textobject.setTextOrigin(430, 295)
+    textobject.textOut("T")   
+    apply_scripting(textobject, "init", -4)
+    textobject.textOut(" = " + str(results["initT"]))
+    c.drawText(textobject)
+
+    textobject = c.beginText()
+    textobject.setTextOrigin(70, 275)
+    textobject.textOut("Rule of Six")   
+    #apply_scripting(textobject, "init", -4)
+    textobject.textOut(" = " + str(results["RoS_val"]))
+    c.drawText(textobject)
+
+    textobject = c.beginText()
+    textobject.setTextOrigin(250, 275)
+    textobject.textOut("Oxygen Balance")   
+    #apply_scripting(textobject, "init", -4)
+    textobject.textOut(" = " + str(results["OB_val"]))
+    c.drawText(textobject)
+
+
 
     # Add interpretation section
     c.drawString(50, 200, "Interpretation:")
