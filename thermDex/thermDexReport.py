@@ -82,7 +82,7 @@ def create_pdf(Name, results, image_path):
     except:
         c.drawString(70, startOfText-70, "Formula: ")   
     try:
-        c.drawString(70, startOfText-90, "mp: " + str(results["mp"]) + " to " +  str(results["mpEnd"]))
+        c.drawString(70, startOfText-90, "mp: " + str(results["mp"]) + " to " +  str(results["mpEnd"] + " °C"))
 #        textobject = c.beginText()
 #        textobject.setTextOrigin(200, 375)
 #        textobject.textOut('37')
@@ -220,7 +220,7 @@ def create_pdf(Name, results, image_path):
     textobject = c.beginText()
     textobject.setTextOrigin(70, startOfText-345)
     #wraped_text = "\n".join(wrap(text, 80))
-    textobject.textLines("The Rule of Six¹ value imples" + str(results["RoS_des"]) + ". The Oxygen Balance¹ suggests " + str(results["OB_des"]) + ".\nThe " + str(results["yoshidaMethod"]) + " method was used to calculate Impact Sensitivity and Explosive Propagation values, these\n suggest " + str(results["IS_des"]) + " and " + str(results["EP_des"]) + ".")   
+    textobject.textLines("The Rule of Six¹ value imples" + str(results["RoS_des"]) + ". The Oxygen Balance¹ suggests " + str(results["OB_des"]) + ".\nThe " + str(results["yoshidaMethod"]) + " method² was used to calculate Impact Sensitivity and Explosive Propagation values, these\n suggest " + str(results["IS_des"]) + " and " + str(results["EP_des"]) + ".")   
     c.drawText(textobject)
 
     textobject = c.beginText()

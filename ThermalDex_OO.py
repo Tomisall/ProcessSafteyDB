@@ -12,6 +12,7 @@ from thermDex.thermDexReport import *
 import pandas as pd
 import re
 import pyperclip
+from pandasTests import *
 
 versionNumber = "0.6.4"
 
@@ -902,13 +903,16 @@ class MolDrawer(QWidget):
             layout.removeWidget(self.error_message)
 
     def createReport(self):
-        moleculeData = self.render_molecule()
-        img = moleculeData.molToIMG()
-        results = asdict(moleculeData)
-        create_pdf(results["name"], results, img) #results["molIMG"]) 
-        if self.error_flag is not None:
-            self.error_message.setText('')
-            layout.removeWidget(self.error_message)
+        try:
+           moleculeData = self.render_molecule()
+           img = moleculeData.molToIMG()
+           results = asdict(moleculeData)
+           create_pdf(results["name"], results, img) #results["molIMG"]) 
+           if self.error_flag is not None:
+               self.error_message.setText('')
+               layout.removeWidget(self.error_message)
+        except:
+            window.showErrorMessage("Generating Memo PDF from given values.")
 
     def getColorForValue(self, hazardClass):
         # Example color-coding logic
@@ -931,6 +935,7 @@ class MolDrawer(QWidget):
         smiles = self.smiles_input.text()
         name = self.name_input.text()
         mp = self.mp_input.text()
+        mpEnd = self.mpEnd_input.text()
         Qdsc = self.Qdsc_input.text()
         QUnits = self.QUnitsSelection.currentText()
         TE = self.TE_input.text()
@@ -945,7 +950,7 @@ class MolDrawer(QWidget):
         writeProj = '"'+proj+'"'
 
         # Create an RDKit molecule from the SMILES string
-        addedMolecule = thermalDexMolecule(SMILES=smiles, name=name, mp=mp, Q_dsc=Qdsc, Qunits=QUnits, onsetT=TE, initT=Tinit, proj=proj)
+        addedMolecule = thermalDexMolecule(SMILES=smiles, name=name, mp=mp, mpEnd=mpEnd, Q_dsc=Qdsc, Qunits=QUnits, onsetT=TE, initT=Tinit, proj=proj)
         if smiles != '' and smiles is not None:
             addedMolecule.mol = MolFromSmiles(smiles)
 
@@ -1000,8 +1005,11 @@ class MolDrawer(QWidget):
                 layout.addWidget(self.error_message)
                 self.error_flag = 202
 
-            addMol = open(defaultDB, 'a')
+            #addMol = open(defaultDB, 'a')
             #addMol.write(writeSmiles + ',' + writeName + ',' + HEG + ',' + writemp + ',' + mwStr + ',' + writeTE + ',' + writeProj + '\n')
+            addedMolecule.genAdditionalValues()
+            altDB = './_core/altDB.csv'
+            writeToDatabase(addedMolecule, altDB) #defaultDB)
             print('\n')
             print(addedMolecule)
             print('\n')
