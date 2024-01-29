@@ -17,6 +17,9 @@ from textwrap import wrap
 pdfmetrics.registerFont(TTFont('Arial', '.\\_core\\Arial.ttf'))
 memoFont = "Arial"
 
+pdfmetrics.registerFont(TTFont('Consolas', '.\\_core\\consola.ttf'))
+unicodeFont = "Consolas"
+
 my_Style=ParagraphStyle('My Para style',
 fontName='Times-Roman',
 backColor='#F1F1F1',
@@ -105,7 +108,9 @@ def create_pdf(Name, results, image_path):
     
     try:
         textobject.textOut(" = " + "{:.2f}".format(results["Q_dsc"]))
+        textobject.setFont(unicodeFont, 11)
         textobject.textOut(" " + str(results["Qunits"]))
+        textobject.setFont(memoFont, 11)
         c.drawText(textobject)
     except:
         c.drawText(textobject)
