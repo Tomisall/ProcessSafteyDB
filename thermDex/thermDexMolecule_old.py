@@ -1,36 +1,5 @@
-import sys
-from rdkit.Chem import Draw, Descriptors, rdMolDescriptors, Mol, MolFromSmiles, MolFromSmarts, rdmolfiles
-from io import BytesIO
-from numpy import log10
-from pubchempy import get_compounds
-from dataclasses import dataclass, field
-from thermDex.thermDexQt import *
-import pandas as pd
-import re
 
-#window = MolDrawer()
 
-def importConfig():
-    conf = open('.\\_core\\ThermalDex.config', 'r')
-    confCounter = 0
-    for line in conf:
-        #print(confCounter)
-        if confCounter == 4:
-           defaultDB = line.strip("\n")
-           confCounter += 1
-        elif confCounter == 8:
-           highEnergyGroups = line.strip("\n")
-           confCounter += 1
-        elif confCounter == 12:
-           expEnergyGroups = line.strip("\n")
-           confCounter += 1
-        else:
-           confCounter += 1
-
-    #print(defaultDB)
-    return defaultDB, highEnergyGroups, expEnergyGroups
-
-defaultDB, highEnergyGroups, expEnergyGroups = importConfig()
 
 @dataclass
 class thermalDexMolecule:
@@ -98,8 +67,8 @@ class thermalDexMolecule:
     def molToQPixmap(self):
         # Generate a molecular drawing as a PNG image
         opts = Draw.MolDrawOptions()
-        opts.bondLineWidth = 2.
-        img = Draw.MolToImage(self.mol, size=(550, 275), options=opts)
+        opts.bondLineWidth = 5.
+        img = Draw.MolToImage(self.mol, size=(1200, 600), options=opts)
 
         # Convert the image to a byte array
         byte_array = BytesIO()
@@ -108,8 +77,8 @@ class thermalDexMolecule:
         # Convert the byte array to a QPixmap and display it
         pixmap = QPixmap()
         pixmap.loadFromData(byte_array.getvalue())
-        self.molPixmap = pixmap
-        return pixmap
+        self.molPixmap = img
+        return img
 
     def molToIMG(self):
         # Generate a molecular drawing as a PNG image
@@ -385,60 +354,4 @@ class thermalDexMolecule:
         self.genCoreValues()
         self.molToQPixmap()
         self.genAdditionalValues()
-
-    def genCoreValuesFromMol(self):
-        try:
-            self.mwFromMol()
-        except:
-            window.showErrorMessage("Calculating MW from RDChem Mol.")
-
-        try:
-           self.HEGFromMol()
-        except:
-            window.showErrorMessage("Determining High Energy Groups from RDChem Mol.")
-
-        try:
-           self.EFGFromMol()
-        except:
-            window.showErrorMessage("Determining Explosive Groups from RDChem Mol.")
-
-        try:
-           self.eleCompFromMol()
-        except:
-            window.showErrorMessage("Determining Elemental Compostion from RDChem Mol.")
-        
-        try:
-           self.CHOFromEleComp()
-        except:
-            window.showErrorMessage("Determining CHO from Elemental Compostion.")
-
-        try:        
-           self.RoSFromEleComp()
-        except:
-            window.showErrorMessage("Calculating Rule of Six from Elemental Compostion.")
-
-        try:
-           self.OBFromEleComp()
-        except:
-            window.showErrorMessage("Calculating Oxygen Balance from Elemental Compostion.")
-
-        try:
-           self.oreoOnsetTadjustment()
-        except:
-            window.showErrorMessage("Adjusting O.R.E.O.S. Calculation for Onset Temperature")
-
-        try:
-           self.oreoSafeScaleCal()
-        except:
-            window.showErrorMessage("Determining O.R.E.O.S. Hazard by Scale.")
-
-        try:
-           self.Td24FromThermalProps()
-        except:
-            window.showErrorMessage("Calculating T<sub>D24</sub> from Thermal Properties.")
-
-        try:
-           self.yoshidaFromThermalProps()
-        except:
-            window.showErrorMessage("Calculating Yoshida values from Thermal Properties.")
 

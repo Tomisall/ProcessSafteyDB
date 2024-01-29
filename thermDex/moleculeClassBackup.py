@@ -1,37 +1,3 @@
-import sys
-from rdkit.Chem import Draw, Descriptors, rdMolDescriptors, Mol, MolFromSmiles, MolFromSmarts, rdmolfiles
-from io import BytesIO
-from numpy import log10
-from pubchempy import get_compounds
-from dataclasses import dataclass, field
-from thermDex.thermDexQt import *
-import pandas as pd
-import re
-
-#window = MolDrawer()
-
-def importConfig():
-    conf = open('.\\_core\\ThermalDex.config', 'r')
-    confCounter = 0
-    for line in conf:
-        #print(confCounter)
-        if confCounter == 4:
-           defaultDB = line.strip("\n")
-           confCounter += 1
-        elif confCounter == 8:
-           highEnergyGroups = line.strip("\n")
-           confCounter += 1
-        elif confCounter == 12:
-           expEnergyGroups = line.strip("\n")
-           confCounter += 1
-        else:
-           confCounter += 1
-
-    #print(defaultDB)
-    return defaultDB, highEnergyGroups, expEnergyGroups
-
-defaultDB, highEnergyGroups, expEnergyGroups = importConfig()
-
 @dataclass
 class thermalDexMolecule:
     # Class for keeping track of Molecules in ThermalDex
@@ -79,7 +45,6 @@ class thermalDexMolecule:
     # Internal Processing Values
     mol: any = None
     molPixmap: any = None
-    molIMG: any = None
     mwStr: str = None
     obStr: str = None
     isStr: str = None
@@ -97,9 +62,7 @@ class thermalDexMolecule:
 
     def molToQPixmap(self):
         # Generate a molecular drawing as a PNG image
-        opts = Draw.MolDrawOptions()
-        opts.bondLineWidth = 2.
-        img = Draw.MolToImage(self.mol, size=(550, 275), options=opts)
+        img = Draw.MolToImage(self.mol)
 
         # Convert the image to a byte array
         byte_array = BytesIO()
@@ -110,22 +73,6 @@ class thermalDexMolecule:
         pixmap.loadFromData(byte_array.getvalue())
         self.molPixmap = pixmap
         return pixmap
-
-    def molToIMG(self):
-        # Generate a molecular drawing as a PNG image
-        opts = Draw.MolDrawOptions()
-        opts.bondLineWidth = 5.
-        img = Draw.MolToImage(self.mol, size=(1200, 600), options=opts)
-
-        # Convert the image to a byte array
-        #byte_array = BytesIO()
-        #img.save(byte_array, format='PNG')
-
-        # Convert the byte array to a QPixmap and display it
-        # pixmap = QPixmap()
-        # pixmap.loadFromData(byte_array.getvalue())
-        self.molIMG = img
-        return img
 
     def mwFromMol(self):
         cmpdMW = Descriptors.MolWt(self.mol)
@@ -383,7 +330,6 @@ class thermalDexMolecule:
 
     def genAllValues(self):
         self.genCoreValues()
-        self.molToQPixmap()
         self.genAdditionalValues()
 
     def genCoreValuesFromMol(self):

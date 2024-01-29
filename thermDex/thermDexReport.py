@@ -1,3 +1,6 @@
+import sys
+import subprocess
+from pathlib import Path
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -33,11 +36,12 @@ def apply_scripting(textobject, text, rise):
     textobject.setRise(0)
 
 
-def create_pdf(Name, results, interpretation, image_path):
-    filename = "thermal_assessment_report.pdf"
+def create_pdf(Name, results, image_path):
+    filename = "./AssessmentMemos/thermal_assessment_memo.pdf"
 
     # Create the PDF
     c = canvas.Canvas(filename, pagesize=A4)
+    c.setAuthor("ThermalDex - A thermal hazard assessment software")
 
     fontsAva = c.getAvailableFonts()
     print(fontsAva)
@@ -60,24 +64,29 @@ def create_pdf(Name, results, interpretation, image_path):
     c.drawString(50, startOfText, "Properties:")
 
     # Add the actual properties from your assessment
-    c.drawString(70, startOfText-20, "SMILES: " + results["SMILES"])
+    wraped_SMILES = "\n".join(wrap(results["SMILES"], 65))
+    textobject = c.beginText()
+    textobject.setTextOrigin(70, startOfText-20)
+    textobject.textLines("SMILES: " + wraped_SMILES)   
+    c.drawText(textobject)
+    #c.writeLines(70, startOfText-20, "SMILES: " + wraped_SMILES)
     try:
-        c.drawString(70, startOfText-40, "Name: " + results["name"])
+        c.drawString(70, startOfText-50, "Name: " + results["name"])
     except:
-        c.drawString(70, startOfText-40, "Name: ")
+        c.drawString(70, startOfText-50, "Name: ")
     try:
-        c.drawString(70, startOfText-60, "Formula: " + results["eleComp"])
+        c.drawString(70, startOfText-70, "Formula: " + results["eleComp"])
     except:
-        c.drawString(70, startOfText-60, "Formula: ")   
+        c.drawString(70, startOfText-70, "Formula: ")   
     try:
-        c.drawString(70, startOfText-80, "mp: " + str(results["mp"]) + " to " +  str(results["mpEnd"]))
+        c.drawString(70, startOfText-90, "mp: " + str(results["mp"]) + " to " +  str(results["mpEnd"]))
 #        textobject = c.beginText()
 #        textobject.setTextOrigin(200, 375)
 #        textobject.textOut('37')
 #        apply_scripting(textobject, '%', -4)
 #        c.drawText(textobject)
     except:
-        c.drawString(70, startOfText-80, "mp: " + " " + " to " + " ")
+        c.drawString(70, startOfText-90, "mp: " + " " + " to " + " ")
 
     # Add results section
     c.setFont(memoFont, 11)
@@ -87,31 +96,43 @@ def create_pdf(Name, results, interpretation, image_path):
     # for i, (key, value) in enumerate(results.items()):
     #    c.drawString(70, 315 - i * 20, f"{key}: {value}")
     c.drawString(70, startOfText-140, "High Energy Groups =  " + str(results["HEG"]) + " "  + ", ".join(results["HEG_list"]))
-    c.drawString(70, startOfText-160, "Explosive  Groups =  " + str(results["EFG"]) + " " + ", ".join(results["HEG_list"]))
+    c.drawString(70, startOfText-160, "Explosive  Groups =  " + str(results["EFG"]) + " " + ", ".join(results["EFG_list"]))
 
     textobject = c.beginText()
     textobject.setTextOrigin(70, startOfText-200)
     textobject.textOut("Q")   
     apply_scripting(textobject, "DSC", -4)
-    textobject.textOut(" = " + "{:.2f}".format(results["Q_dsc"]))
-    textobject.textOut(" " + str(results["Qunits"]))
-    c.drawText(textobject)
+    
+    try:
+        textobject.textOut(" = " + "{:.2f}".format(results["Q_dsc"]))
+        textobject.textOut(" " + str(results["Qunits"]))
+        c.drawText(textobject)
+    except:
+        c.drawText(textobject)
 
     textobject = c.beginText()
     textobject.setTextOrigin(230, startOfText-200)
     textobject.textOut("T")   
     apply_scripting(textobject, "onset", -4)
-    textobject.textOut(" = " + "{:.2f}".format(results["onsetT"]))
-    textobject.textOut(" °C")
-    c.drawText(textobject)
+
+    try:
+        textobject.textOut(" = " + "{:.2f}".format(results["onsetT"]))
+        textobject.textOut(" °C")
+        c.drawText(textobject)
+    except:
+        c.drawText(textobject)
 
     textobject = c.beginText()
     textobject.setTextOrigin(430, startOfText-200)
     textobject.textOut("T")   
     apply_scripting(textobject, "init", -4)
-    textobject.textOut(" = " + "{:.2f}".format(results["initT"]))
-    textobject.textOut(" °C")
-    c.drawText(textobject)
+  
+    try:
+        textobject.textOut(" = " + "{:.2f}".format(results["initT"]))
+        textobject.textOut(" °C")
+        c.drawText(textobject)
+    except:
+        c.drawText(textobject)
 
     textobject = c.beginText()
     textobject.setTextOrigin(70, startOfText-180)
@@ -127,28 +148,41 @@ def create_pdf(Name, results, interpretation, image_path):
     textobject.textOut(" = " + "{:.2f}".format(results["OB_val"]))
     c.drawText(textobject)
 
+
     textobject = c.beginText()
     textobject.setTextOrigin(70, startOfText-220)
     textobject.textOut("Impact Sensitivity")   
-    #apply_scripting(textobject, "init", -4)
-    textobject.textOut(" = " + "{:.2f}".format(results["IS_val"]))
-    c.drawText(textobject)
+
+    try:
+        #apply_scripting(textobject, "init", -4)
+        textobject.textOut(" = " + "{:.2f}".format(results["IS_val"]))
+        c.drawText(textobject)
+    except:
+        c.drawText(textobject)
 
     textobject = c.beginText()
     textobject.setTextOrigin(230, startOfText-220)
     textobject.textOut("Explosive Propagation")   
-    #apply_scripting(textobject, "init", -4)
-    textobject.textOut(" = " + "{:.2f}".format(results["EP_val"]))
-    c.drawText(textobject)
+    
+    try:
+        #apply_scripting(textobject, "init", -4)
+        textobject.textOut(" = " + "{:.2f}".format(results["EP_val"]))
+        c.drawText(textobject)
+    except:
+        c.drawText(textobject)
 
     textobject = c.beginText()
     textobject.setTextOrigin(430, startOfText-220)
     textobject.textOut("T")   
     apply_scripting(textobject, "D24", -4)
-    #d24Str = "{:.1f}".format(d24Temp)
-    textobject.textOut(" = " + "{:.1f}".format(results["Td24"]))
-    textobject.textOut(" °C")
-    c.drawText(textobject)
+    
+    try:
+        #d24Str = "{:.1f}".format(d24Temp)
+        textobject.textOut(" = " + "{:.1f}".format(results["Td24"]))
+        textobject.textOut(" °C")
+        c.drawText(textobject)
+    except:
+        c.drawText(textobject)
 
     oreoSmall = results["oreoSmallScale_des"]
     oreoTens = results["oreoTensScale_des"]
@@ -169,7 +203,7 @@ def create_pdf(Name, results, interpretation, image_path):
     c.drawString(50, startOfText-325, "Interpretation:")
     c.setFont(memoFont, 11)
     # Add your interpretation text
-    interpretation_text = interpretation
+    #interpretation_text = interpretation
     # interpPara = Paragraph(interpretation_text, my_Style)
     # interpPara.drawOn(c, 70, 480)
 
@@ -181,7 +215,7 @@ def create_pdf(Name, results, interpretation, image_path):
     textobject = c.beginText()
     textobject.setTextOrigin(70, startOfText-345)
     #wraped_text = "\n".join(wrap(text, 80))
-    textobject.textLines("The Rule of Six¹ value imples" + results["RoS_des"] + ". The Oxygen Balance¹ suggests " + results["OB_des"] + ".\nThe " + results["yoshidaMethod"] + " method was used to calculate Impact Sensitivity and Explosive Propagation values, these\n suggest " + results["IS_des"] + " and " + results["EP_des"] + ".")   
+    textobject.textLines("The Rule of Six¹ value imples" + str(results["RoS_des"]) + ". The Oxygen Balance¹ suggests " + str(results["OB_des"]) + ".\nThe " + str(results["yoshidaMethod"]) + " method was used to calculate Impact Sensitivity and Explosive Propagation values, these\n suggest " + str(results["IS_des"]) + " and " + str(results["EP_des"]) + ".")   
     c.drawText(textobject)
 
     textobject = c.beginText()
@@ -204,14 +238,19 @@ def create_pdf(Name, results, interpretation, image_path):
     # Save the PDF
     c.save()
     print(f"PDF report generated: {filename}")
+    # `cwd`: current directory is straightforward
+    #cwd = Path.cwd()
+    cwd = "./"
+    filepath =  cwd + filename #(cwd / filename).resolve()
+    print(filepath)
+    subprocess.run(['start', filepath], check=True, shell=True)
 
 # Example usage:
-molecule = thermalDexMolecule(SMILES='CCCC1=NN(C2=C1N=C(NC2=O)C3=C(C=CC(=C3)S(=O)(=O)N4CCN(CC4)C)OCC)C',  name='Sildenafil very very very very very very long name', Q_dsc=770.26, Qunits='J g⁻¹', onsetT=90.14, initT=74.62, proj='PDF_Test') 
-#molecule = thermalDexMolecule(SMILES='CC1=C(C=C(C=C1[N+](=O)[O-])[N+](=O)[O-])[N+](=O)[O-]', name='TNT', Q_dsc=770.26, Qunits='J g⁻¹', onsetT=90.14, initT=74.62, proj='PDF_Test')
-molecule.genAllValues()
-Name = molecule.name
-results = asdict(molecule) #{"Parameter1": "Value1", "Parameter2": "Value2", "Parameter3": "Value3"}
-interpretation = ["This is my assessment of the molecule", "On balance:", "Confrimed to be deadly"]
-image_path = molecule.molIMG #"./_core/ThermalDexIcon.jpg"
+#molecule = thermalDexMolecule(SMILES='CCCC1=NN(C2=C1N=C(NC2=O)C3=C(C=CC(=C3)S(=O)(=O)N4CCN(CC4)C)OCC)C',  name='Sildenafil very very very very very very #long name', Q_dsc=770.26, Qunits='J g⁻¹', onsetT=90.14, initT=74.62, proj='PDF_Test') 
+#molecule = thermalDexMolecule(SMILES='CC1=C(C=C(C=C1[N+](=O)[O-])[N+](=O)[O-])[N+](=O)[O-]', name='TNT', Q_dsc=770.26, Qunits='J g⁻¹', onsetT=90.14, #initT=74.62, proj='PDF_Test')
+#molecule.genAllValues()
+#Name = molecule.name
+#results = asdict(molecule) 
+#image_path = molecule.molIMG #"./_core/ThermalDexIcon.jpg"
 
-create_pdf(Name, results, interpretation, image_path)
+#create_pdf(Name, results, image_path)
