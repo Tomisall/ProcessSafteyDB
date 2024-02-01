@@ -4,7 +4,7 @@ from PyQt5.QtGui import QPixmap, QColor, QIcon, QRegExpValidator #QValidator #, 
 from PyQt5.QtCore import Qt, QRegExp, pyqtSignal
 from rdkit.Chem import Draw, Descriptors, rdMolDescriptors, Mol, MolFromSmiles, MolFromSmarts, rdmolfiles
 from io import BytesIO
-from numpy import log10
+from numpy import log10, nan
 from pubchempy import get_compounds
 from dataclasses import dataclass, field, asdict
 #from thermDex.thermDexMolecule import * #thermalDexMolecule
@@ -863,6 +863,16 @@ class MolDrawer(QWidget):
         self.msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
         returnValue = self.msg.exec()
 
+    def interactiveErrorMessage(self, errorInfo):
+        self.interactMsg = QMessageBox()
+        self.interactMsg.setIcon(QMessageBox.Information)
+        self.interactMsg.setText("Action Needed")
+        self.interactMsg.setInformativeText(errorInfo)
+        self.interactMsg.setWindowTitle("ThermalDex - Info Box")
+        self.interactMsg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        returnValue = self.interactMsg.exec()
+        return returnValue
+
     def errorTestingTool(self):
         self.showErrorMessage("This is an Alternative test method for error handling")
 
@@ -914,8 +924,33 @@ class MolDrawer(QWidget):
         except:
             window.showErrorMessage("Generating Memo PDF from given values.")
 
+    def writeToDatabase(self, molecule, Database):
+        selectedMolData = cleanMolDataFrame(molecule)
+        storedData = pd.read_csv(Database, index_col=0)
+        print('\n\n\n')
+        if selectedMolData['SMILES'][0] in storedData.index:
+            print('found')
+            userInteract = self.interactiveErrorMessage('Molecule Already in Database. Would you like to overwrite it?')
+            if userInteract == QMessageBox.Yes:
+                storedData.update(selectedMolData)
+                outputData = storedData
+
+            elif userInteract == QMessageBox.No:
+                outputData = storedData
+
+            else:
+                outputData = storedData
+
+        else:
+            outputData = pd.concat([storedData, selectedMolData])
+
+        outputData['SMILES'] = outputData.index
+        outputData = outputData[ ['SMILES'] + [ col for col in outputData.columns if col != 'SMILES' ] ]
+        print(outputData)
+        outputData.to_csv(Database, index=False)
+
     def getColorForValue(self, hazardClass):
-        # Example color-coding logic
+        # Color-coding logic
         if hazardClass == 'High Hazard':
             return QColor(255, 0, 0)  # Red
         elif hazardClass == 'Medium Hazard':
@@ -1009,7 +1044,8 @@ class MolDrawer(QWidget):
             #addMol.write(writeSmiles + ',' + writeName + ',' + HEG + ',' + writemp + ',' + mwStr + ',' + writeTE + ',' + writeProj + '\n')
             addedMolecule.genAdditionalValues()
             altDB = './_core/altDB.csv'
-            writeToDatabase(addedMolecule, altDB) #defaultDB)
+            #createDatabase(addedMolecule)
+            self.writeToDatabase(addedMolecule, altDB) #defaultDB)
             print('\n')
             print(addedMolecule)
             print('\n')

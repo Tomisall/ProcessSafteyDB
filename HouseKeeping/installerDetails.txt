@@ -1,0 +1,1 @@
+python -m PyInstaller --onedir -i '.\_core\ThermalDexIcon.ico' --splash='ThermalDexSplash.jpg' --hide-console=hide-early .\ThermalDex.py
