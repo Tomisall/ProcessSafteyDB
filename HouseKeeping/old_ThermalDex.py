@@ -1,27 +1,21 @@
-#import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTableWidget, QTableWidgetItem, QTabWidget, QGraphicsPixmapItem,  QMessageBox, QComboBox #, QTableView, QToolTip
+import sys
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTableWidget, QTableWidgetItem, QTabWidget, QGraphicsPixmapItem,  QMessageBox #, QTableView, QToolTip
 from PyQt5.QtGui import QPixmap, QColor, QIcon, QRegExpValidator #QValidator #, QCursor
 from PyQt5.QtCore import Qt, QRegExp, pyqtSignal
-#from rdkit.Chem import Draw, Descriptors, rdMolDescriptors, Mol, MolFromSmiles, MolFromSmarts, rdmolfiles
-#from io import BytesIO
-#from numpy import log10
-#from pubchempy import get_compounds
-#from dataclasses import dataclass, field, asdict
-from thermDex.thermDexMolecule import * #thermalDexMolecule
-from thermDex.thermDexReport import *
-#import pandas as pd
-#import re
+from rdkit.Chem import Draw, Descriptors, rdMolDescriptors, Mol, MolFromSmiles, MolFromSmarts, rdmolfiles
+from io import BytesIO
+from numpy import log10
+import pandas as pd
+import re
 import pyperclip
-from pandasTests import *
 
-versionNumber = "0.7.5"
+versionNumber = "0.4.6"
 
 try:
     import pyi_splash
     pyi_splash.close()
 except:
     pass
-
 
 def importConfig():
     conf = open('.\\_core\\ThermalDex.config', 'r')
@@ -42,8 +36,6 @@ def importConfig():
 
     #print(defaultDB)
     return defaultDB, highEnergyGroups, expEnergyGroups
-
-#defaultDB, highEnergyGroups, expEnergyGroups = importConfig()
 
 class QHLine(QFrame):
     def __init__(self):
@@ -203,10 +195,7 @@ class MolDrawer(QWidget):
         InputRightLayout.addWidget(QLabel('Q<sub>DSC</sub>:'))
         QUnitsSubLayout = QHBoxLayout()
         QUnitsSubLayout.addWidget(self.Qdsc_input)
-        #QUnitsSubLayout.addWidget(QLabel('cal g<sup>-1</sup> '))
-        self.QUnitsSelection = QComboBox(self)
-        self.QUnitsSelection.addItems(['J g⁻¹', 'cal g⁻¹'])
-        QUnitsSubLayout.addWidget(self.QUnitsSelection)
+        QUnitsSubLayout.addWidget(QLabel('cal g<sup>-1</sup> '))
         InputRightLayout.addLayout(QUnitsSubLayout)
 
         # Input field for Onset string
@@ -257,8 +246,8 @@ class MolDrawer(QWidget):
         clear_button.setMaximumWidth(180)
         buttonContainLayout.addWidget(clear_button)
         #molecule_layout.addLayout(buttonContainLayout)
-        msg_button = QPushButton('Save to PDF', self)
-        msg_button.clicked.connect(self.createReport)
+        msg_button = QPushButton('Error Message Test', self)
+        msg_button.clicked.connect(self.errorTestingTool)
         msg_button.setMaximumWidth(180)
         buttonContainLayout.addWidget(msg_button)
         molecule_layout.addLayout(buttonContainLayout)
@@ -436,12 +425,13 @@ class MolDrawer(QWidget):
         try:
             copyMolXML = pyperclip.paste()
             copyMolReal = rdmolfiles.MolFromMrvBlock(copyMolXML)
+            #Draw.ShowMol(copyMolReal)
             smilesFromMarvin = rdmolfiles.MolToSmiles(copyMolReal)
             print(smilesFromMarvin)
             pyperclip.copy(smilesFromMarvin)
 
         except:
-            print("No mrv XML found.")
+            print("107")
 
     def showErrorMessage(self, errorCode):
         self.msg = QMessageBox()
@@ -451,16 +441,6 @@ class MolDrawer(QWidget):
         self.msg.setWindowTitle("ThermalDex Error")
         self.msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
         returnValue = self.msg.exec()
-
-    def interactiveErrorMessage(self, errorInfo):
-        self.interactMsg = QMessageBox()
-        self.interactMsg.setIcon(QMessageBox.Information)
-        self.interactMsg.setText("Action Needed")
-        self.interactMsg.setInformativeText(errorInfo)
-        self.interactMsg.setWindowTitle("ThermalDex - Info Box")
-        self.interactMsg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        returnValue = self.interactMsg.exec()
-        return returnValue
 
     def errorTestingTool(self):
         self.showErrorMessage("This is an Alternative test method for error handling")
@@ -501,101 +481,8 @@ class MolDrawer(QWidget):
             self.error_message.setText('')
             layout.removeWidget(self.error_message)
 
-    def genCoreValuesFromMol(self, molecule):
-        try:
-            molecule.mwFromMol()
-        except:
-            window.showErrorMessage("Calculating MW from RDChem Mol.")
-
-        try:
-            molecule.HEGFromMol(highEnergyGroups)
-        except:
-            window.showErrorMessage("Determining High Energy Groups from RDChem Mol.")
-
-        try:
-           molecule.EFGFromMol(expEnergyGroups)
-        except:
-            window.showErrorMessage("Determining Explosive Groups from RDChem Mol.")
-
-        try:
-           molecule.eleCompFromMol()
-        except:
-            window.showErrorMessage("Determining Elemental Compostion from RDChem Mol.")
-        
-        try:
-           molecule.CHOFromEleComp()
-        except:
-            window.showErrorMessage("Determining CHO from Elemental Compostion.")
-
-        try:        
-           molecule.RoSFromEleComp()
-        except:
-            window.showErrorMessage("Calculating Rule of Six from Elemental Compostion.")
-
-        try:
-           molecule.OBFromEleComp()
-        except:
-            window.showErrorMessage("Calculating Oxygen Balance from Elemental Compostion.")
-
-        try:
-           molecule.oreoOnsetTadjustment()
-        except:
-            window.showErrorMessage("Adjusting O.R.E.O.S. Calculation for Onset Temperature")
-
-        try:
-           molecule.oreoSafeScaleCal()
-        except:
-            window.showErrorMessage("Determining O.R.E.O.S. Hazard by Scale.")
-
-        try:
-           molecule.Td24FromThermalProps()
-        except:
-            window.showErrorMessage("Calculating T<sub>D24</sub> from Thermal Properties.")
-
-        try:
-           molecule.yoshidaFromThermalProps()
-        except:
-            window.showErrorMessage("Calculating Yoshida values from Thermal Properties.")
-
-    def createReport(self):
-        try:
-           moleculeData = self.render_molecule()
-           img = moleculeData.molToIMG()
-           results = asdict(moleculeData)
-           create_pdf(results["name"], results, img) #results["molIMG"]) 
-           if self.error_flag is not None:
-               self.error_message.setText('')
-               layout.removeWidget(self.error_message)
-        except:
-            window.showErrorMessage("Generating Memo PDF from given values.")
-
-    def writeToDatabase(self, molecule, Database):
-        selectedMolData = cleanMolDataFrame(molecule)
-        storedData = pd.read_csv(Database, index_col=0)
-        print('\n\n\n')
-        if selectedMolData['SMILES'][0] in storedData.index:
-            print('found')
-            userInteract = self.interactiveErrorMessage('Molecule Already in Database. Would you like to overwrite it?')
-            if userInteract == QMessageBox.Yes:
-                storedData.update(selectedMolData)
-                outputData = storedData
-
-            elif userInteract == QMessageBox.No:
-                outputData = storedData
-
-            else:
-                outputData = storedData
-
-        else:
-            outputData = pd.concat([storedData, selectedMolData])
-
-        outputData['SMILES'] = outputData.index
-        outputData = outputData[ ['SMILES'] + [ col for col in outputData.columns if col != 'SMILES' ] ]
-        print(outputData)
-        outputData.to_csv(Database, index=False)
-
     def getColorForValue(self, hazardClass):
-        # Color-coding logic
+        # Example color-coding logic
         if hazardClass == 'High Hazard':
             return QColor(255, 0, 0)  # Red
         elif hazardClass == 'Medium Hazard':
@@ -610,19 +497,14 @@ class MolDrawer(QWidget):
         if self.error_flag is not None:
             self.error_message.setText('')
             layout.removeWidget(self.error_message)
-
         # Get the SMILES string from the input field
         smiles = self.smiles_input.text()
         name = self.name_input.text()
         mp = self.mp_input.text()
-        mpEnd = self.mpEnd_input.text()
         Qdsc = self.Qdsc_input.text()
-        QUnits = self.QUnitsSelection.currentText()
         TE = self.TE_input.text()
         Tinit = self.Tinit_input.text()
         proj = self.proj_input.text()
-
-        # To be removed and replaced by call to thermalDexMolecule, see later.
         writeSmiles = '"'+smiles+'"' #repr(str(smiles))
         writeName = '"'+name+'"'
         writemp = '"'+mp+'"'
@@ -630,36 +512,211 @@ class MolDrawer(QWidget):
         writeProj = '"'+proj+'"'
 
         # Create an RDKit molecule from the SMILES string
-        addedMolecule = thermalDexMolecule(SMILES=smiles, name=name, mp=mp, mpEnd=mpEnd, Q_dsc=Qdsc, Qunits=QUnits, onsetT=TE, initT=Tinit, proj=proj)
         if smiles != '' and smiles is not None:
-            addedMolecule.mol = MolFromSmiles(smiles)
+            mol = MolFromSmiles(smiles)
 
         else:
-            addedMolecule.mol = None
+            mol = None
         
-        if addedMolecule.mol is not None:
-            # Make Pixmap Image to Display.
-            pixmap = addedMolecule.molToQPixmap()
-            scaledPixmap = pixmap #.scaled(550, 275, Qt.KeepAspectRatio)
+        test = 'hi'
+
+        if mol is not None:
+            self.clearTheCalcdValues()
+
+            # Generate a molecular drawing as a PNG image
+            img = Draw.MolToImage(mol)
+
+            # Convert the image to a byte array
+            byte_array = BytesIO()
+            img.save(byte_array, format='PNG')
+
+            # Convert the byte array to a QPixmap and display it
+            pixmap = QPixmap()
+            pixmap.loadFromData(byte_array.getvalue())
+            scaledPixmap = pixmap.scaled(300, 300, Qt.KeepAspectRatio)
             scene = QGraphicsScene()
             #scene.setSceneRect(0, 0, 400, 400)
             scene.addPixmap(scaledPixmap) #pixmap)
             self.mol_display.setScene(scene)
-            addedMolecule.molPixmap = None
+            cmpdMW = Descriptors.MolWt(mol)
+            mwStr = "{:.2f}".format(cmpdMW)
+            self.mwLabel.setText('MW: ' + mwStr)
+            fullMatch = 0
+            with open(highEnergyGroups, "r") as HEGroups: 
+               for line in HEGroups:
+                    HeSubstructure = MolFromSmiles(line)
+                    fullmatchList = Mol.GetSubstructMatches(mol, HeSubstructure)
+                    if len(fullmatchList) > 0:
+                        print('High Energy Group Found: ' + line)
+                    fullMatch += len(fullmatchList)
 
-            # Calculate Core Properties
-            self.genCoreValuesFromMol(addedMolecule)
+            HEG = str(fullMatch)
+            expMatch = 0
+            with open(expEnergyGroups, "r") as expGroups: #"ExplosiveGroups.csv", "r") as expGroups:
+               for line in expGroups:
+                    #print(line)
+                    expSubstructure = MolFromSmiles(line)
+                    expmatchList = Mol.GetSubstructMatches(mol, expSubstructure)
+                    #print('\n')
+                    #print(expmatchList)
+                    #print('\n')
+                    if len(expmatchList) > 0:
+                        print('Explosive Group Found: ' + line)
+                    expMatch += len(expmatchList)
 
-            # Format and Display Properties
-            self.mwLabel.setText('MW: ' + addedMolecule.mwStr)
-            self.HEGlabel.setText('Number of High Energy Groups: ' + str(addedMolecule.HEG))
-            self.EFGlabel.setText('Number of Explosive Functional Groups: ' + str(addedMolecule.EFG)) 
-            self.eleLabel.setText('Elemental Composition: ' + addedMolecule.eleComp)
-            self.RoSLabel.setText('Rule of Six: ' + str(addedMolecule.RoS_val) + addedMolecule.RoS_des)
-            self.obLabel.setText('Oxygen Balance: ' + addedMolecule.obStr + ' ' + addedMolecule.OB_des)
+            EFG = str(expMatch)
+
+            print('Explosive Groups =' + ' ' + EFG)
+
+            self.HEGlabel.setText('Number of High Energy Groups: ' + HEG)
+            self.EFGlabel.setText('Number of Explosive Functional Groups: ' + EFG)
+            oreo = 0 # Initiallise O.R.E.O.S. calculation. Lack of 's' in var name is deliberate, as Scale is factored in later.        
+            # O.R.E.O.S. check for EFG:
+            if int(EFG) >= 1:
+                oreo += 8
+            elif int(EFG) == 0:
+                oreo += 1
+            else:
+                print("Error: O.R.E.O.S. EFG number gives unexpected value: " + EFG)
+            #carbonAtoms = len(Mol.GetSubstructMatches(mol, MolFromSmarts("[C]")))
+            #print(carbonAtoms)
+            chemForm = rdMolDescriptors.CalcMolFormula(mol)
+            print(chemForm)
+            eleComp = ""
+            eleCompList = []
+            eleList = []
+            niceList = []
+            #match = re.findall(r"[A-Z][a-z]?\d*|\((?:[^()]*(?:\(.*\))?[^()]*)+\)\d+", chemForm, re.I) #re.findall(r"([a-z]+)([0-9]+)", chemForm, re.I) #match
+            #match = re.findall(r"[A-Z][a-z]?\d?", chemForm, re.I) #re.findall(r"([a-z]+)([0-9]+)", chemForm, re.I) #match
+            #match = re.findall(r"[A-Za-z]\d?", chemForm, re.I)
+            #match = re.findall(r"[A-Z][0-9]+?[a-z]?[0-9]+?", chemForm, re.I)
+            #match = re.findall(r"[A-Z][a-z]\d+?|[A-Z]\d+?", chemForm, re.I)
+            atomPattern = r"Cl\d*|H\d*|O\d*|N\d*|Si\d*|S\d*|F\d*|Cs\d*|Br\d*|I\d*|B\d*|Al\d*|Na\d*|K\d*|Mg\d*|Zn\d*|Ti\d*|Pd\d*|C\d*"
+            match = re.findall(atomPattern, chemForm, re.I)
+            if match:
+               items = match #match.groups()
+            for ele in match:
+                print(ele)
+                ment = re.findall(r"([a-z]+)([0-9]+)?", ele, re.I)
+                #print(ment)
+                matchedEleComp = ment[0]
+                #print(matchedEleComp)
+                eleList += [matchedEleComp]
+            
+            for compostion in eleList:
+               #print(compostion)
+               eleCompList += compostion[::-1]
+               niceList += [('').join(compostion[::-1])]
+   
+            eleComp = (', ').join(niceList)
+            #print(eleCompList)
+            print(eleList)
+            print(eleComp)
+            self.eleLabel.setText('Elemental Composition: ' + eleComp)
+            carbonAtoms = [ele[1] for ele in eleList if "C" in ele[0]]
+            hydrogenAtoms = [ele[1] for ele in eleList if "H" in ele[0]]
+            oxygenAtoms = [ele[1] for ele in eleList if "O" in ele[0]]
+            print(oxygenAtoms)
+            if carbonAtoms == []:
+                Catoms = 0
+            elif carbonAtoms[0] == '':
+                Catoms = 1
+            else:
+                Catoms = int(carbonAtoms[0])
+            if hydrogenAtoms == []:
+                Hatoms = 0
+            elif hydrogenAtoms[0] == '':
+                Hatoms = 1
+            else:
+                Hatoms = int(hydrogenAtoms[0])
+            if oxygenAtoms == []:
+                Oatoms = 0
+            elif oxygenAtoms[0] == '':
+                Oatoms = 1
+            else:
+                Oatoms = int(oxygenAtoms[0])
+            #print(int(carbonAtoms[0]))
+            print(Catoms)
+            ruleSixCrit = 6*int(HEG) - Catoms #int(carbonAtoms[0])
+            print(ruleSixCrit)
+            if ruleSixCrit > 0:
+                ruleSix = " <b>(Explosive)</b>"
+                oreo += 8
+            else:
+                ruleSix = " <b>(Not Explosive)</b>"
+                oreo += 2
+            self.RoSLabel.setText('Rule of Six: ' + str(ruleSixCrit) + ruleSix)
+            #oxygenBalance = (-1600*((2*int(carbonAtoms[0]))+(int(hydrogenAtoms[0])/2)-int(oxygenAtoms[0])))/cmpdMW
+            oxygenBalance = (-1600*((2*Catoms)+(Hatoms/2)-Oatoms))/cmpdMW
+            print(oxygenBalance)
+            obStr = "{:.2f}".format(oxygenBalance)
+            if oxygenBalance > 160:
+                obRisk = "<b>(Low Risk)</b>"
+                oreo += 2
+            elif oxygenBalance > 80 and oxygenBalance <= 160:
+                obRisk = "<b>(Medium Risk)</b>"
+                oreo += 4
+            elif oxygenBalance >= -120 and oxygenBalance <= 80:
+                obRisk = "<b>(High Risk)</b>"
+                oreo += 8
+            elif oxygenBalance >= -240 and oxygenBalance < -120:
+                obRisk = "<b>(Medium Risk)</b>"
+                oreo += 4
+            elif oxygenBalance < -240:
+                obRisk = "<b>(Low Risk)</b>"
+                oreo += 2
+            self.obLabel.setText('Oxygen Balance: ' + obStr + ' ' + obRisk)
+            
+            # Calculation of O.R.E.O.S. Safe Scale
+            # Onset temp adjustment
+            if TE != 'nan' and TE != '':
+                onsetTemp = float(TE)
+                print('Onset Temperature given as ' + TE)
+                if onsetTemp <= 125:
+                    oreo += 8
+                elif onsetTemp in range(126,200):
+                    oreo += 4
+                elif onsetTemp in range(200,300):
+                    oreo += 2
+                elif onsetTemp >= 300:
+                    oreo += 1
+            else:
+                onsetTemp = None
+
+            print(oreo)
+            print(onsetTemp)
+
+            largeScaleSafety = oreo + 8
+            hundsScaleSafety = oreo + 4
+            tensScaleSafety = oreo + 2
+            smallScaleSafety = oreo + 1
+
+            scaleList = [smallScaleSafety, tensScaleSafety, hundsScaleSafety, largeScaleSafety]
+            hazardList = []
+            hazardValuesRangeList = []
+
+            if onsetTemp == None:
+                hazardValuesRangeList = [15, 22]
+            if onsetTemp != None:
+                hazardValuesRangeList = [18, 28]
+
+            for scale in scaleList:
+                if scale < hazardValuesRangeList[0]:
+                    oreosHazard = "Low Hazard"
+                    hazardList.append(oreosHazard)
+                elif scale in range(hazardValuesRangeList[0], hazardValuesRangeList[1]):  # Note: Remember the last integer in range isnt included thats why I can get away with a list of 2 items. 
+                    oreosHazard = "Medium Hazard"
+                    hazardList.append(oreosHazard)
+                elif scale >= hazardValuesRangeList[1]:
+                    oreosHazard = "High Hazard"
+                    hazardList.append(oreosHazard)
+                else:
+                    print('Error: ' + str(scale))
+            print(hazardList)
             self.table.clearContents()
-            hazardList = [addedMolecule.oreoSmallScale_des, addedMolecule.oreoTensScale_des, addedMolecule.oreoHundsScale_des, addedMolecule.oreoLargeScale_des]
             # Add values to cells
+
+
             for i, hazardClass in enumerate(hazardList):
                 item = QTableWidgetItem(hazardClass)
                 self.table.setItem(0, i, item)
@@ -669,32 +726,53 @@ class MolDrawer(QWidget):
                 print(classColor)
                 item.setBackground(classColor)
 
-            if addedMolecule.isStr != None:
-                self.ISLabel.setText('Yoshida Impact Sensitivity: ' + addedMolecule.isStr + addedMolecule.IS_des)
-            if addedMolecule.epStr != None:
-                self.EPLabel.setText('Yoshida Explosive Propagation: ' + addedMolecule.epStr + addedMolecule.EP_des)
-            if addedMolecule.Td24 != '' and addedMolecule.Td24 != 'nan' and addedMolecule.Td24 != None:
-                d24Str = "{:.1f}".format(addedMolecule.Td24)
-                self.Td24Label.setText('T<sub>D24</sub>: ' + '<b>' + d24Str + ' °' + 'C' + '</b>')
-            if addedMolecule.onsetT != 'nan' and addedMolecule.onsetT != '' and addedMolecule.onsetT != None and addedMolecule.onsetT <= 24.99:
-                self.error_message = QLabel('Sub-Ambient Onset Temperature? Are you sure? Yoshida values will not be accurate.')
-                layout.addWidget(self.error_message)
-                self.error_flag = 201
-            if addedMolecule.initT != 'nan' and addedMolecule.initT != '' and addedMolecule.initT != None and addedMolecule.initT <= 24.99:
-                self.error_message = QLabel('Sub-Ambient Initiation Temperature? Are you sure? Yoshida values will not be accurate.')
-                layout.addWidget(self.error_message)
-                self.error_flag = 202
 
-            #addMol = open(defaultDB, 'a')
-            #addMol.write(writeSmiles + ',' + writeName + ',' + HEG + ',' + writemp + ',' + mwStr + ',' + writeTE + ',' + writeProj + '\n')
-            addedMolecule.genAdditionalValues()
-            altDB = './_core/altDB.csv'
-            #createDatabase(addedMolecule)
-            self.writeToDatabase(addedMolecule, altDB) #defaultDB)
-            print('\n')
-            print(addedMolecule)
-            print('\n')
-            return addedMolecule
+            # Yoshida Correlations
+            # Onset temp adjustment
+            if TE != 'nan' and TE != '' and Qdsc != 'nan' and Qdsc != '':
+                onsetTemp = float(TE)
+                print('Onset Temperature given as ' + TE)
+                deltaH = float(Qdsc)
+                print('Qdsc given as ' + Qdsc)
+                # Impact Sensitvity (IS)
+                impactSens = log10(deltaH) - 0.72*(log10(abs(onsetTemp-25))) - 0.98
+                print('IS = ' + str(impactSens))
+                # Explosive Propagation (EP)
+                exProp = log10(deltaH) - 0.38*(log10(abs(onsetTemp-25))) - 1.67
+                print('EP = ' + str(exProp))
+                if impactSens >= 0:
+                   impact = ' <b>(Impact Sensitive)</b>'
+                elif impactSens < 0:
+                   impact = ' <b>(Not Impact Sensitive)</b>'
+                if exProp >= 0:
+                   explos = ' <b>(Propagates)</b>'
+                elif exProp < 0:
+                   explos = ' <b>(Should Not Propagate)</b>'
+                isStr = "{:.2f}".format(impactSens)
+                self.ISLabel.setText('Yoshida Impact Sensitivity: ' + isStr + impact)
+                epStr = "{:.2f}".format(exProp)
+                self.EPLabel.setText('Yoshida Explosive Propagation: ' + epStr + explos)
+                if onsetTemp <= 24.99:
+                    self.error_message = QLabel('Sub-Ambient Onset Temperature? Are you sure? Yoshida values will not be accurate.')
+                    layout.addWidget(self.error_message)
+                    self.error_flag = 201
+
+            # Estimation of Maximum Recommended Process Temperature To Avoid Hazardous Thermal Decomposition
+            # Onset temp adjustment
+            if Tinit != 'nan' and Tinit != '':
+                initTemp = float(Tinit)
+                print('Tinit given as ' + Tinit)
+                d24Temp = 0.7*initTemp - 46
+                print('T_D24 =' + str(d24Temp))
+                d24Str = "{:.1f}".format(d24Temp)
+                self.Td24Label.setText('T<sub>D24</sub>: ' + '<b>' + d24Str + ' °' + 'C' + '</b>')
+                if initTemp <= 24.99:
+                    self.error_message = QLabel('Sub-Ambient Initiation Temperature? Are you sure? Yoshida values will not be accurate.')
+                    layout.addWidget(self.error_message)
+                    self.error_flag = 202
+
+            addMol = open(defaultDB, 'a')
+            addMol.write(writeSmiles + ',' + writeName + ',' + HEG + ',' + writemp + ',' + mwStr + ',' + writeTE + ',' + writeProj + '\n')
 
 
         else:

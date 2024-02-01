@@ -3,10 +3,34 @@ from rdkit.Chem import Draw, Descriptors, rdMolDescriptors, Mol, MolFromSmiles, 
 from io import BytesIO
 from numpy import log10
 from pubchempy import get_compounds
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
+from thermDex.thermDexQt import *
 import pandas as pd
 import re
-from PyQt5.QtGui import QPixmap
+
+#window = MolDrawer()
+
+def importConfig():
+    conf = open('.\\_core\\ThermalDex.config', 'r')
+    confCounter = 0
+    for line in conf:
+        #print(confCounter)
+        if confCounter == 4:
+           defaultDB = line.strip("\n")
+           confCounter += 1
+        elif confCounter == 8:
+           highEnergyGroups = line.strip("\n")
+           confCounter += 1
+        elif confCounter == 12:
+           expEnergyGroups = line.strip("\n")
+           confCounter += 1
+        else:
+           confCounter += 1
+
+    #print(defaultDB)
+    return defaultDB, highEnergyGroups, expEnergyGroups
+
+defaultDB, highEnergyGroups, expEnergyGroups = importConfig()
 
 @dataclass
 class thermalDexMolecule:
@@ -108,7 +132,7 @@ class thermalDexMolecule:
         self.MW = cmpdMW
         self.mwStr = "{:.2f}".format(cmpdMW)
 
-    def HEGFromMol(self, highEnergyGroups):
+    def HEGFromMol(self):
         fullMatch = 0
         with open(highEnergyGroups, "r") as HEGroups: 
             for line in HEGroups:
@@ -121,7 +145,7 @@ class thermalDexMolecule:
 
         self.HEG = fullMatch
 
-    def EFGFromMol(self, expEnergyGroups):
+    def EFGFromMol(self):
         expMatch= 0
         with open(expEnergyGroups, "r") as expGroups: 
             for line in expGroups:
@@ -340,11 +364,11 @@ class thermalDexMolecule:
         print(IUPACName)
         self.IUPAC_name = IUPACName
 
-    def genCoreValues(self, highEnergyGroups, expEnergyGroups):
+    def genCoreValues(self):
         self.genMol()
         self.mwFromMol()
-        self.HEGFromMol(highEnergyGroups)
-        self.EFGFromMol(expEnergyGroups)
+        self.HEGFromMol()
+        self.EFGFromMol()
         self.eleCompFromMol()
         self.CHOFromEleComp()
         self.RoSFromEleComp()
@@ -361,3 +385,60 @@ class thermalDexMolecule:
         self.genCoreValues()
         self.molToQPixmap()
         self.genAdditionalValues()
+
+    def genCoreValuesFromMol(self):
+        try:
+            self.mwFromMol()
+        except:
+            window.showErrorMessage("Calculating MW from RDChem Mol.")
+
+        try:
+           self.HEGFromMol()
+        except:
+            window.showErrorMessage("Determining High Energy Groups from RDChem Mol.")
+
+        try:
+           self.EFGFromMol()
+        except:
+            window.showErrorMessage("Determining Explosive Groups from RDChem Mol.")
+
+        try:
+           self.eleCompFromMol()
+        except:
+            window.showErrorMessage("Determining Elemental Compostion from RDChem Mol.")
+        
+        try:
+           self.CHOFromEleComp()
+        except:
+            window.showErrorMessage("Determining CHO from Elemental Compostion.")
+
+        try:        
+           self.RoSFromEleComp()
+        except:
+            window.showErrorMessage("Calculating Rule of Six from Elemental Compostion.")
+
+        try:
+           self.OBFromEleComp()
+        except:
+            window.showErrorMessage("Calculating Oxygen Balance from Elemental Compostion.")
+
+        try:
+           self.oreoOnsetTadjustment()
+        except:
+            window.showErrorMessage("Adjusting O.R.E.O.S. Calculation for Onset Temperature")
+
+        try:
+           self.oreoSafeScaleCal()
+        except:
+            window.showErrorMessage("Determining O.R.E.O.S. Hazard by Scale.")
+
+        try:
+           self.Td24FromThermalProps()
+        except:
+            window.showErrorMessage("Calculating T<sub>D24</sub> from Thermal Properties.")
+
+        try:
+           self.yoshidaFromThermalProps()
+        except:
+            window.showErrorMessage("Calculating Yoshida values from Thermal Properties.")
+
