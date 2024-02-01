@@ -80,204 +80,224 @@ class MolDrawer(QWidget):
         layout = QVBoxLayout()
 
         # Create a tab widget
-        self.tab_widget = QTabWidget()
+        tab_widget = QTabWidget()
+
+        ################################################################# Tab Def here
+
+        def thermDexTabLayout(self, tab, layout, tab_widget):
+            # Display area for the molecular drawing
+            self.mol_display = QGraphicsView(self)
+            layout.addWidget(QLabel('Molecule:'))
+            layout.addWidget(self.mol_display)
+
+            ResultsContainLayout = QHBoxLayout()
+            ResultsLeftLayout = QVBoxLayout()
+            ResultsRightLayout = QVBoxLayout()
+
+    	    #Add labels for calculated values
+            self.mwText = 'MW: '
+            self.HEGText = 'Number of High Energy Groups:'
+            self.EFGText = 'Number of Explosive Functional Groups:'
+            self.eleText = 'Elemental Composition: '
+            self.RoSText = 'Rule of Six: '
+            self.obText = 'Oxygen Balance: '
+            self.ISText = 'Yoshida Impact Sensitivity: '
+            self.EPText = 'Yoshida Explosive Propagation: '
+            self.Td24Text = 'T<sub>D24</sub>: '
+
+            labelList = [self.mwText, self.HEGText, self.EFGText, self.eleText, self.RoSText, self.obText, self.ISText, self.EPText, self.Td24Text]
+
+            # https://stackoverflow.com/questions/52777002/create-and-updating-multiple-qlabel-in-pyqt4
+            #attrLabelList = ["mwLabel", "HEGlabel", EFGlabel
+
+
+
+            self.mwLabel = QLabel(self.mwText)
+            self.mwLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
+            ResultsLeftLayout.addWidget(self.mwLabel)
+            self.HEGlabel = QLabel(self.HEGText)
+            self.HEGlabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
+            ResultsLeftLayout.addWidget(self.HEGlabel)
+            self.EFGlabel = QLabel(self.EFGText)
+            self.EFGlabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
+            ResultsLeftLayout.addWidget(self.EFGlabel)
+            self.eleLabel = QLabel(self.eleText)
+            self.eleLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
+            ResultsLeftLayout.addWidget(self.eleLabel)
+            self.RoSLabel = QLabel(self.RoSText)
+            self.RoSLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
+            ResultsRightLayout.addWidget(self.RoSLabel)
+            self.obLabel = QLabel(self.obText)
+            self.obLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
+            ResultsRightLayout.addWidget(self.obLabel)
+            self.ISLabel = QLabel(self.ISText)
+            self.ISLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
+            ResultsRightLayout.addWidget(self.ISLabel)
+            self.EPLabel = QLabel(self.EPText)
+            self.EPLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
+            ResultsRightLayout.addWidget(self.EPLabel)
+            self.Td24Label = QLabel(self.Td24Text)
+            self.Td24Label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+            ResultsRightLayout.addWidget(self.Td24Label)
+
+            ResultsContainLayout.addWidget(QVLine())
+            ResultsContainLayout.addLayout(ResultsLeftLayout)
+            ResultsContainLayout.addWidget(QVLine())
+            ResultsContainLayout.addLayout(ResultsRightLayout)
+            ResultsContainLayout.addWidget(QVLine())
+            layout.addLayout(ResultsContainLayout)
+            layout.addWidget(QHLine())
+
+            self.tableLabel = QLabel('O.R.E.O.S. Assessment of Hazard by Scale:')
+            layout.addWidget(self.tableLabel)
+            tableLayout = QHBoxLayout()
+            self.table = QTableWidget(1, 4)
+            self.table.setHorizontalHeaderLabels(['<5 g', '5 to <100 g', '100 to 500 g', '>500 g'])
+            self.table.verticalHeader().setVisible(False)
+            #self.table.setStyleSheet("QTableWidget::item { border-bottom: 2px solid black; }")
+            self.table.setMaximumHeight(53)
+            self.table.setMaximumWidth(402)
+            self.table.setMinimumHeight(53)
+            self.table.setMinimumWidth(402)
+            #self.table.setAlignment(Qt.AlignVCenter)
+            tableLayout.addWidget(self.table)
+
+            layout.addLayout(tableLayout)
+            layout.addWidget(QHLine())
+
+            # Input field for SMILES string
+            #self.smiles_input = QLineEdit(self)
+            self.smiles_input = ClickableLineEdit(self)
+            self.smiles_input.clicked.connect(self.mrvToSMILES)
+            layout.addWidget(QLabel('Enter SMILES String:'))
+            layout.addWidget(self.smiles_input)
+
+            InputContainLayout = QHBoxLayout()
+            InputLeftLayout = QVBoxLayout()
+            InputRightLayout = QVBoxLayout()
+            numValidator = QRegExpValidator(QRegExp(r'[-]?\d+[.]?\d*'))
+            posNumValidator = QRegExpValidator(QRegExp(r'\d+[.]?\d*'))
+
+            # Input field for Name string
+            self.name_input = QLineEdit(self)
+            InputLeftLayout.addWidget(QLabel('Name:'))
+            nameUnitsSubLayout = QHBoxLayout()
+            nameUnitsSubLayout.addWidget(self.name_input)
+            nameUnitLabel = QLabel('°C    ')
+            nameUnitLabel.setStyleSheet('color: white')
+            nameUnitsSubLayout.addWidget(nameUnitLabel)
+            InputLeftLayout.addLayout(nameUnitsSubLayout)
+
+            # Input field for mp string
+            self.mp_input = QLineEdit(self)
+            self.mp_input.setMaximumWidth(110)
+            self.mp_input.setValidator(numValidator)
+            self.mpEnd_input = QLineEdit(self)
+            self.mpEnd_input.setMaximumWidth(110)
+            self.mpEnd_input.setValidator(numValidator)
+            InputLeftLayout.addWidget(QLabel('m.p.:'))
+            mpUnitsSubLayout = QHBoxLayout()
+            mpUnitsSubLayout.addWidget(self.mp_input)
+            mpUnitsSubLayout.addWidget(QLabel('  to  '))
+            mpUnitsSubLayout.addWidget(self.mpEnd_input)
+            mpUnitsSubLayout.addWidget(QLabel('°C    '))
+            InputLeftLayout.addLayout(mpUnitsSubLayout)
+
+            # Input field for Q_DSC string
+            self.Qdsc_input = QLineEdit(self)
+            self.Qdsc_input.setValidator(posNumValidator)
+            InputRightLayout.addWidget(QLabel('Q<sub>DSC</sub>:'))
+            QUnitsSubLayout = QHBoxLayout()
+            QUnitsSubLayout.addWidget(self.Qdsc_input)
+            #QUnitsSubLayout.addWidget(QLabel('cal g<sup>-1</sup> '))
+            self.QUnitsSelection = QComboBox(self)
+            self.QUnitsSelection.addItems(['J g⁻¹', 'cal g⁻¹'])
+            QUnitsSubLayout.addWidget(self.QUnitsSelection)
+            InputRightLayout.addLayout(QUnitsSubLayout)
+
+            # Input field for Onset string
+            self.TE_input = QLineEdit(self)
+            self.TE_input.setValidator(numValidator)
+            InputRightLayout.addWidget(QLabel('Onset Temperature:'))
+            TEUnitsSubLayout = QHBoxLayout()
+            TEUnitsSubLayout.addWidget(self.TE_input)
+            TEUnitsSubLayout.addWidget(QLabel('°C       '))
+            InputRightLayout.addLayout(TEUnitsSubLayout)
+
+            # Input field for Init string
+            self.Tinit_input = QLineEdit(self)
+            self.Tinit_input.setValidator(numValidator)
+            InputRightLayout.addWidget(QLabel('Initiation Temperature:'))
+            TinitUnitsSubLayout = QHBoxLayout()
+            TinitUnitsSubLayout.addWidget(self.Tinit_input)
+            TinitUnitsSubLayout.addWidget(QLabel('°C       '))
+            InputRightLayout.addLayout(TinitUnitsSubLayout)
+
+            # Input field for proj string
+            self.proj_input = QLineEdit(self)
+            InputLeftLayout.addWidget(QLabel('Project:'))
+            projUnitsSubLayout = QHBoxLayout()
+            projUnitsSubLayout.addWidget(self.proj_input)
+            projUnitLabel = QLabel('°C    ')
+            projUnitLabel.setStyleSheet('color: white')
+            projUnitsSubLayout.addWidget(projUnitLabel)
+            InputLeftLayout.addLayout(projUnitsSubLayout)
+
+            InputContainLayout.addLayout(InputLeftLayout)
+            #ResultsContainLayout.addWidget(QVLine())
+            InputContainLayout.addLayout(InputRightLayout)
+            #ResultsContainLayout.addWidget(QVLine())
+            layout.addLayout(InputContainLayout)
+
+            # Buttons
+            buttonSpacerLabel = QLabel('hidden spacer')
+            buttonSpacerLabel.setStyleSheet('color: white')
+            layout.addWidget(buttonSpacerLabel)
+            buttonContainLayout = QHBoxLayout()
+            render_button = QPushButton('Evaluate Molecule', self)
+            render_button.clicked.connect(self.render_molecule)
+            render_button.setMaximumWidth(180)
+            buttonContainLayout.addWidget(render_button)
+            clear_button = QPushButton('Clear Sheet', self)
+            clear_button.clicked.connect(self.resetToDefaultState)
+            clear_button.setMaximumWidth(180)
+            buttonContainLayout.addWidget(clear_button)
+            #molecule_layout.addLayout(buttonContainLayout)
+            msg_button = QPushButton('Save to PDF', self)
+            msg_button.clicked.connect(self.createReport)
+            msg_button.setMaximumWidth(180)
+            buttonContainLayout.addWidget(msg_button)
+            layout.addLayout(buttonContainLayout)
+
+            tab.setLayout(molecule_layout)
+            tab_widget.addTab(tab, "Add")
 
         # Tab for molecule rendering
-        self.molecule_tab = QWidget()
+        molecule_tab = QWidget()
         molecule_layout = QVBoxLayout()
+        thermDexTabLayout(self, molecule_tab, molecule_layout, tab_widget)
 
-        # Display area for the molecular drawing
-        self.mol_display = QGraphicsView(self)
-        molecule_layout.addWidget(QLabel('Molecule:'))
-        molecule_layout.addWidget(self.mol_display)
+        # New for molecule rendering
+        new_tab = QWidget()
+        new_layout = QVBoxLayout()
+        thermDexTabLayout(self, new_tab, new_layout, tab_widget)
 
-        ResultsContainLayout = QHBoxLayout()
-        ResultsLeftLayout = QVBoxLayout()
-        ResultsRightLayout = QVBoxLayout()
-
-	#Add labels for calculated values
-        self.mwText = 'MW: '
-        self.HEGText = 'Number of High Energy Groups:'
-        self.EFGText = 'Number of Explosive Functional Groups:'
-        self.eleText = 'Elemental Composition: '
-        self.RoSText = 'Rule of Six: '
-        self.obText = 'Oxygen Balance: '
-        self.ISText = 'Yoshida Impact Sensitivity: '
-        self.EPText = 'Yoshida Explosive Propagation: '
-        self.Td24Text = 'T<sub>D24</sub>: '
-
-        self.mwLabel = QLabel(self.mwText)
-        self.mwLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        ResultsLeftLayout.addWidget(self.mwLabel)
-        self.HEGlabel = QLabel(self.HEGText)
-        self.HEGlabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        ResultsLeftLayout.addWidget(self.HEGlabel)
-        self.EFGlabel = QLabel(self.EFGText)
-        self.EFGlabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        ResultsLeftLayout.addWidget(self.EFGlabel)
-        self.eleLabel = QLabel(self.eleText)
-        self.eleLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        ResultsLeftLayout.addWidget(self.eleLabel)
-        self.RoSLabel = QLabel(self.RoSText)
-        self.RoSLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        ResultsRightLayout.addWidget(self.RoSLabel)
-        self.obLabel = QLabel(self.obText)
-        self.obLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        ResultsRightLayout.addWidget(self.obLabel)
-        self.ISLabel = QLabel(self.ISText)
-        self.ISLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        ResultsRightLayout.addWidget(self.ISLabel)
-        self.EPLabel = QLabel(self.EPText)
-        self.EPLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        ResultsRightLayout.addWidget(self.EPLabel)
-        self.Td24Label = QLabel(self.Td24Text)
-        self.Td24Label.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        ResultsRightLayout.addWidget(self.Td24Label)
-
-        ResultsContainLayout.addWidget(QVLine())
-        ResultsContainLayout.addLayout(ResultsLeftLayout)
-        ResultsContainLayout.addWidget(QVLine())
-        ResultsContainLayout.addLayout(ResultsRightLayout)
-        ResultsContainLayout.addWidget(QVLine())
-        molecule_layout.addLayout(ResultsContainLayout)
-        molecule_layout.addWidget(QHLine())
-
-        self.tableLabel = QLabel('O.R.E.O.S. Assessment of Hazard by Scale:')
-        molecule_layout.addWidget(self.tableLabel)
-        tableLayout = QHBoxLayout()
-        self.table = QTableWidget(1, 4)
-        self.table.setHorizontalHeaderLabels(['<5 g', '5 to <100 g', '100 to 500 g', '>500 g'])
-        self.table.verticalHeader().setVisible(False)
-        #self.table.setStyleSheet("QTableWidget::item { border-bottom: 2px solid black; }")
-        self.table.setMaximumHeight(53)
-        self.table.setMaximumWidth(402)
-        self.table.setMinimumHeight(53)
-        self.table.setMinimumWidth(402)
-        #self.table.setAlignment(Qt.AlignVCenter)
-        tableLayout.addWidget(self.table)
-
-        molecule_layout.addLayout(tableLayout)
-        molecule_layout.addWidget(QHLine())
-
-        # Input field for SMILES string
-        #self.smiles_input = QLineEdit(self)
-        self.smiles_input = ClickableLineEdit(self)
-        self.smiles_input.clicked.connect(self.mrvToSMILES)
-        molecule_layout.addWidget(QLabel('Enter SMILES String:'))
-        molecule_layout.addWidget(self.smiles_input)
-
-        InputContainLayout = QHBoxLayout()
-        InputLeftLayout = QVBoxLayout()
-        InputRightLayout = QVBoxLayout()
-        numValidator = QRegExpValidator(QRegExp(r'[-]?\d+[.]?\d*'))
-        posNumValidator = QRegExpValidator(QRegExp(r'\d+[.]?\d*'))
-
-        # Input field for Name string
-        self.name_input = QLineEdit(self)
-        InputLeftLayout.addWidget(QLabel('Name:'))
-        nameUnitsSubLayout = QHBoxLayout()
-        nameUnitsSubLayout.addWidget(self.name_input)
-        nameUnitLabel = QLabel('°C    ')
-        nameUnitLabel.setStyleSheet('color: white')
-        nameUnitsSubLayout.addWidget(nameUnitLabel)
-        InputLeftLayout.addLayout(nameUnitsSubLayout)
-
-        # Input field for mp string
-        self.mp_input = QLineEdit(self)
-        self.mp_input.setMaximumWidth(110)
-        self.mp_input.setValidator(numValidator)
-        self.mpEnd_input = QLineEdit(self)
-        self.mpEnd_input.setMaximumWidth(110)
-        self.mpEnd_input.setValidator(numValidator)
-        InputLeftLayout.addWidget(QLabel('m.p.:'))
-        mpUnitsSubLayout = QHBoxLayout()
-        mpUnitsSubLayout.addWidget(self.mp_input)
-        mpUnitsSubLayout.addWidget(QLabel('  to  '))
-        mpUnitsSubLayout.addWidget(self.mpEnd_input)
-        mpUnitsSubLayout.addWidget(QLabel('°C    '))
-        InputLeftLayout.addLayout(mpUnitsSubLayout)
-
-        # Input field for Q_DSC string
-        self.Qdsc_input = QLineEdit(self)
-        self.Qdsc_input.setValidator(posNumValidator)
-        InputRightLayout.addWidget(QLabel('Q<sub>DSC</sub>:'))
-        QUnitsSubLayout = QHBoxLayout()
-        QUnitsSubLayout.addWidget(self.Qdsc_input)
-        #QUnitsSubLayout.addWidget(QLabel('cal g<sup>-1</sup> '))
-        self.QUnitsSelection = QComboBox(self)
-        self.QUnitsSelection.addItems(['J g⁻¹', 'cal g⁻¹'])
-        QUnitsSubLayout.addWidget(self.QUnitsSelection)
-        InputRightLayout.addLayout(QUnitsSubLayout)
-
-        # Input field for Onset string
-        self.TE_input = QLineEdit(self)
-        self.TE_input.setValidator(numValidator)
-        InputRightLayout.addWidget(QLabel('Onset Temperature:'))
-        TEUnitsSubLayout = QHBoxLayout()
-        TEUnitsSubLayout.addWidget(self.TE_input)
-        TEUnitsSubLayout.addWidget(QLabel('°C       '))
-        InputRightLayout.addLayout(TEUnitsSubLayout)
-
-        # Input field for Init string
-        self.Tinit_input = QLineEdit(self)
-        self.Tinit_input.setValidator(numValidator)
-        InputRightLayout.addWidget(QLabel('Initiation Temperature:'))
-        TinitUnitsSubLayout = QHBoxLayout()
-        TinitUnitsSubLayout.addWidget(self.Tinit_input)
-        TinitUnitsSubLayout.addWidget(QLabel('°C       '))
-        InputRightLayout.addLayout(TinitUnitsSubLayout)
-
-        # Input field for proj string
-        self.proj_input = QLineEdit(self)
-        InputLeftLayout.addWidget(QLabel('Project:'))
-        projUnitsSubLayout = QHBoxLayout()
-        projUnitsSubLayout.addWidget(self.proj_input)
-        projUnitLabel = QLabel('°C    ')
-        projUnitLabel.setStyleSheet('color: white')
-        projUnitsSubLayout.addWidget(projUnitLabel)
-        InputLeftLayout.addLayout(projUnitsSubLayout)
-
-        InputContainLayout.addLayout(InputLeftLayout)
-        #ResultsContainLayout.addWidget(QVLine())
-        InputContainLayout.addLayout(InputRightLayout)
-        #ResultsContainLayout.addWidget(QVLine())
-        molecule_layout.addLayout(InputContainLayout)
-
-        # Buttons
-        buttonSpacerLabel = QLabel('hidden spacer')
-        buttonSpacerLabel.setStyleSheet('color: white')
-        molecule_layout.addWidget(buttonSpacerLabel)
-        buttonContainLayout = QHBoxLayout()
-        render_button = QPushButton('Evaluate Molecule', self)
-        render_button.clicked.connect(self.render_molecule)
-        render_button.setMaximumWidth(180)
-        buttonContainLayout.addWidget(render_button)
-        clear_button = QPushButton('Clear Sheet', self)
-        clear_button.clicked.connect(self.resetToDefaultState)
-        clear_button.setMaximumWidth(180)
-        buttonContainLayout.addWidget(clear_button)
-        #molecule_layout.addLayout(buttonContainLayout)
-        msg_button = QPushButton('Save to PDF', self)
-        msg_button.clicked.connect(self.createReport)
-        msg_button.setMaximumWidth(180)
-        buttonContainLayout.addWidget(msg_button)
-        molecule_layout.addLayout(buttonContainLayout)
-
-        self.molecule_tab.setLayout(molecule_layout)
-        self.tab_widget.addTab(self.molecule_tab, "Add")
-
+        ################################################################# Tab Def here
 
         # Tab for Search
         search_tab = QWidget()
         search_layout = QVBoxLayout() #molecule_layout #
+
+        #self.search_tab = search_tab
+        #self.molecule_layout = molecule_layout
 
         # Entry widget for searching
         lbl_search = QLabel('Search:')
         entry_search = QLineEdit()
         result_label = QLabel('click search')
         counter_label = QLabel('none')
-        view_test_button = QPushButton('edit', self)
-        view_test_button.clicked.connect(self.changeTabForEditing) 
+        view_test_button = QPushButton('Save to PDF', self)
+        #view_test_button.clicked.connect(self.layoutSwitcheroo) 
         search_layout.addWidget(view_test_button)
 
 
@@ -289,12 +309,7 @@ class MolDrawer(QWidget):
         #    for result in results:
         #        list_search_results.addItem(f"{result['Name']} ({result['Formula']})")
 
-        #     searchTest = MolFromSmiles(entry_search.text())
-
-        #     if searchTest is not None:
-
-
-             self.readDatabase = pd.read_csv(defaultDB) #, encoding='mbcs')
+             self.df = pd.read_csv(defaultDB, encoding='mbcs')
              show_result(self)
 
 
@@ -305,23 +320,20 @@ class MolDrawer(QWidget):
                   self.error_message.setText('')
                   layout.removeWidget(self.error_message)
                   self.error_flag = None
-             if self.readDatabase is not None and not self.readDatabase.empty:
-                  current_row = self.readDatabase.iloc[self.current_index]
-                  print(current_row)
-                  print('\n\n')
-                  dictRow = current_row.to_dict()
-                  print(dictRow)
-                  print('\n\n')
-                  readMolecule = thermalDexMolecule(**dictRow)
-                  print(readMolecule.MW)
-                  self.result_smiles = current_row['SMILES']
-                  result_text = f"SMILES: {current_row['SMILES']}\nName: {current_row['name']}\nHEG: {current_row['HEG']}\nmp: {current_row['mp']} to {current_row['mpEnd']}\nMW: {current_row['MW']}\nT<sub>onset</sub>: {current_row['onsetT']}\nT<sub>init</sub>: {current_row['initT']}\nProject: {current_row['proj']}"
+             if self.df is not None and not self.df.empty:
+                  #print(self.current_index)
+                  current_row = self.df.iloc[self.current_index]
+                  #print(self.result_smiles)
+                  self.result_smiles = current_row['Molecule']
+                  #print(self.result_smiles)
+                  result_text = f"SMILES: {current_row['Molecule']}\nName: {current_row['Name']}\nHEG: {current_row['Number of High Energy Groups']}\nmp: {current_row['Melting point']}\nMW: {current_row['Molecular Weight']}\nTE: {current_row['Thermal Event']}\nProject: {current_row['Project']}"
                   result_label.setText(result_text)
                   result_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
                   result_label.setWordWrap(True) 
-                  counter_label.setText(f"Result {self.current_index + 1} of {len(self.readDatabase)}")
+                  counter_label.setText(f"Result {self.current_index + 1} of {len(self.df)}")
                   search_layout.addWidget(prev_button)
                   search_layout.addWidget(next_button)
+                  #print(self.current_index)
 
                   if self.result_smiles is not None:
                       mol = MolFromSmiles(self.result_smiles)
@@ -330,8 +342,6 @@ class MolDrawer(QWidget):
                       mol = None
 
                   if mol is not None:
-
-
                       # Generate a molecular drawing as a PNG image
                       img = Draw.MolToImage(mol)
 
@@ -354,12 +364,13 @@ class MolDrawer(QWidget):
                   show_result(self)
 
         def next_result(self):
-             if self.readDatabase is not None:
-                  if self.current_index < len(self.readDatabase) - 1:
+             if self.df is not None:
+                  if self.current_index < len(self.df) - 1:
                        #search_layout.removeWidget(self.mol_result_display)
                        #search_layout.removeWidget(self.molLabel)
                        self.current_index += 1
                        show_result(self)
+
 
         # Search Buttons & display area for the molecular drawing
         self.mol_result_display = QGraphicsView(self)
@@ -380,7 +391,7 @@ class MolDrawer(QWidget):
         search_layout.addWidget(btn_search)
 
         search_tab.setLayout(search_layout)
-        self.tab_widget.addTab(search_tab, "Search")
+        tab_widget.addTab(search_tab, "Search")
 
 
         # Tab for "About" information
@@ -434,9 +445,9 @@ class MolDrawer(QWidget):
         #abouttestLabel.setTextInteractionFlags(Qt.LinksAccessibleByMouse)
 
         about_tab.setLayout(about_layout)
-        self.tab_widget.addTab(about_tab, "About")
+        tab_widget.addTab(about_tab, "About")
 
-        layout.addWidget(self.tab_widget)
+        layout.addWidget(tab_widget)
 
 
 
@@ -445,8 +456,8 @@ class MolDrawer(QWidget):
         self.setGeometry(100, 100, 600, 825)
         self.setWindowTitle('ThermalDex')
 
-    def changeTabForEditing(self):
-        self.tab_widget.setCurrentWidget(self.molecule_tab)   #0) #self.tab_widget.findChild(QWidget, "Add"))
+   # def layoutSwitcheroo(self):
+   #     self.search_tab.setLayout(self.molecule_layout)
 
     def mrvToSMILES(self):
         try:
@@ -638,6 +649,13 @@ class MolDrawer(QWidget):
         Tinit = self.Tinit_input.text()
         proj = self.proj_input.text()
 
+        # To be removed and replaced by call to thermalDexMolecule, see later.
+        writeSmiles = '"'+smiles+'"' #repr(str(smiles))
+        writeName = '"'+name+'"'
+        writemp = '"'+mp+'"'
+        writeTE = '"'+TE+'"'
+        writeProj = '"'+proj+'"'
+
         # Create an RDKit molecule from the SMILES string
         addedMolecule = thermalDexMolecule(SMILES=smiles, name=name, mp=mp, mpEnd=mpEnd, Q_dsc=Qdsc, Qunits=QUnits, onsetT=TE, initT=Tinit, proj=proj)
         if smiles != '' and smiles is not None:
@@ -699,7 +717,7 @@ class MolDrawer(QWidget):
             addedMolecule.genAdditionalValues()
             altDB = './_core/altDB.csv'
             #createDatabase(addedMolecule)
-            self.writeToDatabase(addedMolecule, defaultDB) #altDB
+            self.writeToDatabase(addedMolecule, altDB) #defaultDB)
             print('\n')
             print(addedMolecule)
             print('\n')
