@@ -14,7 +14,7 @@ from thermDex.thermDexReport import *
 import pyperclip
 from pandasTests import *
 
-versionNumber = "0.7.5"
+versionNumber = "0.8.1"
 
 try:
     import pyi_splash
@@ -75,6 +75,7 @@ class MolDrawer(QWidget):
         #current_index = 0
         self.current_index = 0
         self.result_smiles = None
+        self.selectedDatabase = None
         self.error_flag = None
         # Set up the main layout
         layout = QVBoxLayout()
@@ -274,6 +275,8 @@ class MolDrawer(QWidget):
         # Entry widget for searching
         lbl_search = QLabel('Search:')
         entry_search = QLineEdit()
+        searchTypeSelection = QComboBox(self)
+        searchTypeSelection.addItems(['SMILES (substructure)', 'Name', 'Project', 'Compounds with smaller Qdsc', 'Compounds with larger Qdsc', 'Compounds with smaller Tinit', 'Compounds with larger Tinit', 'Compounds with smaller Tonset', 'Compounds with larger Tonset', 'Compounds with smaller Td24', 'Compounds with larger Td24', 'Compounds with smaller O.R.E.O.S. score at >500 g', 'Compounds with larger O.R.E.O.S. score at >500 g'])
         result_label = QLabel('click search')
         counter_label = QLabel('none')
         view_test_button = QPushButton('edit', self)
@@ -282,31 +285,67 @@ class MolDrawer(QWidget):
 
 
         def search_database():
-        #    query = entry_search.text().lower()
-        #    results = [entry for entry in self.database if query in entry['Name'].lower() or query in entry['Formula'].lower()]
+             self.readDatabase = pd.read_csv(defaultDB) #, index_col=0) #, encoding='mbcs')
+             searchTest = MolFromSmiles(entry_search.text())
+             print(entry_search.text())
 
-        #    list_search_results.clear()
-        #    for result in results:
-        #        list_search_results.addItem(f"{result['Name']} ({result['Formula']})")
+             if entry_search.text() != '' and entry_search.text() != None and searchTest is not None:
+                 smilesList = self.readDatabase['SMILES'].tolist()  #.index.values
+                 print(smilesList)
+                 foundList = []
+                 for smile in smilesList:
+                     searchStructure = MolFromSmiles(smile)
+                     fullmatchList = Mol.GetSubstructMatches(searchStructure, searchTest)
+                     if len(fullmatchList) > 0:
+                         print('Substructure Match Found: ' + smile)
+                         foundList += [smile]
+                 print('\n\n')
+                 print(foundList)
 
-        #     searchTest = MolFromSmiles(entry_search.text())
+                 indexList = []
+                 for foundMatch in foundList:
+                     row_index = self.readDatabase.index[self.readDatabase['SMILES'] == foundMatch].tolist()
+                     indexList += row_index
 
-        #     if searchTest is not None:
+                 print(indexList)
+                 print('\n\n')
+                 foundDataFrame = self.readDatabase.iloc[indexList]
+                 print(foundDataFrame)
+                 print('\n\n')
+
+                 foundDataFrame.reset_index(drop=True)
+
+                 self.selectedDatabase = foundDataFrame
+                 show_result(self, foundDataFrame, True)
+
+             elif entry_search.text() == '' or entry_search.text() == None:    
+                 self.selectedDatabase = self.readDatabase
+                 show_result(self, self.readDatabase, True)
+
+             else:
+                 otherSearchIndex = []
+                 otherSearchIndex += [self.readDatabase.isin([entry_search.text()]).any(axis=1).idxmax()]
+                 print(otherSearchIndex)
+                 otherFoundDataFrame = self.readDatabase.iloc[otherSearchIndex]
+                 self.selectedDatabase = otherFoundDataFrame
+                 show_result(self, otherFoundDataFrame, True)
+                 if otherFoundDataFrame.empty:
+                      errorInfo = "No matches found"
+                      interactiveErrorMessage(self, errorInfo)
+      
 
 
-             self.readDatabase = pd.read_csv(defaultDB) #, encoding='mbcs')
-             show_result(self)
-
-
-        def show_result(self):
+        def show_result(self, Database, resetIndex):
              #print(self)
              layout = self.layout()
              if self.error_flag is not None:
                   self.error_message.setText('')
                   layout.removeWidget(self.error_message)
                   self.error_flag = None
-             if self.readDatabase is not None and not self.readDatabase.empty:
-                  current_row = self.readDatabase.iloc[self.current_index]
+             if resetIndex == True:
+                  self.current_index = 0             
+             if Database is not None and not Database.empty:
+                  current_row = Database.iloc[self.current_index]
                   print(current_row)
                   print('\n\n')
                   dictRow = current_row.to_dict()
@@ -319,7 +358,7 @@ class MolDrawer(QWidget):
                   result_label.setText(result_text)
                   result_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
                   result_label.setWordWrap(True) 
-                  counter_label.setText(f"Result {self.current_index + 1} of {len(self.readDatabase)}")
+                  counter_label.setText(f"Result {self.current_index + 1} of {len(Database)}")
                   search_layout.addWidget(prev_button)
                   search_layout.addWidget(next_button)
 
@@ -351,15 +390,15 @@ class MolDrawer(QWidget):
                   #search_layout.removeWidget(self.mol_result_display)
                   #search_layout.removeWidget(self.molLabel)
                   self.current_index -= 1
-                  show_result(self)
+                  show_result(self, self.selectedDatabase, False)
 
-        def next_result(self):
-             if self.readDatabase is not None:
-                  if self.current_index < len(self.readDatabase) - 1:
+        def next_result(self, Database):
+             if Database is not None:
+                  if self.current_index < len(Database) - 1:
                        #search_layout.removeWidget(self.mol_result_display)
                        #search_layout.removeWidget(self.molLabel)
                        self.current_index += 1
-                       show_result(self)
+                       show_result(self, self.selectedDatabase, False)
 
         # Search Buttons & display area for the molecular drawing
         self.mol_result_display = QGraphicsView(self)
@@ -371,10 +410,11 @@ class MolDrawer(QWidget):
         prev_button = QPushButton('Previous')
         next_button = QPushButton('Next')
         prev_button.clicked.connect(lambda: prev_result(self))
-        next_button.clicked.connect(lambda: next_result(self))
+        next_button.clicked.connect(lambda: next_result(self, self.selectedDatabase))
 
         search_layout.addWidget(lbl_search)
         search_layout.addWidget(entry_search)
+        search_layout.addWidget(searchTypeSelection)
         search_layout.addWidget(result_label)
         search_layout.addWidget(counter_label)
         search_layout.addWidget(btn_search)
@@ -446,7 +486,70 @@ class MolDrawer(QWidget):
         self.setWindowTitle('ThermalDex')
 
     def changeTabForEditing(self):
-        self.tab_widget.setCurrentWidget(self.molecule_tab)   #0) #self.tab_widget.findChild(QWidget, "Add"))
+        try:
+            editDB = self.selectedDatabase.fillna('')
+            current_row = editDB.iloc[self.current_index]
+            dictRow = current_row.to_dict()
+            print(dictRow)
+            print('\n\n')
+            readMolecule = thermalDexMolecule(**dictRow)
+            readMolecule.genMol()
+            # Make Pixmap Image to Display.
+            pixmap = readMolecule.molToQPixmap()
+            scaledPixmap = pixmap #.scaled(550, 275, Qt.KeepAspectRatio)
+            scene = QGraphicsScene()
+            #scene.setSceneRect(0, 0, 400, 400)
+            scene.addPixmap(scaledPixmap) #pixmap)
+            self.mol_display.setScene(scene)
+            readMolecule.molPixmap = None
+            self.smiles_input.setText(readMolecule.SMILES)
+            self.name_input.setText(readMolecule.name)
+            self.mp_input.setText(str(readMolecule.mp))
+            self.mpEnd_input.setText(str(readMolecule.mpEnd))
+            self.Qdsc_input.setText(str(readMolecule.Q_dsc))
+            comboIndex = self.QUnitsSelection.findText(readMolecule.Qunits)
+            self.QUnitsSelection.setCurrentIndex(comboIndex)
+            self.TE_input.setText(str(readMolecule.onsetT))
+            self.Tinit_input.setText(str(readMolecule.initT))
+            self.proj_input.setText(str(readMolecule.proj))
+            niceMWStr = "{:.2f}".format(readMolecule.MW)
+            self.mwLabel.setText('MW: ' + niceMWStr) #str(readMolecule.MW))
+            self.HEGlabel.setText('Number of High Energy Groups: ' + str(readMolecule.HEG))
+            self.EFGlabel.setText('Number of Explosive Functional Groups: ' + str(readMolecule.EFG)) 
+            self.eleLabel.setText('Elemental Composition: ' + readMolecule.eleComp)
+            self.RoSLabel.setText('Rule of Six: ' + str(readMolecule.RoS_val) + readMolecule.RoS_des)
+            self.obLabel.setText('Oxygen Balance: ' + str(readMolecule.obStr) + ' ' + readMolecule.OB_des)
+            self.table.clearContents()
+            hazardList = [readMolecule.oreoSmallScale_des, readMolecule.oreoTensScale_des, readMolecule.oreoHundsScale_des, readMolecule.oreoLargeScale_des]
+            # Add values to cells
+            for i, hazardClass in enumerate(hazardList):
+                item = QTableWidgetItem(hazardClass)
+                self.table.setItem(0, i, item)
+   
+                # Color code cells based on values
+                classColor = self.getColorForValue(hazardClass)
+                print(classColor)
+                item.setBackground(classColor)
+        
+            try:
+                isStr = "{:.2f}".format(readMolecule.IS_val)
+            except:
+                isStr = ''
+            self.ISLabel.setText('Yoshida Impact Sensitivity: ' + isStr + readMolecule.IS_des)
+            try:
+                epStr = "{:.2f}".format(readMolecule.EP_val)
+            except:
+                epStr = ''
+            self.EPLabel.setText('Yoshida Explosive Propagation: ' + epStr + readMolecule.EP_des)
+            try:
+                d24Str = "{:.1f}".format(readMolecule.Td24)
+                self.Td24Label.setText('T<sub>D24</sub>: <b>' + d24Str + ' °C</b>')        
+            except:
+                pass
+            self.tab_widget.setCurrentWidget(self.molecule_tab)   #0) #self.tab_widget.findChild(QWidget, "Add"))
+
+        except:
+            window.showErrorMessage("Editing current selection. Has a molecule been found?")
 
     def mrvToSMILES(self):
         try:
@@ -684,7 +787,7 @@ class MolDrawer(QWidget):
                 self.EPLabel.setText('Yoshida Explosive Propagation: ' + addedMolecule.epStr + addedMolecule.EP_des)
             if addedMolecule.Td24 != '' and addedMolecule.Td24 != 'nan' and addedMolecule.Td24 != None:
                 d24Str = "{:.1f}".format(addedMolecule.Td24)
-                self.Td24Label.setText('T<sub>D24</sub>: ' + '<b>' + d24Str + ' °' + 'C' + '</b>')
+                self.Td24Label.setText('T<sub>D24</sub>: <b>' + d24Str + ' °C</b>')
             if addedMolecule.onsetT != 'nan' and addedMolecule.onsetT != '' and addedMolecule.onsetT != None and addedMolecule.onsetT <= 24.99:
                 self.error_message = QLabel('Sub-Ambient Onset Temperature? Are you sure? Yoshida values will not be accurate.')
                 layout.addWidget(self.error_message)
