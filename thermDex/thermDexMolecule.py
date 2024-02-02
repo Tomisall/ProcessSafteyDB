@@ -116,10 +116,18 @@ class thermalDexMolecule:
                 fullmatchList = Mol.GetSubstructMatches(self.mol, HeSubstructure)
                 if len(fullmatchList) > 0:
                     print('High Energy Group Found: ' + line[:-1])
-                    self.HEG_list += [line[:-1]]
+                    for match in range(0, len(fullmatchList)):
+                        self.HEG_list += [line[:-1]]
                 fullMatch += len(fullmatchList)
 
-        self.HEG = fullMatch
+        nitroCount = self.HEG_list.count('C[N+](=O)[O-]')
+        nitroCorrection = -2*nitroCount
+        if nitroCount >= 1:
+            for nitro in range(0, nitroCount):
+                self.HEG_list.remove('CNO')
+                self.HEG_list.remove('CN=O')
+
+        self.HEG = fullMatch + nitroCorrection
 
     def EFGFromMol(self, expEnergyGroups):
         expMatch= 0
@@ -129,10 +137,19 @@ class thermalDexMolecule:
                 expmatchList = Mol.GetSubstructMatches(self.mol, expSubstructure)
                 if len(expmatchList) > 0:
                     print('Explosive Group Found: ' + line[:-1])
-                    self.EFG_list += [line[:-1]]
+                    for match in range(0, len(expmatchList)):
+                        self.EFG_list += [line[:-1]]
                 expMatch += len(expmatchList)
 
-        self.EFG = expMatch
+        nitroCount = self.EFG_list.count('C[N+](=O)[O-]')
+        nitroCorrection = -2*nitroCount
+        if nitroCount >= 1:
+            for nitro in range(0, nitroCount):
+                self.EFG_list.remove('CNO')
+                self.EFG_list.remove('CN=O')
+
+        self.EFG = expMatch + nitroCorrection
+
         if self.EFG >= 1:
             self.oreo += 8
         elif self.EFG == 0:

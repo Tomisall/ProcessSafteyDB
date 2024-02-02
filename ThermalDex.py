@@ -14,11 +14,12 @@ from thermDex.thermDexReport import *
 import pyperclip
 from pandasTests import *
 
-versionNumber = "0.8.1"
+versionNumber = "0.8.4"
 
 try:
     import pyi_splash
     pyi_splash.close()
+    window.raise_()
 except:
     pass
 
@@ -689,6 +690,7 @@ class MolDrawer(QWidget):
             window.showErrorMessage("Generating Memo PDF from given values.")
 
     def writeToDatabase(self, molecule, Database):
+        molecule.genAdditionalValues()
         selectedMolData = cleanMolDataFrame(molecule)
         storedData = pd.read_csv(Database, index_col=0)
         print('\n\n\n')
@@ -724,12 +726,7 @@ class MolDrawer(QWidget):
         else:
             return QColor(0, 0, 255)  # Blue
 
-    def render_molecule(self):
-        layout = self.layout()
-        if self.error_flag is not None:
-            self.error_message.setText('')
-            layout.removeWidget(self.error_message)
-
+    def genMoleculeFromUserInput(self):
         # Get the SMILES string from the input field
         smiles = self.smiles_input.text()
         name = self.name_input.text()
@@ -743,21 +740,38 @@ class MolDrawer(QWidget):
 
         # Create an RDKit molecule from the SMILES string
         addedMolecule = thermalDexMolecule(SMILES=smiles, name=name, mp=mp, mpEnd=mpEnd, Q_dsc=Qdsc, Qunits=QUnits, onsetT=TE, initT=Tinit, proj=proj)
-        if smiles != '' and smiles is not None:
-            addedMolecule.mol = MolFromSmiles(smiles)
+        return addedMolecule
+
+    def checkIfSMILESAreValid(self, molecule):
+        if molecule.SMILES != '' and molecule.SMILES is not None:
+            molecule.mol = MolFromSmiles(molecule.SMILES)
 
         else:
-            addedMolecule.mol = None
+            molecule.mol = None
+
+    def displayTheMolecule(self, molecule, display):
+        # Make Pixmap Image to Display.
+        pixmap = molecule.molToQPixmap()
+        scene = QGraphicsScene()
+        scene.addPixmap(pixmap)
+        display.setScene(scene)
+        molecule.molPixmap = None
+
+    def render_molecule(self):
+        layout = self.layout()
+        if self.error_flag is not None:
+            self.error_message.setText('')
+            layout.removeWidget(self.error_message)
+
+        # Generate a thermalDexMolecule from the user input.
+        addedMolecule = self.genMoleculeFromUserInput()
+
+        # Check that the user provided SMILES are valid.
+        self.checkIfSMILESAreValid(addedMolecule)
         
         if addedMolecule.mol is not None:
             # Make Pixmap Image to Display.
-            pixmap = addedMolecule.molToQPixmap()
-            scaledPixmap = pixmap #.scaled(550, 275, Qt.KeepAspectRatio)
-            scene = QGraphicsScene()
-            #scene.setSceneRect(0, 0, 400, 400)
-            scene.addPixmap(scaledPixmap) #pixmap)
-            self.mol_display.setScene(scene)
-            addedMolecule.molPixmap = None
+            self.displayTheMolecule(addedMolecule, self.mol_display)
 
             # Calculate Core Properties
             self.genCoreValuesFromMol(addedMolecule)
@@ -797,12 +811,8 @@ class MolDrawer(QWidget):
                 layout.addWidget(self.error_message)
                 self.error_flag = 202
 
-            #addMol = open(defaultDB, 'a')
-            #addMol.write(writeSmiles + ',' + writeName + ',' + HEG + ',' + writemp + ',' + mwStr + ',' + writeTE + ',' + writeProj + '\n')
-            addedMolecule.genAdditionalValues()
-            altDB = './_core/altDB.csv'
             #createDatabase(addedMolecule)
-            self.writeToDatabase(addedMolecule, defaultDB) #altDB
+            self.writeToDatabase(addedMolecule, defaultDB)
             print('\n')
             print(addedMolecule)
             print('\n')
@@ -822,4 +832,6 @@ if __name__ == '__main__':
     app.setWindowIcon(QIcon('.\\_core\\ThermalDexIcon.ico'))
     window = MolDrawer()
     window.show()
+    window.raise_()
+    window.activateWindow()
     sys.exit(app.exec_())
