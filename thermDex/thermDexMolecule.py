@@ -1,6 +1,7 @@
 import sys
 from rdkit.Chem import Draw, Descriptors, rdMolDescriptors, Mol, MolFromSmiles, MolFromSmarts, rdmolfiles
 from io import BytesIO
+import base64
 from numpy import log10
 from pubchempy import get_compounds
 from dataclasses import dataclass, field, asdict
@@ -102,6 +103,12 @@ class thermalDexMolecule:
         # pixmap.loadFromData(byte_array.getvalue())
         self.molIMG = img
         return img
+
+    def molToBytes(self):
+        image = self.molToIMG()
+        byte_array = BytesIO()
+        image.save(byte_array, format='PNG')
+        return base64.b64encode(byte_array.getvalue()).decode('utf-8')
 
     def mwFromMol(self):
         cmpdMW = Descriptors.MolWt(self.mol)
