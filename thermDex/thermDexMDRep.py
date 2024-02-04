@@ -8,7 +8,7 @@ highEnergyGroups = ['C', 'N=N']
 expEnergyGroups = ['N', 'OO']
 
 def mdReportCreation(molecule, dataURL):
-    memo = MarkdownPdf(toc_level=1)
+    memo = MarkdownPdf(toc_level=0)
 
     #<style>
     css = '''
@@ -20,26 +20,84 @@ def mdReportCreation(molecule, dataURL):
     '''
     #</style>
 
-    memo.add_section(Section("# Thermal Hazard Assessment Memo\n", toc=False)) #, css)
+    #memo.add_section(Section("# Thermal Hazard Assessment Memo\n", toc=False)) #, css)
+
+    if molecule.mp == '' and molecule.mpEnd == '':
+        mpString = ''
+
+    elif molecule.mp != '' and molecule.mpEnd == '':
+        mpString = f'mp: {molecule.mp} °C'
+
+    elif molecule.mp != '' and molecule.mpEnd != '':
+        mpString = f'mp: {molecule.mp} to {molecule.mpEnd} °C'
 
     report_body = f'''
-## {molecule.name}
-![../ThermalDexSplash.jpg](../ThermalDexSplash.jpg)
-                 
-## Molecule Properties 
-SMILES: {molecule.SMILES}\n
-Q<sub>DSC</sub> = 550 J g-1
-T<sub>D24</sub> = 130 °C
+<div style="text-align: center;">
 
+# Thermal Hazard Assessment Memo\n
+
+</div>
+
+## {molecule.name}
 <div style="text-align: center;">
 <img src="{dataURL}" alt="HTML image test" width="50%"/>
 </div>
+                 
+### Molecule Properties 
+SMILES: {molecule.SMILES}\n
+Formula: {molecule.eleComp}\n
+{mpString}\n
 
-## Interpritation 
-These results have been calculated using X and they show Y.
+### Results
+<table align="Center" style="border-spacing: 10px;">
+    <tr>
+        <td colspan="3">High Energy Groups: ({molecule.HEG}) {molecule.HEG_list}</td>
+    </tr>
+    <tr>
+        <td colspan="3">Explosive Groups: ({molecule.EFG}) {molecule.EFG_list}</td>
+    </tr>
+    <tr>
+        <td>Rule of Six = {molecule.RoS_val}</td>
+        <td>Oxygen Balance = {molecule.OB_val}</td>
+        <td> </td>
+    </tr>
+    <tr>
+        <td>Q<sub>DSC</sub> = {molecule.Q_dsc} {molecule.Qunits}</td>
+        <td>T<sub>onset</sub> = {molecule.onsetT}</td>
+        <td>T<sub>init</sub> = {molecule.initT}</td>
+    </tr>
+    <tr>
+        <td>Impact Sensitivity = {molecule.IS_val}</td>
+        <td>Explosive Propagation = {molecule.EP_val}</td>
+        <td>T<sub>D24</sub> = {molecule.Td24} °C</td>
+    </tr>
+</table>
+
+<br>
+
+<table align="Center" style="border-collapse:collapse; border:1px solid black; "border-spacing:20px;">
+    <tr style="border:1px solid black; border-collapse: collapse;">
+        <td style="border:1px solid black; border-collapse: collapse;"> <5 g</td>
+        <td style="border:1px solid black; border-collapse: collapse;"> 5 to 100 g</td>
+        <td style="border:1px solid black; border-collapse: collapse;"> 100 to 500 g</td>
+        <td style="border:1px solid black; border-collapse: collapse;"> >500 g</td>
+    </tr>
+    <tr style="border:1px solid black; border-collapse: collapse; padding:0px;">
+        <td style="border:1px solid black; border-collapse: collapse;">{molecule.oreoSmallScale_des}</td>
+        <td style="border:1px solid black; border-collapse: collapse;">{molecule.oreoTensScale_des}</td>
+        <td style="border:1px solid black; border-collapse: collapse;">{molecule.oreoHundsScale_des}</td>
+        <td style="border:1px solid black; border-collapse: collapse;">{molecule.oreoLargeScale_des}</td>
+    </tr>
+</table>
+
+### Interpretation
+These results have been calculated using X<sup>1</sup> and they show Y<sup>2</sup>.
+
+<small>[1]: *Org. Proc. Res. Dev.,* 2011, 2341-2356</small>\n
+<small>[2]: *Org. Proc. Res. Dev.,* 2011, 2117-2119</small>
 '''
 
-    memo.add_section(Section(report_body)) #, css)
+    memo.add_section(Section(report_body, toc=False)) #, css)
     memo.save("altmemo.pdf")
 
     doc = fitz.open("altmemo.pdf")
