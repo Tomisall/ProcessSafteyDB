@@ -98,6 +98,18 @@ These results have been calculated using X<sup>1</sup> and they show Y<sup>2</su
 '''
 
     memo.add_section(Section(report_body, toc=False)) #, css)
+
+    memo.meta.update({
+      "creationDate": fitz.get_pdf_now(),
+      "modDate": fitz.get_pdf_now(),
+      "creator": "ThermalDex: Thermal Hazard Assessment Tool",
+      "producer": None,
+      "title": "Thermal Hazard Assessment Memo",
+      "author": "ThermalDex: Thermal Hazard Assessment Tool",
+      "subject": None,
+      "keywords": None,
+    })
+
     memo.save("altmemo.pdf")
 
     doc = fitz.open("altmemo.pdf")
