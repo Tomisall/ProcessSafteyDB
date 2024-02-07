@@ -2,7 +2,7 @@
 from markdown_pdf import MarkdownPdf, Section
 #from custom_Markdown_PDF import MarkdownPdf, Section
 import fitz
-from thermDexMolecule import thermalDexMolecule
+#from thermDexMolecule import thermalDexMolecule
 
 highEnergyGroups = ['C', 'N=N']
 expEnergyGroups = ['N', 'OO']
@@ -133,10 +133,10 @@ These results have been calculated using X<sup>1</sup> and they show Y<sup>2</su
 
         doc.save("altmemo_2.pdf")
 
-molecule = thermalDexMolecule(SMILES='c1ccc(C)cc1',name='Test mol Toluene')
-molecule.genMol()
-molecule.molToIMG() #.genAllValues() #highEnergyGroups,expEnergyGroups)
-imageData = molecule.molToBytes()
-dataURL = 'data:image/png;base64,' + imageData
-print(dataURL)
-mdReportCreation(molecule, dataURL)
+#molecule = thermalDexMolecule(SMILES='c1ccc(C)cc1',name='Test mol Toluene')
+#molecule.genMol()
+#molecule.molToIMG() #.genAllValues() #highEnergyGroups,expEnergyGroups)
+#imageData = molecule.molToBytes()
+#dataURL = 'data:image/png;base64,' + imageData
+#print(dataURL)
+#mdReportCreation(molecule, dataURL)

@@ -9,6 +9,7 @@ from PyQt5.QtCore import Qt, QRegExp, pyqtSignal
 #from dataclasses import dataclass, field, asdict
 from thermDex.thermDexMolecule import * #thermalDexMolecule
 from thermDex.thermDexReport import *
+from thermDex.thermDexMDRep import *
 #import pandas as pd
 #import re
 import pyperclip
@@ -678,16 +679,19 @@ class MolDrawer(QWidget):
             window.showErrorMessage("Calculating Yoshida values from Thermal Properties.")
 
     def createReport(self):
-        try:
-           moleculeData = self.render_molecule()
-           img = moleculeData.molToIMG()
-           results = asdict(moleculeData)
-           create_pdf(results["name"], results, img) #results["molIMG"]) 
-           if self.error_flag is not None:
-               self.error_message.setText('')
-               layout.removeWidget(self.error_message)
-        except:
-            window.showErrorMessage("Generating Memo PDF from given values.")
+        #try:
+        moleculeData = self.render_molecule()
+           #img = moleculeData.molToIMG()
+           #results = asdict(moleculeData)
+           #create_pdf(results["name"], results, img) #results["molIMG"]) 
+        imageData = moleculeData.molToBytes()
+        dataURL = 'data:image/png;base64,' + imageData
+        mdReportCreation(moleculeData, dataURL)
+        if self.error_flag is not None:
+            self.error_message.setText('')
+            layout.removeWidget(self.error_message)
+        #except:
+            #window.showErrorMessage("Generating Memo PDF from given values.")
 
     def writeToDatabase(self, molecule, Database):
         molecule.genAdditionalValues()
