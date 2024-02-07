@@ -64,7 +64,8 @@ class MarkdownPdf:
         """Add markdown section to pdf."""
         rect = fitz.paper_rect(section.paper_size)
         where = rect + section.borders
-        story = fitz.Story(html=self.m_d.render(section.text), user_css=css, archive=section.root)
+        #story = fitz.Story(html=self.m_d.render(section.text), user_css=css, archive=section.root)
+        story = fitz.Story(html=section.text, user_css=css, archive=section.root)
         more = 1
         while more:  # loop outputting the story
             self.page += 1

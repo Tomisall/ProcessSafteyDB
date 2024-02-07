@@ -9,7 +9,7 @@ from PyQt5.QtCore import Qt, QRegExp, pyqtSignal
 #from dataclasses import dataclass, field, asdict
 from thermDex.thermDexMolecule import * #thermalDexMolecule
 from thermDex.thermDexReport import *
-from thermDex.thermDexMDRep import *
+from thermDex.thermDexHTMLRep import *
 #import pandas as pd
 #import re
 import pyperclip
