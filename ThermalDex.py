@@ -10,12 +10,13 @@ from PyQt5.QtCore import Qt, QRegExp, pyqtSignal
 from thermDex.thermDexMolecule import * #thermalDexMolecule
 from thermDex.thermDexReport import *
 from thermDex.thermDexHTMLRep import *
+from thermDex.attachedFileManager import *
 #import pandas as pd
 #import re
 import pyperclip
 from pandasTests import *
 
-versionNumber = "0.8.4"
+versionNumber = "0.8.6"
 
 try:
     import pyi_splash
@@ -240,11 +241,54 @@ class MolDrawer(QWidget):
         projUnitsSubLayout.addWidget(projUnitLabel)
         InputLeftLayout.addLayout(projUnitsSubLayout)
 
+        # Input field for Hammer Drop Test
+        hamSubLayout = QHBoxLayout()
+        InputLeftLayout.addWidget(QLabel('Hammer Drop Test:'))
+        self.hamSelection = QComboBox(self)
+        self.hamSelection.addItems(['Not Performed', 'Positive', 'Negative'])
+        hamSubLayout.addWidget(self.hamSelection)
+        hamUnitLabel = QLabel('°C    ')
+        hamUnitLabel.setStyleSheet('color: white')
+        hamSubLayout.addWidget(hamUnitLabel)
+        InputLeftLayout.addLayout(hamSubLayout)
+
+        # Input field for Friction Test
+        fricSubLayout = QHBoxLayout()
+        InputRightLayout.addWidget(QLabel('Friction Test:'))
+        self.fricSelection = QComboBox(self)
+        self.fricSelection.addItems(['Not Performed', 'Positive', 'Negative'])
+        fricSubLayout.addWidget(self.fricSelection)
+        fricUnitLabel = QLabel('°C    ')
+        fricUnitLabel.setStyleSheet('color: white')
+        fricSubLayout.addWidget(fricUnitLabel)
+        InputRightLayout.addLayout(fricSubLayout)
+
         InputContainLayout.addLayout(InputLeftLayout)
         #ResultsContainLayout.addWidget(QVLine())
         InputContainLayout.addLayout(InputRightLayout)
         #ResultsContainLayout.addWidget(QVLine())
         molecule_layout.addLayout(InputContainLayout)
+
+        # Attach Data Files
+        filesSubLayout = QHBoxLayout()
+        attachedFilesLabel = QLabel('Attached Files:')
+        attachedFilesLabel.resize(120, 120)
+        filesSubLayout.addWidget(attachedFilesLabel)
+        self.filesCount = QLabel('0 Attached Files')
+        self.filesCount.resize(90, 120)
+        filesSubLayout.addWidget(self.filesCount)
+        attach_button = QPushButton('Add/View Files', self)
+        attach_button.clicked.connect(self.openFileManager) 
+        attach_button.setMaximumWidth(140)
+        filesSubLayout.addWidget(attach_button)
+        attachSpacerLabel = QLabel('hidden spacer')
+        attachSpacerLabel.setStyleSheet('color: white')
+        filesSubLayout.addWidget(attachSpacerLabel)
+        attachSpacerLabelTwo = QLabel('hidden spacer')
+        attachSpacerLabelTwo.setStyleSheet('color: white')
+        filesSubLayout.addWidget(attachSpacerLabelTwo)
+        molecule_layout.addSpacing(15)
+        molecule_layout.addLayout(filesSubLayout)
 
         # Buttons
         buttonSpacerLabel = QLabel('hidden spacer')
@@ -484,7 +528,7 @@ class MolDrawer(QWidget):
 
         # Set up the main window
         self.setLayout(layout)
-        self.setGeometry(100, 100, 600, 825)
+        self.setGeometry(100, 100, 600, 875)
         self.setWindowTitle('ThermalDex')
 
     def changeTabForEditing(self):
@@ -564,6 +608,12 @@ class MolDrawer(QWidget):
         except:
             print("No mrv XML found.")
 
+    def openFileManager(self):
+        self.fileWindow = FileManagementWindow()
+        self.fileWindow.show()
+        self.fileWindow.raise_()
+        self.fileWindow.activateWindow()
+
     def showErrorMessage(self, errorCode):
         self.msg = QMessageBox()
         self.msg.setIcon(QMessageBox.Warning)
@@ -613,6 +663,8 @@ class MolDrawer(QWidget):
         self.TE_input.setText('')
         self.Tinit_input.setText('')
         self.proj_input.setText('')
+        self.hamSelection.setCurrentIndex(0)
+        self.fricSelection.setCurrentIndex(0)
 
     def resetToDefaultState(self):
         self.clearTheCalcdValues()
