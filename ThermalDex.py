@@ -11,7 +11,7 @@ from thermDex.thermDexMolecule import * #thermalDexMolecule
 from thermDex.thermDexReport import *
 from thermDex.thermDexHTMLRep import *
 from thermDex.attachedFileManager import *
-#import pandas as pd
+#clea
 #import re
 import pyperclip
 from pandasTests import *
@@ -271,16 +271,16 @@ class MolDrawer(QWidget):
 
         # Attach Data Files
         filesSubLayout = QHBoxLayout()
-        attachedFilesLabel = QLabel('Attached Files:')
-        attachedFilesLabel.resize(120, 120)
-        filesSubLayout.addWidget(attachedFilesLabel)
+        self.attachedFilesLabel = QLabel('Attached Files:')
+        self.attachedFilesLabel.resize(120, 120)
+        filesSubLayout.addWidget(self.attachedFilesLabel)
         self.filesCount = QLabel('0 Attached Files')
         self.filesCount.resize(90, 120)
         filesSubLayout.addWidget(self.filesCount)
-        attach_button = QPushButton('Add/View Files', self)
-        attach_button.clicked.connect(self.openFileManager) 
-        attach_button.setMaximumWidth(140)
-        filesSubLayout.addWidget(attach_button)
+        self.attach_button = QPushButton('Add/View Files', self)
+        self.attach_button.clicked.connect(self.openFileManager) 
+        self.attach_button.setMaximumWidth(140)
+        filesSubLayout.addWidget(self.attach_button)
         attachSpacerLabel = QLabel('hidden spacer')
         attachSpacerLabel.setStyleSheet('color: white')
         filesSubLayout.addWidget(attachSpacerLabel)
@@ -313,6 +313,10 @@ class MolDrawer(QWidget):
         self.molecule_tab.setLayout(molecule_layout)
         self.tab_widget.addTab(self.molecule_tab, "Add")
 
+        # Hide File Handling Widgets 
+        self.attachedFilesLabel.hide()
+        self.filesCount.hide()
+        self.attach_button.hide()
 
         # Tab for Search
         search_tab = QWidget()
@@ -576,6 +580,12 @@ class MolDrawer(QWidget):
                 classColor = self.getColorForValue(hazardClass)
                 print(classColor)
                 item.setBackground(classColor)
+            
+            fileCounter = self.countFiles(defaultDB)
+            self.filesCount.setText(f"{str(fileCounter)} Attached Files")
+            self.attachedFilesLabel.show()
+            self.filesCount.show()
+            self.attach_button.show()
         
             try:
                 isStr = "{:.2f}".format(readMolecule.IS_val)
@@ -609,10 +619,18 @@ class MolDrawer(QWidget):
             print("No mrv XML found.")
 
     def openFileManager(self):
-        self.fileWindow = FileManagementWindow()
+        self.fileWindow = FileManagementWindow(self.smiles_input.text(), defaultDB, window)
         self.fileWindow.show()
         self.fileWindow.raise_()
         self.fileWindow.activateWindow()
+
+    def countFiles(self, database):
+        storedData = pd.read_csv(database)
+        row_index = storedData.index[storedData['SMILES'] == self.smiles_input.text()].tolist()
+        folderInfo = storedData['dataFolder'][row_index[0]]
+        files = [f for f in listdir(folderInfo) if isfile(join(folderInfo, f))]
+        fileCount = len(files)
+        return fileCount
 
     def showErrorMessage(self, errorCode):
         self.msg = QMessageBox()
@@ -665,6 +683,9 @@ class MolDrawer(QWidget):
         self.proj_input.setText('')
         self.hamSelection.setCurrentIndex(0)
         self.fricSelection.setCurrentIndex(0)
+        self.attachedFilesLabel.hide()
+        self.filesCount.hide()
+        self.attach_button.hide()
 
     def resetToDefaultState(self):
         self.clearTheCalcdValues()
@@ -730,6 +751,11 @@ class MolDrawer(QWidget):
         except:
             window.showErrorMessage("Calculating Yoshida values from Thermal Properties.")
 
+        try:
+            molecule.makeFolderForMolData()
+        except:
+            window.showErrorMessage("Making Folder to Hold Molecule Data Files.")
+
     def createReport(self):
         #try:
         moleculeData = self.render_molecule()
@@ -746,9 +772,10 @@ class MolDrawer(QWidget):
             #window.showErrorMessage("Generating Memo PDF from given values.")
 
     def writeToDatabase(self, molecule, Database):
-        molecule.genAdditionalValues()
+        #molecule.genAdditionalValues()
         selectedMolData = cleanMolDataFrame(molecule)
         storedData = pd.read_csv(Database, index_col=0)
+        checkData = pd.read_csv(Database)
         print('\n\n\n')
         if selectedMolData['SMILES'][0] in storedData.index:
             print('found')
@@ -756,6 +783,12 @@ class MolDrawer(QWidget):
             if userInteract == QMessageBox.Yes:
                 storedData.update(selectedMolData)
                 outputData = storedData
+                row_index = checkData.index[checkData['SMILES'] == selectedMolData['SMILES'][0]].tolist()
+                print(row_index)
+                folderInfo = checkData['dataFolder'][row_index[0]]
+                print(folderInfo)
+                output_index = outputData.index[checkData['SMILES'] == selectedMolData['SMILES'][0]].tolist()
+                outputData['dataFolder'][output_index[0]] = folderInfo
 
             elif userInteract == QMessageBox.No:
                 outputData = storedData
@@ -872,6 +905,11 @@ class MolDrawer(QWidget):
             print('\n')
             print(addedMolecule)
             print('\n')
+            fileCounter = self.countFiles(defaultDB)
+            self.filesCount.setText(f"{str(fileCounter)} Attached Files")
+            self.attachedFilesLabel.show()
+            self.filesCount.show()
+            self.attach_button.show()
             return addedMolecule
 
 

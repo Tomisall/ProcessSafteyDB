@@ -1,4 +1,5 @@
 import sys
+import os
 from rdkit.Chem import Draw, Descriptors, rdMolDescriptors, Mol, MolFromSmiles, MolFromSmarts, rdmolfiles
 from io import BytesIO
 import base64
@@ -7,6 +8,7 @@ from pubchempy import get_compounds
 from dataclasses import dataclass, field, asdict
 import pandas as pd
 import re
+from datetime import datetime
 from PyQt5.QtGui import QPixmap
 
 @dataclass
@@ -66,6 +68,7 @@ class thermalDexMolecule:
     Hatoms: int = None
     Oatoms: int = None
     yoshidaMethod: str = 'Pfizer'
+    dataFolder: str = ''
 
     def genMol(self):
         RDmol = MolFromSmiles(self.SMILES)
@@ -186,6 +189,16 @@ class thermalDexMolecule:
         self.eleComp = (', ').join(niceList)
         self.eleList = eleList
         return eleList
+
+    def makeFolderForMolData(self):
+        if self.dataFolder == '':
+            now = datetime.now()
+            neatNow = now.strftime("%d-%b-%Y_%H-%M-%S")
+            folderName = f'./_core/UserAddedData/{str(self.molForm)}_{str(neatNow)}'
+            os.mkdir(folderName)
+            self.dataFolder = folderName
+        else:
+            pass
 
     def CHOFromEleComp(self):
         carbonAtoms = [ele[1] for ele in self.eleList if "C" in ele[0]]

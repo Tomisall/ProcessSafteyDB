@@ -3,16 +3,21 @@ import shutil
 import subprocess
 from os import listdir, remove, system
 from os.path import isfile, join
+import pandas as pd
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QListWidget, QPushButton, QLabel, QFileDialog, QMessageBox
 
 class FileManagementWindow(QWidget):
-    def __init__(self):
+    def __init__(self, molecule, database, window):
         super().__init__()
         self.setWindowTitle("Attached Files")
         self.setGeometry(100, 100, 400, 300)
         self.fileDir = './_core/UserAddedData'
+        self.molecule = molecule
+        self.database = database
+        self.mainWindow = window
 
         self.file_list_widget = QListWidget()
+        self.findFolder()
         self.load_files()
 
         self.add_button = QPushButton("+ Add File")
@@ -24,7 +29,7 @@ class FileManagementWindow(QWidget):
         self.open_button.clicked.connect(self.open_file)
 
         layout = QVBoxLayout()
-        layout.addWidget(QLabel("Files in the Folder:"))
+        layout.addWidget(QLabel(f"Files associated with {self.molecule}:"))
         layout.addWidget(self.file_list_widget)
 
         button_layout = QHBoxLayout()
@@ -39,6 +44,12 @@ class FileManagementWindow(QWidget):
     def open_window(self):
         self.newWindow = FileManagementWindow(self)
         self.newWindow.show()
+
+    def findFolder(self):
+        storedData = pd.read_csv(self.database)
+        row_index = storedData.index[storedData['SMILES'] == self.molecule].tolist()
+        folderInfo = storedData['dataFolder'][row_index[0]]
+        self.fileDir = folderInfo
 
     def load_files(self):
         # Simulating loading files from a folder
@@ -55,6 +66,8 @@ class FileManagementWindow(QWidget):
                 shutil.copy2(file, self.fileDir)
             self.file_list_widget.clear()
             self.load_files()
+            fileCounter = self.mainWindow.countFiles(self.database)
+            self.mainWindow.filesCount.setText(f"{str(fileCounter)} Attached Files")
 
     def remove_file(self):
         deleteMsg = QMessageBox()
@@ -69,6 +82,8 @@ class FileManagementWindow(QWidget):
                 self.file_list_widget.takeItem(self.file_list_widget.row(item))
                 itemPath = self.fileDir + '/' + item.text()
                 remove(itemPath)
+            fileCounter = self.mainWindow.countFiles(self.database)
+            self.mainWindow.filesCount.setText(f"{str(fileCounter)} Attached Files")
 
         elif userConfirm == QMessageBox.No:
             pass
