@@ -3,6 +3,16 @@ import subprocess
 from pathlib import Path
 from xhtml2pdf import pisa
 import time
+from os import listdir, remove
+from os.path import isfile, join, abspath
+import fitz
+from PIL import Image
+from io import BytesIO
+import base64
+from docx2pdf import convert
+from datetime import datetime
+import win32com.client
+import pythoncom
 
 def convert_html_to_pdf(html_string, pdf_path):
     with open(pdf_path, "wb") as pdf_file:
@@ -11,6 +21,8 @@ def convert_html_to_pdf(html_string, pdf_path):
     return not pisa_status.err
 
 def mdReportCreation(molecule, dataURL):
+    wdFormatPDF = 17
+
     if molecule.mp == '' and molecule.mpEnd == '':
         mpString = ''
 
@@ -19,6 +31,76 @@ def mdReportCreation(molecule, dataURL):
 
     elif molecule.mp != '' and molecule.mpEnd != '':
         mpString = f'mp: {molecule.mp} to {molecule.mpEnd} °C'
+
+
+    additionalData = '<h2>Additional Data</h2>'
+    attachedFiles = [f for f in listdir(molecule.dataFolder) if isfile(join(molecule.dataFolder, f))]
+    print('\n\n')
+    print(molecule.dataFolder)
+    print(attachedFiles)
+    imgList = ['.png', '.PNG', '.jpeg', '.JPEG', '.jpg', '.JPG', '.svg', '.SVG']
+    pdfList = ['.pdf', '.PDF']
+    docList = ['.doc', '.docx']
+    for file in attachedFiles:
+        if file.endswith(tuple(imgList)):
+             print(file)
+             additionalData += f'''
+<h3>{file}</h3>
+<div class="imgDiv">
+<img src="{molecule.dataFolder}/{file}" alt="{file}" style="object-fit: cover;"/>
+</div>
+'''
+        elif file.endswith(tuple(pdfList)):
+            additionalData += f'<h3>{file}</h3>'
+            pdfFile = fitz.open(f'{molecule.dataFolder}/{file}')
+            noOfPages = pdfFile.page_count
+            for pageNo in range(noOfPages):
+                page = pdfFile.load_page(pageNo) 
+                pix = page.get_pixmap()
+                #image_data = pix.tobytes()
+                #byte_array = BytesIO()
+                #byte_array.write(image_data, format='PNG')
+                image_bytes = pix.tobytes("PNG")
+                pngOfPage = base64.b64encode(image_bytes).decode('utf-8')
+                pageDataURL = 'data:image/png;base64,' + pngOfPage
+                additionalData += f'''
+<div class="imgDiv">
+<img src="{pageDataURL}" alt="{file}" style="object-fit: cover;"/>
+</div>
+'''
+
+        elif file.endswith(tuple(docList)):
+            additionalData += f'<h3>{file}</h3>'
+            now = datetime.now()
+            neatNow = now.strftime("%d-%b-%Y_%H-%M-%S")
+            outName = f'./_core/UserAddedData/temp/temp_{str(neatNow)}.pdf'
+            #convert(f'{molecule.dataFolder}/{file}', outName)
+            absolutePath = abspath(f'{molecule.dataFolder}/{file}')
+            outAbs = abspath(outName)
+            word = win32com.client.Dispatch('Word.Application', pythoncom.CoInitialize())
+            doc = word.Documents.Open(absolutePath)
+            doc.SaveAs(outAbs, FileFormat=wdFormatPDF)
+            doc.Close()
+            #word.Quit()
+            pdfFile = fitz.open(outName)
+            noOfPages = pdfFile.page_count
+            for pageNo in range(noOfPages):
+                page = pdfFile.load_page(pageNo) 
+                pix = page.get_pixmap()
+                #image_data = pix.tobytes()
+                #byte_array = BytesIO()
+                #byte_array.write(image_data, format='PNG')
+                image_bytes = pix.tobytes("PNG")
+                pngOfPage = base64.b64encode(image_bytes).decode('utf-8')
+                pageDataURL = 'data:image/png;base64,' + pngOfPage
+                additionalData += f'''
+<div class="imgDiv">
+<img src="{pageDataURL}" alt="{file}" style="object-fit: cover;"/>
+</div>
+'''
+        else:
+            print(f'poo poo {file}')
+
 
     html_content = f'''
 <!DOCTYPE html>
@@ -94,6 +176,10 @@ MW: {"{:.2f}".format(molecule.MW)} g mol<sup>-1</sup><br>
 </div>
 </body>
 '''
+    if additionalData != '<h2>Additional Data</h2>':
+        html_content += additionalData
+    else:
+        print('\n\nFoo\n\n')
     convert_html_to_pdf(html_content, "./AssessmentMemos/htmlMemo.pdf")
-    time.sleep(2)
+    time.sleep(1)
     subprocess.run(['start', "./AssessmentMemos/htmlMemo.pdf"], check=True, shell=True)

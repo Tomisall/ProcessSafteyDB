@@ -15,6 +15,7 @@ from thermDex.attachedFileManager import *
 #import re
 import pyperclip
 from pandasTests import *
+import configparser
 
 versionNumber = "0.8.6"
 
@@ -46,7 +47,14 @@ def importConfig():
     #print(defaultDB)
     return defaultDB, highEnergyGroups, expEnergyGroups
 
-#defaultDB, highEnergyGroups, expEnergyGroups = importConfig()
+def altImportConfig():
+    config = configparser.ConfigParser()
+    config.read('./_core/ThermalDex.ini')
+    defaultDB = config.get('Database', 'defaultDB')
+    highEnergyGroups = config.get('Lists of Groups', 'highEnergyGroups')
+    expEnergyGroups = config.get('Lists of Groups', 'expEnergyGroups')
+    yosidaMethod = config.get('Calculations', 'yoshidaCalcs')
+    return defaultDB, highEnergyGroups, expEnergyGroups, yosidaMethod
 
 class QHLine(QFrame):
     def __init__(self):
@@ -624,10 +632,19 @@ class MolDrawer(QWidget):
         self.fileWindow.raise_()
         self.fileWindow.activateWindow()
 
+    def findFolder(self, database):
+        try:
+            storedData = pd.read_csv(database)
+            row_index = storedData.index[storedData['SMILES'] == self.smiles_input.text()].tolist()
+            folderInfo = storedData['dataFolder'][row_index[0]]
+            return folderInfo
+
+        except:
+            return ''
+     
+
     def countFiles(self, database):
-        storedData = pd.read_csv(database)
-        row_index = storedData.index[storedData['SMILES'] == self.smiles_input.text()].tolist()
-        folderInfo = storedData['dataFolder'][row_index[0]]
+        folderInfo = self.findFolder(database)
         files = [f for f in listdir(folderInfo) if isfile(join(folderInfo, f))]
         fileCount = len(files)
         return fileCount
@@ -827,8 +844,10 @@ class MolDrawer(QWidget):
         Tinit = self.Tinit_input.text()
         proj = self.proj_input.text()
 
+        dataFolder = self.findFolder(defaultDB)
+
         # Create an RDKit molecule from the SMILES string
-        addedMolecule = thermalDexMolecule(SMILES=smiles, name=name, mp=mp, mpEnd=mpEnd, Q_dsc=Qdsc, Qunits=QUnits, onsetT=TE, initT=Tinit, proj=proj)
+        addedMolecule = thermalDexMolecule(SMILES=smiles, name=name, mp=mp, mpEnd=mpEnd, Q_dsc=Qdsc, Qunits=QUnits, onsetT=TE, initT=Tinit, proj=proj, dataFolder=dataFolder)
         return addedMolecule
 
     def checkIfSMILESAreValid(self, molecule):
@@ -910,6 +929,12 @@ class MolDrawer(QWidget):
             self.attachedFilesLabel.show()
             self.filesCount.show()
             self.attach_button.show()
+            tempFiles = [f for f in listdir('./_core/UserAddedData/temp') if isfile(join('./_core/UserAddedData/temp', f))]
+            for file in tempFiles:
+                try:
+                    remove(f'./_core/UserAddedData/temp/{file}')
+                except:
+                    pass
             return addedMolecule
 
 
@@ -921,7 +946,7 @@ class MolDrawer(QWidget):
             self.error_flag = 100
 
 if __name__ == '__main__':
-    defaultDB, highEnergyGroups, expEnergyGroups = importConfig()
+    defaultDB, highEnergyGroups, expEnergyGroups, yosidaMethod = altImportConfig()
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon('.\\_core\\ThermalDexIcon.ico'))
     window = MolDrawer()
