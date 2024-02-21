@@ -8,7 +8,7 @@ from PyQt5.QtCore import Qt, QRegExp, pyqtSignal
 #from pubchempy import get_compounds
 #from dataclasses import dataclass, field, asdict
 from thermDex.thermDexMolecule import * #thermalDexMolecule
-from thermDex.thermDexReport import *
+#from thermDex.thermDexReport import *
 from thermDex.thermDexHTMLRep import *
 from thermDex.attachedFileManager import *
 from thermDex.Section import Section
@@ -988,8 +988,15 @@ class MolDrawer(QWidget):
     def writeToDatabase(self, molecule, Database):
         #molecule.genAdditionalValues()
         selectedMolData = cleanMolDataFrame(molecule)
-        storedData = pd.read_csv(Database, index_col=0)
-        checkData = pd.read_csv(Database)
+        try:
+            storedData = pd.read_csv(Database, index_col=0)
+            checkData = pd.read_csv(Database)
+        except:
+            data = {'SMILES': []}
+            storedData = pd.DataFrame(data)
+            checkData = pd.DataFrame(data)
+
+        
         print('\n\n\n')
         if selectedMolData['SMILES'][0] in storedData.index:
             print('found')

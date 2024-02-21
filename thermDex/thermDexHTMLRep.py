@@ -11,8 +11,10 @@ from io import BytesIO
 import base64
 from docx2pdf import convert
 from datetime import datetime
-import win32com.client
-import pythoncom
+
+if sys.platform != "darwin":
+    import win32com.client
+    import pythoncom
 
 def convert_html_to_pdf(html_string, pdf_path):
     with open(pdf_path, "wb") as pdf_file:
@@ -102,8 +104,21 @@ def mdReportCreation(molecule, dataURL):
             print(f'poo poo {file}')
 
 
+    if molecule.Td24 != None:
+         Td24Formated = "{:.2f}".format(molecule.Td24) + " °C"
+    else:
+         Td24Formated = ""
 
-    Td24Formated = "{:.2f}".format(molecule.Td24) + " °C"
+    if molecule.IS_val != None:
+        ISvalFormated = "{:.2f}".format(molecule.IS_val)
+    else:
+        ISvalFormated = ""
+
+    if molecule.EP_val != None:
+        EPvalFormated = "{:.2f}".format(molecule.EP_val)
+    else:
+        EPvalFormated = ""
+
     html_content = f'''
 <!DOCTYPE html>
 <html>
@@ -143,8 +158,8 @@ MW: {"{:.2f}".format(molecule.MW)} g mol<sup>-1</sup><br>
 <td class="secretTable">T<sub>init</sub> = {molecule.initT} °C</td>
 </tr>
 <tr class="secretTable">
-<td class="secretTable">Impact Sensitivity = {"{:.2f}".format(molecule.IS_val)}</td>
-<td class="secretTableMid">Explosive Propagation = {"{:.2f}".format(molecule.EP_val)}</td>
+<td class="secretTable">Impact Sensitivity = {ISvalFormated}</td>
+<td class="secretTableMid">Explosive Propagation = {EPvalFormated}</td>
 <td class="secretTable">T<sub>D24</sub> = {Td24Formated}</td>
 </tr>
 </table>
