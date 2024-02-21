@@ -329,7 +329,7 @@ class MolDrawer(QWidget):
 
         # Tab for Search
         search_tab = QWidget()
-        search_layout = QVBoxLayout() #molecule_layout #
+        search_layout = QVBoxLayout()
 
         # Entry widget for searching
         lbl_search = QLabel('Search:')
@@ -338,10 +338,6 @@ class MolDrawer(QWidget):
         searchTypeSelection.addItems(['SMILES (substructure)', 'Name', 'Project', 'Compounds with smaller Qdsc', 'Compounds with larger Qdsc', 'Compounds with smaller Tinit', 'Compounds with larger Tinit', 'Compounds with smaller Tonset', 'Compounds with larger Tonset', 'Compounds with smaller Td24', 'Compounds with larger Td24', 'Compounds with smaller O.R.E.O.S. score at >500 g', 'Compounds with larger O.R.E.O.S. score at >500 g'])
         result_label = QLabel('click search')
         counter_label = QLabel('none')
-        view_test_button = QPushButton('edit', self)
-        view_test_button.clicked.connect(self.changeTabForEditing) 
-        search_layout.addWidget(view_test_button)
-
 
         def search_database():
              self.readDatabase = pd.read_csv(defaultDB) #, index_col=0) #, encoding='mbcs')
@@ -390,13 +386,13 @@ class MolDrawer(QWidget):
                  show_result(self, otherFoundDataFrame, True)
                  if otherFoundDataFrame.empty:
                       errorInfo = "No matches found"
-                      interactiveErrorMessage(self, errorInfo)
-      
-
+                      self.interactiveErrorMessage(errorInfo)
 
         def show_result(self, Database, resetIndex):
              #print(self)
              layout = self.layout()
+             self.mol_result_display.show()
+             self.molLabel.show()
              if self.error_flag is not None:
                   self.error_message.setText('')
                   layout.removeWidget(self.error_message)
@@ -418,8 +414,13 @@ class MolDrawer(QWidget):
                   result_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
                   result_label.setWordWrap(True) 
                   counter_label.setText(f"Result {self.current_index + 1} of {len(Database)}")
-                  search_layout.addWidget(prev_button)
-                  search_layout.addWidget(next_button)
+                  search_layout.insertWidget(6, edit_button) #  .addWidget(edit_button)
+                  search_layout.insertWidget(7, result_label)
+                  search_layout.addWidget(counter_label)
+                  prev_next_layout = QHBoxLayout()
+                  prev_next_layout.addWidget(prev_button)
+                  prev_next_layout.addWidget(next_button)
+                  search_layout.addLayout(prev_next_layout)
 
                   if self.result_smiles is not None:
                       mol = MolFromSmiles(self.result_smiles)
@@ -464,19 +465,23 @@ class MolDrawer(QWidget):
         self.molLabel = QLabel('Molecule:')
         search_layout.addWidget(self.molLabel)
         search_layout.addWidget(self.mol_result_display)
+        self.mol_result_display.hide()
+        self.molLabel.hide()
 
         btn_search = QPushButton('Search', clicked=search_database)
+        edit_button = QPushButton('Edit')
         prev_button = QPushButton('Previous')
         next_button = QPushButton('Next')
         prev_button.clicked.connect(lambda: prev_result(self))
         next_button.clicked.connect(lambda: next_result(self, self.selectedDatabase))
+        edit_button.clicked.connect(self.changeTabForEditing) 
+
 
         search_layout.addWidget(lbl_search)
         search_layout.addWidget(entry_search)
         search_layout.addWidget(searchTypeSelection)
-        search_layout.addWidget(result_label)
-        search_layout.addWidget(counter_label)
         search_layout.addWidget(btn_search)
+        search_layout.addStretch()
 
         search_tab.setLayout(search_layout)
         self.tab_widget.addTab(search_tab, "Search")
@@ -717,76 +722,76 @@ class MolDrawer(QWidget):
 
 
     def changeTabForEditing(self):
-        try:
-            editDB = self.selectedDatabase.fillna('')
-            current_row = editDB.iloc[self.current_index]
-            dictRow = current_row.to_dict()
-            print(dictRow)
-            print('\n\n')
-            readMolecule = thermalDexMolecule(**dictRow)
-            readMolecule.genMol()
-            # Make Pixmap Image to Display.
-            pixmap = readMolecule.molToQPixmap()
-            scaledPixmap = pixmap #.scaled(550, 275, Qt.KeepAspectRatio)
-            scene = QGraphicsScene()
-            #scene.setSceneRect(0, 0, 400, 400)
-            scene.addPixmap(scaledPixmap) #pixmap)
-            self.mol_display.setScene(scene)
-            readMolecule.molPixmap = None
-            self.smiles_input.setText(readMolecule.SMILES)
-            self.name_input.setText(readMolecule.name)
-            self.mp_input.setText(str(readMolecule.mp))
-            self.mpEnd_input.setText(str(readMolecule.mpEnd))
-            self.Qdsc_input.setText(str(readMolecule.Q_dsc))
-            comboIndex = self.QUnitsSelection.findText(readMolecule.Qunits)
-            self.QUnitsSelection.setCurrentIndex(comboIndex)
-            self.TE_input.setText(str(readMolecule.onsetT))
-            self.Tinit_input.setText(str(readMolecule.initT))
-            self.proj_input.setText(str(readMolecule.proj))
-            niceMWStr = "{:.2f}".format(readMolecule.MW)
-            self.mwLabel.setText('MW: ' + niceMWStr) #str(readMolecule.MW))
-            self.HEGlabel.setText('Number of High Energy Groups: ' + str(readMolecule.HEG))
-            self.EFGlabel.setText('Number of Explosive Functional Groups: ' + str(readMolecule.EFG)) 
-            self.eleLabel.setText('Elemental Composition: ' + readMolecule.eleComp)
-            self.RoSLabel.setText('Rule of Six: ' + str(readMolecule.RoS_val) + readMolecule.RoS_des)
-            self.obLabel.setText('Oxygen Balance: ' + str(readMolecule.obStr) + ' ' + readMolecule.OB_des)
-            self.table.clearContents()
-            hazardList = [readMolecule.oreoSmallScale_des, readMolecule.oreoTensScale_des, readMolecule.oreoHundsScale_des, readMolecule.oreoLargeScale_des]
-            # Add values to cells
-            for i, hazardClass in enumerate(hazardList):
-                item = QTableWidgetItem(hazardClass)
-                self.table.setItem(0, i, item)
-   
-                # Color code cells based on values
-                classColor = self.getColorForValue(hazardClass)
-                print(classColor)
-                item.setBackground(classColor)
-            
-            fileCounter = self.countFiles(defaultDB)
-            self.filesCount.setText(f"{str(fileCounter)} Attached Files")
-            self.attachedFilesLabel.show()
-            self.filesCount.show()
-            self.attach_button.show()
-        
-            try:
-                isStr = "{:.2f}".format(readMolecule.IS_val)
-            except:
-                isStr = ''
-            self.ISLabel.setText('Yoshida Impact Sensitivity: ' + isStr + readMolecule.IS_des)
-            try:
-                epStr = "{:.2f}".format(readMolecule.EP_val)
-            except:
-                epStr = ''
-            self.EPLabel.setText('Yoshida Explosive Propagation: ' + epStr + readMolecule.EP_des)
-            try:
-                d24Str = "{:.1f}".format(readMolecule.Td24)
-                self.Td24Label.setText('T<sub>D24</sub>: <b>' + d24Str + ' °C</b>')        
-            except:
-                pass
-            self.tab_widget.setCurrentWidget(self.molecule_tab)   #0) #self.tab_widget.findChild(QWidget, "Add"))
+        #try:
+        editDB = self.selectedDatabase.fillna('')
+        current_row = editDB.iloc[self.current_index]
+        dictRow = current_row.to_dict()
+        print(dictRow)
+        print('\n\n')
+        readMolecule = thermalDexMolecule(**dictRow)
+        readMolecule.genMol()
+        # Make Pixmap Image to Display.
+        pixmap = readMolecule.molToQPixmap()
+        scaledPixmap = pixmap #.scaled(550, 275, Qt.KeepAspectRatio)
+        scene = QGraphicsScene()
+        #scene.setSceneRect(0, 0, 400, 400)
+        scene.addPixmap(scaledPixmap) #pixmap)
+        self.mol_display.setScene(scene)
+        readMolecule.molPixmap = None
+        self.smiles_input.setText(readMolecule.SMILES)
+        self.name_input.setText(readMolecule.name)
+        self.mp_input.setText(str(readMolecule.mp))
+        self.mpEnd_input.setText(str(readMolecule.mpEnd))
+        self.Qdsc_input.setText(str(readMolecule.Q_dsc))
+        comboIndex = self.QUnitsSelection.findText(readMolecule.Qunits)
+        self.QUnitsSelection.setCurrentIndex(comboIndex)
+        self.TE_input.setText(str(readMolecule.onsetT))
+        self.Tinit_input.setText(str(readMolecule.initT))
+        self.proj_input.setText(str(readMolecule.proj))
+        niceMWStr = "{:.2f}".format(readMolecule.MW)
+        self.mwLabel.setText('MW: ' + niceMWStr) #str(readMolecule.MW))
+        self.HEGlabel.setText('Number of High Energy Groups: ' + str(readMolecule.HEG))
+        self.EFGlabel.setText('Number of Explosive Functional Groups: ' + str(readMolecule.EFG)) 
+        self.eleLabel.setText('Elemental Composition: ' + readMolecule.eleComp)
+        self.RoSLabel.setText('Rule of Six: ' + str(readMolecule.RoS_val) + readMolecule.RoS_des)
+        self.obLabel.setText('Oxygen Balance: ' + str(readMolecule.obStr) + ' ' + readMolecule.OB_des)
+        self.table.clearContents()
+        hazardList = [readMolecule.oreoSmallScale_des, readMolecule.oreoTensScale_des, readMolecule.oreoHundsScale_des, readMolecule.oreoLargeScale_des]
+        # Add values to cells
+        for i, hazardClass in enumerate(hazardList):
+            item = QTableWidgetItem(hazardClass)
+            self.table.setItem(0, i, item)
 
+            # Color code cells based on values
+            classColor = self.getColorForValue(hazardClass)
+            print(classColor)
+            item.setBackground(classColor)
+        
+        fileCounter = self.countFiles(defaultDB)
+        self.filesCount.setText(f"{str(fileCounter)} Attached Files")
+        self.attachedFilesLabel.show()
+        self.filesCount.show()
+        self.attach_button.show()
+    
+        try:
+            isStr = "{:.2f}".format(readMolecule.IS_val)
         except:
-            window.showErrorMessage("Editing current selection. Has a molecule been found?")
+            isStr = ''
+        self.ISLabel.setText('Yoshida Impact Sensitivity: ' + isStr + readMolecule.IS_des)
+        try:
+            epStr = "{:.2f}".format(readMolecule.EP_val)
+        except:
+            epStr = ''
+        self.EPLabel.setText('Yoshida Explosive Propagation: ' + epStr + readMolecule.EP_des)
+        try:
+            d24Str = "{:.1f}".format(readMolecule.Td24)
+            self.Td24Label.setText('T<sub>D24</sub>: <b>' + d24Str + ' °C</b>')        
+        except:
+            pass
+        self.tab_widget.setCurrentWidget(self.molecule_tab)   #0) #self.tab_widget.findChild(QWidget, "Add"))
+
+        #except:
+        #    window.showErrorMessage("Editing current selection. Has a molecule been found?")
 
     def mrvToSMILES(self):
         try:
@@ -817,10 +822,14 @@ class MolDrawer(QWidget):
      
 
     def countFiles(self, database):
-        folderInfo = self.findFolder(database)
-        files = [f for f in listdir(folderInfo) if isfile(join(folderInfo, f))]
-        fileCount = len(files)
-        return fileCount
+        try:
+            folderInfo = self.findFolder(database)
+            files = [f for f in listdir(folderInfo) if isfile(join(folderInfo, f))]
+            fileCount = len(files)
+            return fileCount
+        except:
+            print('No Folder Given.')
+            return 0
 
     def showErrorMessage(self, errorCode):
         self.msg = QMessageBox()

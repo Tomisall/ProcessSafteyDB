@@ -5,6 +5,7 @@ from os import listdir, remove, system
 from os.path import isfile, join
 import pandas as pd
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QListWidget, QPushButton, QLabel, QFileDialog, QMessageBox
+from thermDex.thermDexMolecule import *
 
 class FileManagementWindow(QWidget):
     def __init__(self, molecule, database, window):
@@ -48,14 +49,35 @@ class FileManagementWindow(QWidget):
     def findFolder(self):
         storedData = pd.read_csv(self.database)
         row_index = storedData.index[storedData['SMILES'] == self.molecule].tolist()
-        folderInfo = storedData['dataFolder'][row_index[0]]
-        self.fileDir = folderInfo
+        printTest = storedData.iloc[row_index[0]]
+        print(f'\n\n{printTest}\n\n')
+        if storedData['dataFolder'].isnull().iloc[row_index[0]]:
+            self.fileDir = ''
+
+        else:
+            folderInfo = storedData['dataFolder'][row_index[0]]
+            print(folderInfo)
+            self.fileDir = folderInfo
 
     def load_files(self):
         # Simulating loading files from a folder
         #files = ["file1.txt", "file2.txt", "file3.txt"]
-        files = [f for f in listdir(self.fileDir) if isfile(join(self.fileDir, f))]
-        self.file_list_widget.addItems(files)
+        print(self.fileDir)
+        if self.fileDir != None and self.fileDir != '' and self.fileDir != 'nan':
+            files = [f for f in listdir(self.fileDir) if isfile(join(self.fileDir, f))]
+            self.file_list_widget.addItems(files)
+        else:
+            tempMolForFolderGen = thermalDexMolecule(SMILES=self.molecule)
+            tempMolForFolderGen.genMol()
+            tempMolForFolderGen.eleCompFromMol()
+            folderName = tempMolForFolderGen.makeFolderForMolData()
+            storedData = pd.read_csv(self.database)
+            row_index = storedData.index[storedData['SMILES'] == self.molecule].tolist()
+            storedData['dataFolder'][row_index[0]] = folderName
+            print(storedData)
+            storedData.to_csv(self.database, index=False)
+            self.fileDir = folderName
+            self.load_files()
 
     def add_file(self):
         file_dialog = QFileDialog()

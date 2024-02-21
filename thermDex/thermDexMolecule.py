@@ -191,12 +191,13 @@ class thermalDexMolecule:
         return eleList
 
     def makeFolderForMolData(self):
-        if self.dataFolder == '':
+        if self.dataFolder == '' or self.dataFolder == None:
             now = datetime.now()
             neatNow = now.strftime("%d-%b-%Y_%H-%M-%S")
             folderName = f'./_core/UserAddedData/{str(self.molForm)}_{str(neatNow)}'
             os.mkdir(folderName)
             self.dataFolder = folderName
+            return folderName
         else:
             pass
 
