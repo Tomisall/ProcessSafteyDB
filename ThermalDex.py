@@ -334,8 +334,16 @@ class MolDrawer(QWidget):
         # Entry widget for searching
         lbl_search = QLabel('Search:')
         entry_search = QLineEdit()
-        searchTypeSelection = QComboBox(self)
-        searchTypeSelection.addItems(['SMILES (substructure)', 'Name', 'Project', 'Compounds with smaller Qdsc', 'Compounds with larger Qdsc', 'Compounds with smaller Tinit', 'Compounds with larger Tinit', 'Compounds with smaller Tonset', 'Compounds with larger Tonset', 'Compounds with smaller Td24', 'Compounds with larger Td24', 'Compounds with smaller O.R.E.O.S. score at >500 g', 'Compounds with larger O.R.E.O.S. score at >500 g'])
+        self.searchTypeSelection = QComboBox(self)
+        self.searchTypeSelection.addItems(['SMILES', 'Name', 'Project', 'Qdsc', 'Tinit', 'Tonset', 'Td24', 'O.R.E.O.S. at >500 g'])
+        smilesSearchList = ['Substructure', 'Exact']
+        nameProjSearchList = ['is', 'contains']
+        valuesSearchList = ['=', '<', '>', '</=', '>/=']
+        self.listOfSearchTypes = [smilesSearchList, nameProjSearchList, nameProjSearchList, valuesSearchList, valuesSearchList, valuesSearchList, valuesSearchList, valuesSearchList]
+        self.searchSubType = QComboBox(self)
+        self.searchSubType.addItems(smilesSearchList)
+        self.searchTypeSelection.currentIndexChanged.connect(self.set_sub_search)
+
         result_label = QLabel('click search')
         counter_label = QLabel('none')
 
@@ -414,8 +422,9 @@ class MolDrawer(QWidget):
                   result_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
                   result_label.setWordWrap(True) 
                   counter_label.setText(f"Result {self.current_index + 1} of {len(Database)}")
-                  search_layout.insertWidget(6, edit_button) #  .addWidget(edit_button)
-                  search_layout.insertWidget(7, result_label)
+                  search_layout.insertWidget(4, edit_button) #  .addWidget(edit_button)
+                  search_layout.insertWidget(5, del_button)
+                  search_layout.insertWidget(6, result_label)
                   search_layout.addWidget(counter_label)
                   prev_next_layout = QHBoxLayout()
                   prev_next_layout.addWidget(prev_button)
@@ -470,17 +479,20 @@ class MolDrawer(QWidget):
 
         btn_search = QPushButton('Search', clicked=search_database)
         edit_button = QPushButton('Edit')
+        del_button = QPushButton('Delete')
         prev_button = QPushButton('Previous')
         next_button = QPushButton('Next')
         prev_button.clicked.connect(lambda: prev_result(self))
         next_button.clicked.connect(lambda: next_result(self, self.selectedDatabase))
         edit_button.clicked.connect(self.changeTabForEditing) 
 
-
+        sub_search_layout = QHBoxLayout()
         search_layout.addWidget(lbl_search)
-        search_layout.addWidget(entry_search)
-        search_layout.addWidget(searchTypeSelection)
-        search_layout.addWidget(btn_search)
+        sub_search_layout.addWidget(self.searchTypeSelection)
+        sub_search_layout.addWidget(self.searchSubType)
+        sub_search_layout.addWidget(entry_search)
+        sub_search_layout.addWidget(btn_search)
+        search_layout.addLayout(sub_search_layout)
         search_layout.addStretch()
 
         search_tab.setLayout(search_layout)
@@ -677,6 +689,9 @@ class MolDrawer(QWidget):
         self.setGeometry(100, 100, 600, 875)
         self.setWindowTitle('ThermalDex')
 
+    def set_sub_search(self, subIndex):
+        self.searchSubType.clear()
+        self.searchSubType.addItems(self.listOfSearchTypes[subIndex])
 
     def select_database(self):
         options = QFileDialog.Options()
