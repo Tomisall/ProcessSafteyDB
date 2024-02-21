@@ -11,6 +11,7 @@ from thermDex.thermDexMolecule import * #thermalDexMolecule
 from thermDex.thermDexReport import *
 from thermDex.thermDexHTMLRep import *
 from thermDex.attachedFileManager import *
+from thermDex.Section import Section
 #clea
 #import re
 import pyperclip
@@ -480,11 +481,140 @@ class MolDrawer(QWidget):
         search_tab.setLayout(search_layout)
         self.tab_widget.addTab(search_tab, "Search")
 
+        # Tab for Settings
+        settings_tab = QWidget()
+        settings_layout = QVBoxLayout()
+        self.config = configparser.ConfigParser()
+        self.config.read('./_core/ThermalDex.ini')
+
+        #settings_layout.addWidget(self.default_file_label)
+        #settings_layout.addWidget(self.default_file_input)
+        #settings_layout.addWidget(self.default_file_button)
+        #settings_layout.addWidget(self.save_button)
+
+        # Defaults
+        defaults_section = Section("Defaults", 100, self)
+        defaults_layout = QVBoxLayout()
+        defaults_layout.addWidget(QLabel("Select ThermalDex Defaults", defaults_section))
+        #any_layout.addWidget(QPushButton("Button in Section", section))
+        QDSCDefaultsLayout = QHBoxLayout()
+        QDSCDefaultsLabel = QLabel('Select Q<sub>DSC</sub> Units: ')
+        QDSCDefaultsCombo = QComboBox()
+        QDSCDefaultsCombo.addItems(['J g⁻¹', 'cal g⁻¹'])
+        QDSCApplyButton = QPushButton('Apply')
+        QDSCDefaultsLayout.addWidget(QDSCDefaultsLabel)
+        QDSCDefaultsLayout.addWidget(QDSCDefaultsCombo)
+        QDSCDefaultsLayout.addWidget(QDSCApplyButton)
+        defaults_layout.addLayout(QDSCDefaultsLayout)
+
+        yoshidaDefaultsLayout = QHBoxLayout()
+        yoshidaDefaultsLabel = QLabel('Yoshia Method: ')
+        yoshidaDefaultsCombo = QComboBox()
+        yoshidaDefaultsCombo.addItems(['Pfizer', 'Yoshida'])
+        yoshidaApplyButton = QPushButton('Apply')
+        yoshidaDefaultsLayout.addWidget(yoshidaDefaultsLabel)
+        yoshidaDefaultsLayout.addWidget(yoshidaDefaultsCombo)
+        yoshidaDefaultsLayout.addWidget(yoshidaApplyButton)
+        defaults_layout.addLayout(yoshidaDefaultsLayout)
+
+        defaults_section.setContentLayout(defaults_layout)
+
+        # Core Settings
+        core_section = Section("Core Settings", 100, self)
+        core_layout = QVBoxLayout()
+        core_layout.addWidget(QLabel("Core Settings for ThermalDex (be careful...)", core_section))
+        
+        databaseCoreLayout = QHBoxLayout()
+        databaseCoreLabel = QLabel("Compound Database:")
+        self.databaseCoreInput = QLineEdit(self.config.get('Database', 'defaultDB'))
+        databaseCoreSelectButton = QPushButton("Browse")
+        databaseCoreSelectButton.clicked.connect(self.select_database)
+        databaseCoreApplyButton = QPushButton("Apply")
+        databaseCoreApplyButton.clicked.connect(self.save_database_settings)
+        databaseCoreLayout.addWidget(databaseCoreLabel)
+        databaseCoreLayout.addSpacing(14)
+        databaseCoreLayout.addWidget(self.databaseCoreInput)
+        databaseCoreLayout.addWidget(databaseCoreSelectButton)
+        databaseCoreLayout.addWidget(databaseCoreApplyButton)
+        core_layout.addLayout(databaseCoreLayout)
+
+        hegCoreLayout = QHBoxLayout()
+        hegCoreLabel = QLabel("High Energy Groups List:")
+        self.hegCoreInput = QLineEdit(self.config.get('Lists of Groups', 'highenergygroups'))
+        hegCoreSelectButton = QPushButton("Browse")
+        hegCoreSelectButton.clicked.connect(self.select_heglist)
+        hegCoreApplyButton = QPushButton("Apply")
+        hegCoreApplyButton.clicked.connect(self.save_heglist_settings)
+        hegCoreLayout.addWidget(hegCoreLabel)
+        hegCoreLayout.addWidget(self.hegCoreInput)
+        hegCoreLayout.addWidget(hegCoreSelectButton)
+        hegCoreLayout.addWidget(hegCoreApplyButton)
+        core_layout.addLayout(hegCoreLayout)
+
+        efgCoreLayout = QHBoxLayout()
+        efgCoreLabel = QLabel("Explosive Groups List:")
+        self.efgCoreInput = QLineEdit(self.config.get('Lists of Groups', 'expenergygroups'))
+        efgCoreSelectButton = QPushButton("Browse")
+        efgCoreSelectButton.clicked.connect(self.select_efglist)
+        efgCoreApplyButton = QPushButton("Apply")
+        efgCoreApplyButton.clicked.connect(self.save_efglist_settings)
+        efgCoreLayout.addWidget(efgCoreLabel)
+        efgCoreLayout.addSpacing(14)
+        efgCoreLayout.addWidget(self.efgCoreInput)
+        efgCoreLayout.addWidget(efgCoreSelectButton)
+        efgCoreLayout.addWidget(efgCoreApplyButton)
+        core_layout.addLayout(efgCoreLayout)
+
+        core_section.setContentLayout(core_layout)
+
+        # Apperance Settings
+        apperance_section = Section("Apperance Settings", 100, self)
+        apperance_layout = QVBoxLayout()
+        apperance_layout.addWidget(QLabel("Apperance Settings for ThermalDex (currently inactive)", core_section))
+        
+        palletApperLayout = QHBoxLayout()
+        palletApperLabel = QLabel('Molecule Drawing Pallet:')
+        palletApperCombo = QComboBox()
+        palletApperCombo.addItems(['Colorful', 'Black and White'])
+        palletApperButton = QPushButton('Apply')
+        palletApperLayout.addWidget(palletApperLabel)
+        palletApperLayout.addWidget(palletApperCombo)
+        palletApperLayout.addWidget(palletApperButton)
+        apperance_layout.addLayout(palletApperLayout)
+
+        themeApperLayout = QHBoxLayout()
+        themeApperLabel = QLabel('ThermalDex Theme:')
+        themeApperCombo = QComboBox()
+        themeApperCombo.addItems(['Light Mode', 'Dark Mode'])
+        themeApperButton = QPushButton('Apply')
+        themeApperLayout.addWidget(themeApperLabel)
+        themeApperLayout.addWidget(themeApperCombo)
+        themeApperLayout.addWidget(themeApperButton)
+        apperance_layout.addLayout(themeApperLayout)
+
+        fullscreenApperLayout = QHBoxLayout()
+        fullscreenApperLabel = QLabel('Full Screen on Start-up?:')
+        fullscreenApperCombo = QComboBox()
+        fullscreenApperCombo.addItems(['True', 'False'])
+        fullscreenApperButton = QPushButton('Apply')
+        fullscreenApperLayout.addWidget(fullscreenApperLabel)
+        fullscreenApperLayout.addWidget(fullscreenApperCombo)
+        fullscreenApperLayout.addWidget(fullscreenApperButton)
+        apperance_layout.addLayout(fullscreenApperLayout)
+        
+        apperance_section.setContentLayout(apperance_layout)       
+
+        settings_layout.addWidget(defaults_section)
+        settings_layout.addWidget(core_section)
+        settings_layout.addWidget(apperance_section)
+        settings_layout.addStretch()
+
+        settings_tab.setLayout(settings_layout)
+        self.tab_widget.addTab(settings_tab, "Settings")
 
         # Tab for "About" information
 
         #def hover(url):
-        #    if url:
         #        QToolTip.showText(QCursor.pos(), titles.get(url, url))
         #    else:
         #        QToolTip.hideText()
@@ -533,7 +663,6 @@ class MolDrawer(QWidget):
 
         about_tab.setLayout(about_layout)
         self.tab_widget.addTab(about_tab, "About")
-
         layout.addWidget(self.tab_widget)
 
 
@@ -542,6 +671,50 @@ class MolDrawer(QWidget):
         self.setLayout(layout)
         self.setGeometry(100, 100, 600, 875)
         self.setWindowTitle('ThermalDex')
+
+
+    def select_database(self):
+        options = QFileDialog.Options()
+        default_file, _ = QFileDialog.getOpenFileName(self, "Select Database to Use:", "", "CSV Files (*.csv)", options=options)
+        if default_file:
+            self.databaseCoreInput.setText(default_file)
+
+    def save_database_settings(self):
+        self.config.set('Database', 'defaultDB', self.databaseCoreInput.text())
+
+        with open('./_core/ThermalDex.ini', 'w') as configfile:
+            self.config.write(configfile)
+            
+        QMessageBox.information(self, "Settings Saved", "Settings have been saved.")
+
+    def select_heglist(self):
+        options = QFileDialog.Options()
+        default_file, _ = QFileDialog.getOpenFileName(self, "Select List to Use:", "", "CSV Files (*.csv)", options=options)
+        if default_file:
+            self.hegCoreInput.setText(default_file)
+
+    def save_heglist_settings(self):
+        self.config.set('Lists of Groups', 'highenergygroups', self.hegCoreInput.text())
+
+        with open('./_core/ThermalDex.ini', 'w') as configfile:
+            self.config.write(configfile)
+            
+        QMessageBox.information(self, "Settings Saved", "Settings have been saved.")
+
+    def select_efglist(self):
+        options = QFileDialog.Options()
+        default_file, _ = QFileDialog.getOpenFileName(self, "Select List to Use:", "", "CSV Files (*.csv)", options=options)
+        if default_file:
+            self.efgCoreInput.setText(default_file)
+
+    def save_efglist_settings(self):
+        self.config.set('Lists of Groups', 'expenergygroups', self.efgCoreInput.text())
+
+        with open('./_core/ThermalDex.ini', 'w') as configfile:
+            self.config.write(configfile)
+            
+        QMessageBox.information(self, "Settings Saved", "Settings have been saved.")
+
 
     def changeTabForEditing(self):
         try:

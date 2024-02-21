@@ -85,3 +85,8 @@ div.imgDiv{
     text-align: center;
     height: 175px;
 }
+
+div.attachedFile{
+    text-align: center;
+    width: 1000px;
+}

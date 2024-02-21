@@ -46,7 +46,7 @@ def mdReportCreation(molecule, dataURL):
              print(file)
              additionalData += f'''
 <h3>{file}</h3>
-<div class="imgDiv">
+<div class="attachedFile">
 <img src="{molecule.dataFolder}/{file}" alt="{file}" style="object-fit: cover;"/>
 </div>
 '''
@@ -64,7 +64,7 @@ def mdReportCreation(molecule, dataURL):
                 pngOfPage = base64.b64encode(image_bytes).decode('utf-8')
                 pageDataURL = 'data:image/png;base64,' + pngOfPage
                 additionalData += f'''
-<div class="imgDiv">
+<div class="attachedFile">
 <img src="{pageDataURL}" alt="{file}" style="object-fit: cover;"/>
 </div>
 '''
@@ -94,7 +94,7 @@ def mdReportCreation(molecule, dataURL):
                 pngOfPage = base64.b64encode(image_bytes).decode('utf-8')
                 pageDataURL = 'data:image/png;base64,' + pngOfPage
                 additionalData += f'''
-<div class="imgDiv">
+<div class="attachedFile">
 <img src="{pageDataURL}" alt="{file}" style="object-fit: cover;"/>
 </div>
 '''
@@ -102,6 +102,8 @@ def mdReportCreation(molecule, dataURL):
             print(f'poo poo {file}')
 
 
+
+    Td24Formated = "{:.2f}".format(molecule.Td24) + " °C"
     html_content = f'''
 <!DOCTYPE html>
 <html>
@@ -143,7 +145,7 @@ MW: {"{:.2f}".format(molecule.MW)} g mol<sup>-1</sup><br>
 <tr class="secretTable">
 <td class="secretTable">Impact Sensitivity = {"{:.2f}".format(molecule.IS_val)}</td>
 <td class="secretTableMid">Explosive Propagation = {"{:.2f}".format(molecule.EP_val)}</td>
-<td class="secretTable">T<sub>D24</sub> = {molecule.Td24} °C</td>
+<td class="secretTable">T<sub>D24</sub> = {Td24Formated}</td>
 </tr>
 </table>
 
