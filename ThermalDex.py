@@ -335,11 +335,11 @@ class MolDrawer(QWidget):
         lbl_search = QLabel('Search:')
         entry_search = QLineEdit()
         self.searchTypeSelection = QComboBox(self)
-        self.searchTypeSelection.addItems(['SMILES', 'Name', 'Project', 'Qdsc', 'Tinit', 'Tonset', 'Td24', 'O.R.E.O.S. at >500 g'])
+        self.searchTypeSelection.addItems(['SMILES', 'Name', 'Project', 'MW', 'Qdsc', 'Tinit', 'Tonset', 'Td24', 'O.R.E.O.S. at >500 g'])
         smilesSearchList = ['Substructure', 'Exact']
         nameProjSearchList = ['is', 'contains']
         valuesSearchList = ['=', '<', '>', '</=', '>/=']
-        self.listOfSearchTypes = [smilesSearchList, nameProjSearchList, nameProjSearchList, valuesSearchList, valuesSearchList, valuesSearchList, valuesSearchList, valuesSearchList]
+        self.listOfSearchTypes = [smilesSearchList, nameProjSearchList, nameProjSearchList, valuesSearchList, valuesSearchList, valuesSearchList, valuesSearchList, valuesSearchList, valuesSearchList]
         self.searchSubType = QComboBox(self)
         self.searchSubType.addItems(smilesSearchList)
         self.searchTypeSelection.currentIndexChanged.connect(self.set_sub_search)
@@ -349,58 +349,847 @@ class MolDrawer(QWidget):
 
         def search_database():
              self.readDatabase = pd.read_csv(defaultDB) #, index_col=0) #, encoding='mbcs')
-             searchTest = MolFromSmiles(entry_search.text())
-             print(entry_search.text())
 
-             if entry_search.text() != '' and entry_search.text() != None and searchTest is not None:
-                 smilesList = self.readDatabase['SMILES'].tolist()  #.index.values
-                 print(smilesList)
-                 foundList = []
-                 for smile in smilesList:
-                     searchStructure = MolFromSmiles(smile)
-                     fullmatchList = Mol.GetSubstructMatches(searchStructure, searchTest)
-                     if len(fullmatchList) > 0:
-                         print('Substructure Match Found: ' + smile)
-                         foundList += [smile]
-                 print('\n\n')
-                 print(foundList)
-
-                 indexList = []
-                 for foundMatch in foundList:
-                     row_index = self.readDatabase.index[self.readDatabase['SMILES'] == foundMatch].tolist()
-                     indexList += row_index
-
-                 print(indexList)
-                 print('\n\n')
-                 foundDataFrame = self.readDatabase.iloc[indexList]
-                 print(foundDataFrame)
-                 print('\n\n')
-
-                 foundDataFrame.reset_index(drop=True)
-
-                 self.selectedDatabase = foundDataFrame
-                 show_result(self, foundDataFrame, True)
-
-             elif entry_search.text() == '' or entry_search.text() == None:    
+             if entry_search.text() == '' or entry_search.text() == None:    
                  self.selectedDatabase = self.readDatabase
                  show_result(self, self.readDatabase, True)
 
+             elif self.searchTypeSelection.currentText() == 'SMILES':
+                 if self.searchSubType.currentText() == 'Exact':
+                     searchSMILES = entry_search.text()
+                     row_index = self.readDatabase.index[self.readDatabase['SMILES'] == searchSMILES].tolist()
+                     foundDataFrame = self.readDatabase.iloc[row_index]
+                     foundDataFrame.reset_index(drop=True)
+                     self.selectedDatabase = foundDataFrame
+                     show_result(self, foundDataFrame, True)
+
+                 elif self.searchSubType.currentText() == 'Substructure':
+                    try:
+                        searchTest = MolFromSmiles(entry_search.text())
+                        checkifrealbyMW = Descriptors.MolWt(searchTest)
+                        if entry_search.text() != '' and entry_search.text() != None and searchTest is not None:
+                            smilesList = self.readDatabase['SMILES'].tolist()  #.index.values
+                            print(smilesList)
+                            foundList = []
+                            for smile in smilesList:
+                                searchStructure = MolFromSmiles(smile)
+                                fullmatchList = Mol.GetSubstructMatches(searchStructure, searchTest)
+                                if len(fullmatchList) > 0:
+                                    print('Substructure Match Found: ' + smile)
+                                    foundList += [smile]
+                            print('\n\n')
+                            print(foundList)
+                            indexList = []
+                            for foundMatch in foundList:
+                                row_index = self.readDatabase.index[self.readDatabase['SMILES'] == foundMatch].tolist()
+                                indexList += row_index
+                            print(indexList)
+                            print('\n\n')
+                            foundDataFrame = self.readDatabase.iloc[indexList]
+                            print(foundDataFrame)
+                            print('\n\n')
+                            foundDataFrame.reset_index(drop=True)
+                            self.selectedDatabase = foundDataFrame
+                            show_result(self, foundDataFrame, True)
+                    except:
+                        errorInfo = "Enter Valid SMILES"
+                        self.interactiveErrorMessage(errorInfo)
+
+             elif self.searchTypeSelection.currentText() == 'Name':
+                 if self.searchSubType.currentText() == 'is':
+                     searchName = entry_search.text()
+                     row_index = self.readDatabase.index[self.readDatabase['name'] == searchName].tolist()
+                     foundDataFrame = self.readDatabase.iloc[row_index]
+                     foundDataFrame.reset_index(drop=True)
+                     self.selectedDatabase = foundDataFrame
+                     show_result(self, foundDataFrame, True)
+
+                 elif self.searchSubType.currentText() == 'contains':
+                     searchName = entry_search.text()
+                     nameList = self.readDatabase['name'].tolist()  #.index.values
+                     cleanNameList = []
+                     foundList = []
+                     for name in nameList:
+                         if name == name: # a check to remove nan values
+                             cleanNameList += [name]
+                     for name in cleanNameList:
+                         print(name)
+                         if searchName.lower() in name.lower():
+                             foundList += [name]
+                     print('\n\n')
+                     print(foundList)
+                     indexList = []
+                     for foundMatch in foundList:
+                         row_index = self.readDatabase.index[self.readDatabase['name'] == foundMatch].tolist()
+                         indexList += row_index
+                     foundDataFrame = self.readDatabase.iloc[indexList]
+                     print(foundDataFrame)
+                     print('\n\n')
+                     foundDataFrame.reset_index(drop=True)
+                     self.selectedDatabase = foundDataFrame
+                     show_result(self, foundDataFrame, True)
+
+             elif self.searchTypeSelection.currentText() == 'Project':
+                 if self.searchSubType.currentText() == 'is':
+                     searchName = entry_search.text()
+                     row_index = self.readDatabase.index[self.readDatabase['proj'] == searchName].tolist()
+                     foundDataFrame = self.readDatabase.iloc[row_index]
+                     foundDataFrame.reset_index(drop=True)
+                     self.selectedDatabase = foundDataFrame
+                     show_result(self, foundDataFrame, True)
+
+                 elif self.searchSubType.currentText() == 'contains':
+                     searchName = entry_search.text()
+                     nameList = self.readDatabase['proj'].tolist()  #.index.values
+                     cleanNameList = []
+                     foundList = []
+                     for name in nameList:
+                         if name == name: # a check to remove nan values
+                             cleanNameList += [name]
+                     for name in cleanNameList:
+                         print(name)
+                         if searchName.lower() in name.lower():
+                             foundList += [name]
+                     print('\n\n')
+                     print(foundList)
+                     indexList = []
+                     for foundMatch in foundList:
+                         row_index = self.readDatabase.index[self.readDatabase['proj'] == foundMatch].tolist()
+                         indexList += row_index
+                     foundDataFrame = self.readDatabase.iloc[indexList]
+                     print(foundDataFrame)
+                     print('\n\n')
+                     foundDataFrame.reset_index(drop=True)
+                     self.selectedDatabase = foundDataFrame
+                     show_result(self, foundDataFrame, True)
+
+             elif self.searchTypeSelection.currentText() == 'MW':
+                 if self.searchSubType.currentText() == '=':
+                     try:
+                        searchName = float(entry_search.text())
+                        row_index = self.readDatabase.index[self.readDatabase['MW'] == searchName].tolist()
+                        foundDataFrame = self.readDatabase.iloc[row_index]
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo) 
+
+                 elif self.searchSubType.currentText() == '<':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['MW'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value < float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['MW'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '>':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['MW'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value > float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['MW'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '</=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['MW'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value <= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['MW'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)           
+
+                 elif self.searchSubType.currentText() == '>/=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['MW'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value >= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['MW'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)  
+
+             elif self.searchTypeSelection.currentText() == 'Qdsc':
+                 if self.searchSubType.currentText() == '=':
+                     try:
+                        searchName = float(entry_search.text())
+                        row_index = self.readDatabase.index[self.readDatabase['Q_dsc'] == searchName].tolist()
+                        foundDataFrame = self.readDatabase.iloc[row_index]
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo) 
+
+                 elif self.searchSubType.currentText() == '<':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['Q_dsc'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value < float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['Q_dsc'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '>':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['Q_dsc'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value > float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['Q_dsc'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '</=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['Q_dsc'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value <= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['Q_dsc'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)           
+
+                 elif self.searchSubType.currentText() == '>/=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['Q_dsc'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value >= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['Q_dsc'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)  
+
+             elif self.searchTypeSelection.currentText() == 'Tinit':
+                 if self.searchSubType.currentText() == '=':
+                     try:
+                        searchName = float(entry_search.text())
+                        row_index = self.readDatabase.index[self.readDatabase['initT'] == searchName].tolist()
+                        foundDataFrame = self.readDatabase.iloc[row_index]
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo) 
+
+                 elif self.searchSubType.currentText() == '<':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['initT'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value < float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['initT'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '>':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['initT'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value > float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['initT'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        foundList = list(dict.fromkeys(foundList))
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '</=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['initT'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value <= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['initT'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        foundList = list(dict.fromkeys(foundList))
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)           
+
+                 elif self.searchSubType.currentText() == '>/=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['initT'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value >= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['initT'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)               
+
+             elif self.searchTypeSelection.currentText() == 'Tonset':
+                 if self.searchSubType.currentText() == '=':
+                     try:
+                        searchName = float(entry_search.text())
+                        row_index = self.readDatabase.index[self.readDatabase['onsetT'] == searchName].tolist()
+                        foundDataFrame = self.readDatabase.iloc[row_index]
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo) 
+
+                 elif self.searchSubType.currentText() == '<':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['onsetT'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value < float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['onsetT'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '>':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['onsetT'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value > float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['onsetT'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '</=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['onsetT'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value <= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['onsetT'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)           
+
+                 elif self.searchSubType.currentText() == '>/=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['onsetT'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value >= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['onsetT'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)     
+
+             elif self.searchTypeSelection.currentText() == 'Td24':
+                 if self.searchSubType.currentText() == '=':
+                     try:
+                        searchName = float(entry_search.text())
+                        row_index = self.readDatabase.index[self.readDatabase['Td24'] == searchName].tolist()
+                        foundDataFrame = self.readDatabase.iloc[row_index]
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo) 
+
+                 elif self.searchSubType.currentText() == '<':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['Td24'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value < float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['Td24'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '>':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['Td24'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value > float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['Td24'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '</=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['Td24'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value <= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['Td24'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)           
+
+                 elif self.searchSubType.currentText() == '>/=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['Td24'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value >= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['Td24'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)     
+
+             elif self.searchTypeSelection.currentText() == 'O.R.E.O.S. at >500 g':
+                 if self.searchSubType.currentText() == '=':
+                     try:
+                        searchName = float(entry_search.text())
+                        row_index = self.readDatabase.index[self.readDatabase['oreoLargeScale_val'] == searchName].tolist()
+                        foundDataFrame = self.readDatabase.iloc[row_index]
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo) 
+
+                 elif self.searchSubType.currentText() == '<':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['oreoLargeScale_val'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value < float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['oreoLargeScale_val'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '>':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['oreoLargeScale_val'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value > float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['oreoLargeScale_val'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '</=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['oreoLargeScale_val'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value <= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        indexList = []
+                        foundList = list(dict.fromkeys(foundList))
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['oreoLargeScale_val'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)           
+
+                 elif self.searchSubType.currentText() == '>/=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['oreoLargeScale_val'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value >= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        indexList = []
+                        foundList = list(dict.fromkeys(foundList))
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['oreoLargeScale_val'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
              else:
-                 otherSearchIndex = []
-                 otherSearchIndex += [self.readDatabase.isin([entry_search.text()]).any(axis=1).idxmax()]
-                 print(otherSearchIndex)
-                 otherFoundDataFrame = self.readDatabase.iloc[otherSearchIndex]
-                 self.selectedDatabase = otherFoundDataFrame
-                 show_result(self, otherFoundDataFrame, True)
-                 if otherFoundDataFrame.empty:
-                      errorInfo = "No matches found"
-                      self.interactiveErrorMessage(errorInfo)
+                 errorInfo = "How!? How have you gotten to this error message... I... Ugh... Report this to the developer okay?"
+                 self.interactiveErrorMessage(errorInfo)   
 
         def show_result(self, Database, resetIndex):
              #print(self)
              layout = self.layout()
              self.mol_result_display.show()
              self.molLabel.show()
+             if Database.empty:
+                  errorInfo = "No matches found. Try a diffrent search?"
+                  self.interactiveErrorMessage(errorInfo)
+                  counter_label.setText("")
+                  result_label.setText("")
+                  self.mol_result_display.hide()
+                  self.molLabel.hide()
+                  try:
+                      edit_button.hide()
+                      del_button.hide()
+                      prev_button.hide()
+                      next_button.hide()
+                  except:
+                      print('Not shown')
+
              if self.error_flag is not None:
                   self.error_message.setText('')
                   layout.removeWidget(self.error_message)
@@ -417,7 +1206,7 @@ class MolDrawer(QWidget):
                   readMolecule = thermalDexMolecule(**dictRow)
                   print(readMolecule.MW)
                   self.result_smiles = current_row['SMILES']
-                  result_text = f"SMILES: {current_row['SMILES']}\nName: {current_row['name']}\nHEG: {current_row['HEG']}\nmp: {current_row['mp']} to {current_row['mpEnd']}\nMW: {current_row['MW']}\nT<sub>onset</sub>: {current_row['onsetT']}\nT<sub>init</sub>: {current_row['initT']}\nProject: {current_row['proj']}"
+                  result_text = f"SMILES: {current_row['SMILES']}<br>Name: {current_row['name']}<br>High Energy Groups: {current_row['HEG']}<br>Explosive Functional Groups: {current_row['EFG']}<br>mp: {current_row['mp']} to {current_row['mpEnd']}<br>MW: {'{:.2f}'.format(current_row['MW'])}<br>Q<sub>DSC</sub>: {current_row['Q_dsc']}<br>T<sub>onset</sub>: {current_row['onsetT']}<br>T<sub>init</sub>: {current_row['initT']}<br>Project: {current_row['proj']}"
                   result_label.setText(result_text)
                   result_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
                   result_label.setWordWrap(True) 
@@ -430,6 +1219,10 @@ class MolDrawer(QWidget):
                   prev_next_layout.addWidget(prev_button)
                   prev_next_layout.addWidget(next_button)
                   search_layout.addLayout(prev_next_layout)
+                  edit_button.show()
+                  del_button.show()
+                  prev_button.show()
+                  next_button.show()
 
                   if self.result_smiles is not None:
                       mol = MolFromSmiles(self.result_smiles)
