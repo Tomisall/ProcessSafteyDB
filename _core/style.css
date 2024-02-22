@@ -3,6 +3,7 @@
 
   @frame content_frame {          /* Content Frame */
      left: 50pt;
+     /*right: 50pt;*/
      width: 495pt;
      top: 40pt;
      height: 750pt;
@@ -10,9 +11,13 @@
      /* Another static Frame */
   @frame footer_frame {           
      -pdf-frame-content: footer_content;
-     left: 60pt; width: 470pt; top: 770pt; height: 40pt;
+     left: 60pt; width: 470pt; top: 792pt; height: 40pt;
      display: block;
   }
+}
+
+@media print {
+    .pagebreak { page-break-before: always; } /* page-break-after works, as well */
 }
 
 body {
@@ -24,6 +29,7 @@ body {
     -o-font-feature-settings: "kern" 1;
     font-feature-settings: "kern" 1;
     font-kerning: normal;
+    overflow-wrap: break-word;
 }
 
 table {
@@ -89,4 +95,11 @@ div.imgDiv{
 div.attachedFile{
     text-align: center;
     width: 1000px;
+}
+
+div.breakLine{
+    width: 470pt;
+    text-wrap: balance;
+    word-break: break-all;
+    overflow-wrap: break-word;
 }
