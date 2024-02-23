@@ -80,6 +80,13 @@ td.secretTableMid{
     padding-right: 4px;
     margin-left:-16px;
 }
+td.secretTableTop{
+    border: 0px;
+    padding-top: 6px;
+    padding-left: 0px;
+    padding-right: 4px;
+    margin-top:-1600px;
+}
 tr.secretTable{
     border: 0px;
 }

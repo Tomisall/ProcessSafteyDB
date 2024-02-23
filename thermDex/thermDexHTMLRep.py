@@ -248,6 +248,13 @@ MW: {"{:.2f}".format(molecule.MW)} g mol<sup>-1</sup><br>
 </tr>
 </tbody>
 </table>
+<p style="margin-bottom:0%;">Emperical Test Results:</p>
+<table align="Center" class="secretTable">
+<tr class="secretTable">
+<td class="secretTableTop">Hammer Drop Test: {molecule.hammerDrop}</td>
+<td class="secretTableTop">Friction Test: {molecule.friction}</td>
+</tr>
+</table>
 <div class="pagebreak"> </div>
 <h3>Interpretation</h3>
 <p> {interpRoS} </p>
