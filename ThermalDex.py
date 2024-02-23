@@ -1,7 +1,7 @@
 #import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTableWidget, QTableWidgetItem, QTabWidget, QGraphicsPixmapItem,  QMessageBox, QComboBox #, QTableView, QToolTip
 from PyQt5.QtGui import QPixmap, QColor, QIcon, QRegExpValidator #QValidator #, QCursor
-from PyQt5.QtCore import Qt, QRegExp, pyqtSignal
+from PyQt5.QtCore import Qt, QRegExp, pyqtSignal, QCoreApplication
 #from rdkit.Chem import Draw, Descriptors, rdMolDescriptors, Mol, MolFromSmiles, MolFromSmarts, rdmolfiles
 #from io import BytesIO
 #from numpy import log10
@@ -56,8 +56,8 @@ def altImportConfig():
     defaultDB = config.get('Database', 'defaultDB')
     highEnergyGroups = config.get('Lists of Groups', 'highEnergyGroups')
     expEnergyGroups = config.get('Lists of Groups', 'expEnergyGroups')
-    yosidaMethod = config.get('Calculations', 'yoshidaCalcs')
-    return defaultDB, highEnergyGroups, expEnergyGroups, yosidaMethod
+    yoshidaMethod = config.get('Calculations', 'yoshidaCalcs')
+    return defaultDB, highEnergyGroups, expEnergyGroups, yoshidaMethod
 
 class QHLine(QFrame):
     def __init__(self):
@@ -1214,7 +1214,7 @@ class MolDrawer(QWidget):
                   readMolecule = thermalDexMolecule(**dictRow)
                   print(readMolecule.MW)
                   self.result_smiles = current_row['SMILES']
-                  result_text = f"SMILES: {current_row['SMILES']}<br>Name: {current_row['name']}<br>High Energy Groups: {current_row['HEG']}<br>Explosive Functional Groups: {current_row['EFG']}<br>mp: {current_row['mp']} to {current_row['mpEnd']}<br>MW: {'{:.2f}'.format(current_row['MW'])}<br>Q<sub>DSC</sub>: {current_row['Q_dsc']}<br>T<sub>onset</sub>: {current_row['onsetT']}<br>T<sub>init</sub>: {current_row['initT']}<br>Project: {current_row['proj']}"
+                  result_text = f"SMILES: {current_row['SMILES']}<br>Name: {current_row['name']}<br>High Energy Groups: {current_row['HEG']}<br>Explosive Functional Groups: {current_row['EFG']}<br>mp: {current_row['mp']} to {current_row['mpEnd']} °C<br>MW: {'{:.2f}'.format(current_row['MW'])} g mol<sup>-1</sup><br>Q<sub>DSC</sub>: {current_row['Q_dsc']} {current_row['Qunits']}<br>T<sub>onset</sub>: {current_row['onsetT']} °C<br>T<sub>init</sub>: {current_row['initT']} °C<br>Oxygen Balance: {current_row['OB_val']} {current_row['OB_des']}<br>Rule of Six: {current_row['RoS_val']} {current_row['RoS_des']}<br>Impact Sensitivity: {current_row['IS_val']} {current_row['IS_des']}<br>Explosive Propagation: {current_row['EP_val']} {current_row['EP_des']}<br>Yosida Calculation Method Used: {current_row['yoshidaMethod']}<br>Hammer Drop Test: {current_row['hammerDrop']}<br>Friction Test: {current_row['friction']}<br>Project: {current_row['proj']}"
                   result_label.setText(result_text)
                   result_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
                   result_label.setWordWrap(True)
@@ -1392,6 +1392,8 @@ class MolDrawer(QWidget):
         self.config = configparser.ConfigParser()
         self.config.read('./_core/ThermalDex.ini')
 
+        settings_intro = QLabel('<h1>ThermalDex Settings</h1><p>This pane contains the settings for this application. Change relavent settings as needed.</p>')
+        settings_layout.addWidget(settings_intro)
         #settings_layout.addWidget(self.default_file_label)
         #settings_layout.addWidget(self.default_file_input)
         #settings_layout.addWidget(self.default_file_button)
@@ -1512,6 +1514,15 @@ class MolDrawer(QWidget):
         settings_layout.addWidget(defaults_section)
         settings_layout.addWidget(core_section)
         settings_layout.addWidget(apperance_section)
+
+        reload_sublayout = QHBoxLayout()
+        reload_config_label = QLabel('Configuration changes will take effect the next time ThermalDex is opened.<br> To force changes to take effect now, click:')
+        reload_config_button = QPushButton('Reload Config')
+        reload_config_button.clicked.connect(self.reload_config_func)
+        reload_sublayout.addWidget(reload_config_label)
+        reload_sublayout.addWidget(reload_config_button)
+        settings_layout.addLayout(reload_sublayout)
+
         settings_layout.addStretch()
 
         settings_tab.setLayout(settings_layout)
@@ -1576,6 +1587,16 @@ class MolDrawer(QWidget):
         self.setLayout(layout)
         self.setGeometry(100, 100, 600, 875)
         self.setWindowTitle('ThermalDex')
+
+    def reload_config_func(self):
+        #sys.exit(app.exec_())
+        #QCoreApplication.quit()
+        global defaultDB
+        global highEnergyGroups
+        global expEnergyGroups
+        global yoshidaMethod
+
+        defaultDB, highEnergyGroups, expEnergyGroups, yoshidaMethod = altImportConfig()
 
     def delCurrentEntry(self, currentResult, Database):
         errorInfo = "Really? Delete this entry? Are you sure?"
@@ -2029,7 +2050,7 @@ class MolDrawer(QWidget):
         dataFolder = self.findFolder(defaultDB)
 
         # Create an RDKit molecule from the SMILES string
-        addedMolecule = thermalDexMolecule(SMILES=smiles, name=name, mp=mp, mpEnd=mpEnd, Q_dsc=Qdsc, Qunits=QUnits, onsetT=TE, initT=Tinit, proj=proj, hammerDrop=hammerDrop, friction=friction, dataFolder=dataFolder)
+        addedMolecule = thermalDexMolecule(SMILES=smiles, name=name, mp=mp, mpEnd=mpEnd, Q_dsc=Qdsc, Qunits=QUnits, onsetT=TE, initT=Tinit, proj=proj, hammerDrop=hammerDrop, friction=friction, dataFolder=dataFolder, yoshidaMethod=yoshidaMethod)
         return addedMolecule
 
     def checkIfSMILESAreValid(self, molecule):
@@ -2128,7 +2149,7 @@ class MolDrawer(QWidget):
             self.error_flag = 100
 
 if __name__ == '__main__':
-    defaultDB, highEnergyGroups, expEnergyGroups, yosidaMethod = altImportConfig()
+    defaultDB, highEnergyGroups, expEnergyGroups, yoshidaMethod = altImportConfig()
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon('.\\_core\\ThermalDexIcon.ico'))
     window = MolDrawer()
