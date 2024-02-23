@@ -12,11 +12,13 @@ from thermDex.thermDexMolecule import * #thermalDexMolecule
 from thermDex.thermDexHTMLRep import *
 from thermDex.attachedFileManager import *
 from thermDex.Section import Section
+from thermDex.thermDexPlots import *
 #clea
 #import re
 import pyperclip
 from pandasTests import *
 import configparser
+from numpy import log10
 
 versionNumber = "0.8.6"
 
@@ -1173,8 +1175,6 @@ class MolDrawer(QWidget):
         def show_result(self, Database, resetIndex):
              #print(self)
              layout = self.layout()
-             self.mol_result_display.show()
-             self.molLabel.show()
              if Database.empty:
                   errorInfo = "No matches found. Try a diffrent search?"
                   self.interactiveErrorMessage(errorInfo)
@@ -1182,14 +1182,20 @@ class MolDrawer(QWidget):
                   result_label.setText("")
                   self.mol_result_display.hide()
                   self.molLabel.hide()
+                  make_plot_label.hide()
+                  make_plot_button.hide()
+                  self.select_x_values.hide()
+                  vs_label.hide()
+                  self.select_y_values.hide()
                   try:
                       edit_button.hide()
                       del_button.hide()
                       prev_button.hide()
                       next_button.hide()
+                      results_table_Label.hide()
+                      results_table.hide()
                   except:
                       print('Not shown')
-
              if self.error_flag is not None:
                   self.error_message.setText('')
                   layout.removeWidget(self.error_message)
@@ -1197,6 +1203,8 @@ class MolDrawer(QWidget):
              if resetIndex == True:
                   self.current_index = 0             
              if Database is not None and not Database.empty:
+                  self.mol_result_display.show()
+                  self.molLabel.show()
                   current_row = Database.iloc[self.current_index]
                   print(current_row)
                   print('\n\n')
@@ -1209,11 +1217,41 @@ class MolDrawer(QWidget):
                   result_text = f"SMILES: {current_row['SMILES']}<br>Name: {current_row['name']}<br>High Energy Groups: {current_row['HEG']}<br>Explosive Functional Groups: {current_row['EFG']}<br>mp: {current_row['mp']} to {current_row['mpEnd']}<br>MW: {'{:.2f}'.format(current_row['MW'])}<br>Q<sub>DSC</sub>: {current_row['Q_dsc']}<br>T<sub>onset</sub>: {current_row['onsetT']}<br>T<sub>init</sub>: {current_row['initT']}<br>Project: {current_row['proj']}"
                   result_label.setText(result_text)
                   result_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
-                  result_label.setWordWrap(True) 
+                  result_label.setWordWrap(True)
+
+                  results_table.clearContents()
+
+                  oreoSmall = current_row['oreoSmallScale_des']
+                  oreoTens = current_row['oreoTensScale_des']
+                  oreoHunds = current_row['oreoHundsScale_des']
+                  oreoLarge = current_row['oreoLargeScale_des']
+
+                  smallEntry = QTableWidgetItem(oreoSmall)
+                  results_table.setItem(0, 0, smallEntry)
+                  classColor = self.getColorForValue(oreoSmall)
+                  smallEntry.setBackground(classColor)
+
+                  tensEntry = QTableWidgetItem(oreoTens)
+                  results_table.setItem(0, 1, tensEntry)
+                  classColor = self.getColorForValue(oreoTens)
+                  tensEntry.setBackground(classColor)
+
+                  hundsEntry = QTableWidgetItem(oreoHunds)
+                  results_table.setItem(0, 2, hundsEntry)
+                  classColor = self.getColorForValue(oreoHunds)
+                  hundsEntry.setBackground(classColor)
+
+                  largeEntry = QTableWidgetItem(oreoLarge)
+                  results_table.setItem(0, 3, largeEntry)
+                  classColor = self.getColorForValue(oreoLarge)
+                  largeEntry.setBackground(classColor)
+
                   counter_label.setText(f"Result {self.current_index + 1} of {len(Database)}")
                   search_layout.insertWidget(4, edit_button) #  .addWidget(edit_button)
                   search_layout.insertWidget(5, del_button)
                   search_layout.insertWidget(6, result_label)
+                  search_layout.insertWidget(7, results_table_Label)
+                  search_layout.insertWidget(8, results_table)
                   search_layout.addWidget(counter_label)
                   prev_next_layout = QHBoxLayout()
                   prev_next_layout.addWidget(prev_button)
@@ -1221,6 +1259,15 @@ class MolDrawer(QWidget):
                   search_layout.addLayout(prev_next_layout)
                   edit_button.show()
                   del_button.show()
+                  make_plot_label.show()
+                  make_plot_button.show()
+                  self.plot_database = Database
+                  self.plot_current_value = dictRow
+                  self.select_x_values.show()
+                  vs_label.show()
+                  self.select_y_values.show()
+                  results_table_Label.show()
+                  results_table.show()
                   prev_button.show()
                   next_button.show()
 
@@ -1232,9 +1279,10 @@ class MolDrawer(QWidget):
 
                   if mol is not None:
 
-
                       # Generate a molecular drawing as a PNG image
-                      img = Draw.MolToImage(mol)
+                      opts = Draw.MolDrawOptions()
+                      opts.bondLineWidth = 2.
+                      img = Draw.MolToImage(mol, size=(400, 150), options=opts)
 
                       # Convert the image to a byte array
                       byte_array = BytesIO()
@@ -1245,6 +1293,7 @@ class MolDrawer(QWidget):
                       pixmap.loadFromData(byte_array.getvalue())
                       scene = QGraphicsScene()
                       scene.addPixmap(pixmap)
+                      #scene.setSceneRect(0,50,500,300)
                       self.mol_result_display.setScene(scene)
 
         def prev_result(self):
@@ -1264,6 +1313,7 @@ class MolDrawer(QWidget):
 
         # Search Buttons & display area for the molecular drawing
         self.mol_result_display = QGraphicsView(self)
+        #self.mol_result_display.scale(0.7,0.7)
         self.molLabel = QLabel('Molecule:')
         search_layout.addWidget(self.molLabel)
         search_layout.addWidget(self.mol_result_display)
@@ -1277,7 +1327,16 @@ class MolDrawer(QWidget):
         next_button = QPushButton('Next')
         prev_button.clicked.connect(lambda: prev_result(self))
         next_button.clicked.connect(lambda: next_result(self, self.selectedDatabase))
-        edit_button.clicked.connect(self.changeTabForEditing) 
+        edit_button.clicked.connect(self.changeTabForEditing)
+        
+        results_table_Label = QLabel('O.R.E.O.S. Assessment of Hazard by Scale:')
+        results_table = QTableWidget(1, 4)
+        results_table.setHorizontalHeaderLabels(['<5 g', '5 to <100 g', '100 to 500 g', '>500 g'])
+        results_table.verticalHeader().setVisible(False)
+        results_table.setMaximumHeight(53)
+        results_table.setMaximumWidth(402)
+        results_table.setMinimumHeight(53)
+        results_table.setMinimumWidth(402)
 
         sub_search_layout = QHBoxLayout()
         search_layout.addWidget(lbl_search)
@@ -1287,6 +1346,29 @@ class MolDrawer(QWidget):
         sub_search_layout.addWidget(btn_search)
         search_layout.addLayout(sub_search_layout)
         search_layout.addStretch()
+
+        make_plot_label = QLabel('For search results: ')
+        make_plot_button = QPushButton('Plot')
+        self.select_x_values = QComboBox(self)
+        vs_label = QLabel('<em>vs</em>')
+        self.select_y_values = QComboBox(self)
+        selectable_xy_values = ['Qdsc', 'Tonset', 'Tinit', 'Td24', 'IS', 'EP', 'OB', 'RoS', 'OREOS', 'MW', 'Log(Qdsc)', 'Log(Tonset-25)', 'Log(Tinit-25)']
+        self.select_x_values.addItems(selectable_xy_values)
+        self.select_y_values.addItems(selectable_xy_values)
+        make_plot_layout = QHBoxLayout()
+        make_plot_layout.addWidget(make_plot_label)
+        make_plot_layout.addWidget(make_plot_button)
+        make_plot_layout.addWidget(self.select_x_values)
+        make_plot_layout.addWidget(vs_label)
+        make_plot_layout.addWidget(self.select_y_values)
+        make_plot_layout.addStretch()
+        search_layout.addLayout(make_plot_layout)
+        make_plot_label.hide()
+        make_plot_button.hide()
+        self.select_x_values.hide()
+        vs_label.hide()
+        self.select_y_values.hide()
+        make_plot_button.clicked.connect(lambda: self.plotSearchResults(self.plot_database, self.plot_current_value))
 
         search_tab.setLayout(search_layout)
         self.tab_widget.addTab(search_tab, "Search")
@@ -1481,6 +1563,58 @@ class MolDrawer(QWidget):
         self.setLayout(layout)
         self.setGeometry(100, 100, 600, 875)
         self.setWindowTitle('ThermalDex')
+
+    def plotSearchResults(self, Results, currentResult):
+        print(f'\n\nDatabase:\n{Results}\n\nCurrent:\n{currentResult}')
+
+        selectable_xy_values = ['Qdsc', 'Tonset', 'Tinit', 'Td24', 'IS', 'EP', 'OB', 'RoS', 'OREOS', 'MW', 'Log(Qdsc)', 'Log(Tonset-25)', 'Log(Tinit-25)']
+        databaseHeadings = ['Q_dsc', 'onsetT', 'initT', 'Td24', 'IS_val', 'EP_val', 'OB_val', 'RoS_val', 'oreoLargeScale_val', 'MW']
+ 
+        print(f'\n\nxvalues = {self.select_x_values.currentText()}')
+        print(f'yvalues = {self.select_y_values.currentText()}')
+
+        if self.select_x_values.currentText() == 'Log(Qdsc)':
+            rawListValues = Results['Q_dsc'].tolist()
+            x_values = log10(rawListValues)
+            current_x = log10(currentResult['Q_dsc'])
+        elif self.select_x_values.currentText() == 'Log(Tonset-25)':
+            rawListValues = Results['onsetT'].tolist()
+            subtractedValues = [x - 25 for x in rawListValues]
+            x_values = log10(subtractedValues)
+            current_x = log10(currentResult['onsetT']-25)
+        elif self.select_x_values.currentText() == 'Log(Tonset-25)':
+            rawListValues = Results['initT'].tolist()
+            subtractedValues = [x - 25 for x in rawListValues]
+            x_values = log10(subtractedValues)
+            current_x = log10(currentResult['initT']-25)
+        else:
+            selected_x_index = selectable_xy_values.index(self.select_x_values.currentText())
+            databaseCol = databaseHeadings[selected_x_index]
+            x_values = Results[databaseCol].tolist()
+            current_x = currentResult[databaseCol]
+
+        if self.select_y_values.currentText() == 'Log(Qdsc)':
+            rawListValues = Results['Q_dsc'].tolist()
+            y_values = log10(rawListValues)
+            current_y = log10(currentResult['Q_dsc'])
+        elif self.select_y_values.currentText() == 'Log(Tonset-25)':
+            rawListValues = Results['onsetT'].tolist()
+            subtractedValues = [y - 25 for y in rawListValues]
+            y_values = log10(subtractedValues)
+            current_y = log10(currentResult['onsetT']-25)
+        elif self.select_y_values.currentText() == 'Log(Tinit-25)':
+            rawListValues = Results['initT'].tolist()
+            subtractedValues = [y - 25 for y in rawListValues]
+            y_values = log10(subtractedValues)
+            current_y = log10(currentResult['initT']-25)
+        else:
+            selected_y_index = selectable_xy_values.index(self.select_y_values.currentText())
+            databaseCol = databaseHeadings[selected_y_index]
+            y_values = Results[databaseCol].tolist()
+            current_y = currentResult[databaseCol]
+
+        scatterSelection(x_values,y_values,self.select_x_values.currentText(),self.select_y_values.currentText(),current_x,current_y)
+
 
     def set_sub_search(self, subIndex):
         self.searchSubType.clear()
