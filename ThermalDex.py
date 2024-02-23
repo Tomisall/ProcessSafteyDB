@@ -20,7 +20,7 @@ from pandasTests import *
 import configparser
 from numpy import log10
 
-versionNumber = "0.8.6"
+versionNumber = "0.9.1"
 
 try:
     import pyi_splash
@@ -1247,11 +1247,13 @@ class MolDrawer(QWidget):
                   largeEntry.setBackground(classColor)
 
                   counter_label.setText(f"Result {self.current_index + 1} of {len(Database)}")
-                  search_layout.insertWidget(4, edit_button) #  .addWidget(edit_button)
-                  search_layout.insertWidget(5, del_button)
-                  search_layout.insertWidget(6, result_label)
-                  search_layout.insertWidget(7, results_table_Label)
-                  search_layout.insertWidget(8, results_table)
+                  #search_layout.insertWidget(4, edit_button) #  .addWidget(edit_button)
+                  #search_layout.insertWidget(5, del_button)
+                  edit_button.show()
+                  del_button.show()
+                  search_layout.insertWidget(5, result_label)
+                  search_layout.insertWidget(6, results_table_Label)
+                  search_layout.insertWidget(7, results_table)
                   search_layout.addWidget(counter_label)
                   prev_next_layout = QHBoxLayout()
                   prev_next_layout.addWidget(prev_button)
@@ -1323,11 +1325,17 @@ class MolDrawer(QWidget):
         btn_search = QPushButton('Search', clicked=search_database)
         edit_button = QPushButton('Edit')
         del_button = QPushButton('Delete')
+        edit_button.hide()
+        del_button.hide()
+        eddel_sublayout = QHBoxLayout()
+        eddel_sublayout.addWidget(del_button)
+        eddel_sublayout.addWidget(edit_button)
         prev_button = QPushButton('Previous')
         next_button = QPushButton('Next')
         prev_button.clicked.connect(lambda: prev_result(self))
         next_button.clicked.connect(lambda: next_result(self, self.selectedDatabase))
         edit_button.clicked.connect(self.changeTabForEditing)
+        del_button.clicked.connect(lambda: subFunctionForDeletion(self.plot_current_value,defaultDB))
         
         results_table_Label = QLabel('O.R.E.O.S. Assessment of Hazard by Scale:')
         results_table = QTableWidget(1, 4)
@@ -1345,6 +1353,7 @@ class MolDrawer(QWidget):
         sub_search_layout.addWidget(entry_search)
         sub_search_layout.addWidget(btn_search)
         search_layout.addLayout(sub_search_layout)
+        search_layout.addLayout(eddel_sublayout)
         search_layout.addStretch()
 
         make_plot_label = QLabel('For search results: ')
@@ -1369,6 +1378,10 @@ class MolDrawer(QWidget):
         vs_label.hide()
         self.select_y_values.hide()
         make_plot_button.clicked.connect(lambda: self.plotSearchResults(self.plot_database, self.plot_current_value))
+
+        def subFunctionForDeletion(Entry, Database):
+            self.delCurrentEntry(Entry, Database)
+            search_database()
 
         search_tab.setLayout(search_layout)
         self.tab_widget.addTab(search_tab, "Search")
@@ -1564,6 +1577,25 @@ class MolDrawer(QWidget):
         self.setGeometry(100, 100, 600, 875)
         self.setWindowTitle('ThermalDex')
 
+    def delCurrentEntry(self, currentResult, Database):
+        errorInfo = "Really? Delete this entry? Are you sure?"
+        userInteract = self.interactiveErrorMessage(errorInfo) 
+        if userInteract == QMessageBox.Yes:
+            print(f'dict Results: {currentResult}')
+            storedData = pd.read_csv(Database, index_col=0)
+            removeDataTranspose = pd.DataFrame.from_dict(currentResult, orient='index')
+            removeDataIndexed = removeDataTranspose.T
+            removeData = removeDataIndexed.set_index('SMILES')
+            print(f'\n\n\nDatabase:\n{storedData}\n\nValue to Delete:\n{removeData}')
+
+            reducedData = storedData.drop([currentResult['SMILES']])
+            print(f'\n\nDatabase after drop would be:\n{reducedData}')
+            reducedData['SMILES'] = reducedData.index
+            reducedData = reducedData[ ['SMILES'] + [ col for col in reducedData.columns if col != 'SMILES' ] ]
+            print(reducedData)
+            reducedData.to_csv(Database, index=False)
+
+
     def plotSearchResults(self, Results, currentResult):
         print(f'\n\nDatabase:\n{Results}\n\nCurrent:\n{currentResult}')
 
@@ -1582,7 +1614,7 @@ class MolDrawer(QWidget):
             subtractedValues = [x - 25 for x in rawListValues]
             x_values = log10(subtractedValues)
             current_x = log10(currentResult['onsetT']-25)
-        elif self.select_x_values.currentText() == 'Log(Tonset-25)':
+        elif self.select_x_values.currentText() == 'Log(Tinit-25)':
             rawListValues = Results['initT'].tolist()
             subtractedValues = [x - 25 for x in rawListValues]
             x_values = log10(subtractedValues)
@@ -1708,7 +1740,25 @@ class MolDrawer(QWidget):
             classColor = self.getColorForValue(hazardClass)
             print(classColor)
             item.setBackground(classColor)
-        
+
+        if readMolecule.hammerDrop == 'Positive':
+            self.hamSelection.setCurrentIndex(1)
+
+        elif readMolecule.hammerDrop == 'Negative':
+            self.hamSelection.setCurrentIndex(2)
+
+        else:
+            self.hamSelection.setCurrentIndex(0)
+
+        if readMolecule.friction == 'Positive':
+            self.fricSelection.setCurrentIndex(1)
+
+        elif readMolecule.friction == 'Negative':
+            self.fricSelection.setCurrentIndex(2)
+
+        else:
+            self.fricSelection.setCurrentIndex(0)
+
         fileCounter = self.countFiles(defaultDB)
         self.filesCount.setText(f"{str(fileCounter)} Attached Files")
         self.attachedFilesLabel.show()
@@ -1922,7 +1972,6 @@ class MolDrawer(QWidget):
             data = {'SMILES': []}
             storedData = pd.DataFrame(data)
             checkData = pd.DataFrame(data)
-
         
         print('\n\n\n')
         if selectedMolData['SMILES'][0] in storedData.index:
@@ -1974,11 +2023,13 @@ class MolDrawer(QWidget):
         TE = self.TE_input.text()
         Tinit = self.Tinit_input.text()
         proj = self.proj_input.text()
+        hammerDrop = self.hamSelection.currentText()
+        friction = self.fricSelection.currentText()
 
         dataFolder = self.findFolder(defaultDB)
 
         # Create an RDKit molecule from the SMILES string
-        addedMolecule = thermalDexMolecule(SMILES=smiles, name=name, mp=mp, mpEnd=mpEnd, Q_dsc=Qdsc, Qunits=QUnits, onsetT=TE, initT=Tinit, proj=proj, dataFolder=dataFolder)
+        addedMolecule = thermalDexMolecule(SMILES=smiles, name=name, mp=mp, mpEnd=mpEnd, Q_dsc=Qdsc, Qunits=QUnits, onsetT=TE, initT=Tinit, proj=proj, hammerDrop=hammerDrop, friction=friction, dataFolder=dataFolder)
         return addedMolecule
 
     def checkIfSMILESAreValid(self, molecule):

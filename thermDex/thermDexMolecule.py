@@ -25,6 +25,8 @@ class thermalDexMolecule:
     onsetT: float = None
     initT: float = None
     proj: str = ''
+    hammerDrop: str = 'Not Performed'
+    friction: str = 'Not Performed'
 
     # Calculated Values
     MW: float = None
