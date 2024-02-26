@@ -19,8 +19,10 @@ import pyperclip
 from pandasTests import *
 import configparser
 from numpy import log10
+from contextlib import redirect_stdout
+from os import path
 
-versionNumber = "0.9.1"
+versionNumber = "0.9.8"
 
 try:
     import pyi_splash
@@ -54,10 +56,12 @@ def altImportConfig():
     config = configparser.ConfigParser()
     config.read('./_core/ThermalDex.ini')
     defaultDB = config.get('Database', 'defaultDB')
-    highEnergyGroups = config.get('Lists of Groups', 'highEnergyGroups')
-    expEnergyGroups = config.get('Lists of Groups', 'expEnergyGroups')
-    yoshidaMethod = config.get('Calculations', 'yoshidaCalcs')
-    return defaultDB, highEnergyGroups, expEnergyGroups, yoshidaMethod
+    highEnergyGroups = config.get('Lists of Groups', 'highenergygroups')
+    expEnergyGroups = config.get('Lists of Groups', 'expenergygroups')
+    yoshidaMethod = config.get('Calculations', 'yoshidacalcs')
+    qdscUnits = config.get('Default Values', 'qdscunits')
+
+    return defaultDB, highEnergyGroups, expEnergyGroups, yoshidaMethod, qdscUnits
 
 class QHLine(QFrame):
     def __init__(self):
@@ -221,6 +225,7 @@ class MolDrawer(QWidget):
         #QUnitsSubLayout.addWidget(QLabel('cal g<sup>-1</sup> '))
         self.QUnitsSelection = QComboBox(self)
         self.QUnitsSelection.addItems(['J g⁻¹', 'cal g⁻¹'])
+        self.QUnitsSelection.setCurrentIndex(int(qdscUnits))
         QUnitsSubLayout.addWidget(self.QUnitsSelection)
         InputRightLayout.addLayout(QUnitsSubLayout)
 
@@ -1188,6 +1193,7 @@ class MolDrawer(QWidget):
                   vs_label.hide()
                   self.select_y_values.hide()
                   try:
+                      export_button.hide()
                       edit_button.hide()
                       del_button.hide()
                       prev_button.hide()
@@ -1214,7 +1220,7 @@ class MolDrawer(QWidget):
                   readMolecule = thermalDexMolecule(**dictRow)
                   print(readMolecule.MW)
                   self.result_smiles = current_row['SMILES']
-                  result_text = f"SMILES: {current_row['SMILES']}<br>Name: {current_row['name']}<br>High Energy Groups: {current_row['HEG']}<br>Explosive Functional Groups: {current_row['EFG']}<br>mp: {current_row['mp']} to {current_row['mpEnd']} °C<br>MW: {'{:.2f}'.format(current_row['MW'])} g mol<sup>-1</sup><br>Q<sub>DSC</sub>: {current_row['Q_dsc']} {current_row['Qunits']}<br>T<sub>onset</sub>: {current_row['onsetT']} °C<br>T<sub>init</sub>: {current_row['initT']} °C<br>Oxygen Balance: {current_row['OB_val']} {current_row['OB_des']}<br>Rule of Six: {current_row['RoS_val']} {current_row['RoS_des']}<br>Impact Sensitivity: {current_row['IS_val']} {current_row['IS_des']}<br>Explosive Propagation: {current_row['EP_val']} {current_row['EP_des']}<br>Yosida Calculation Method Used: {current_row['yoshidaMethod']}<br>Hammer Drop Test: {current_row['hammerDrop']}<br>Friction Test: {current_row['friction']}<br>Project: {current_row['proj']}"
+                  result_text = f"SMILES: {current_row['SMILES']}<br>Name: {current_row['name']}<br>High Energy Groups: {current_row['HEG']}<br>Explosive Functional Groups: {current_row['EFG']}<br>mp: {current_row['mp']} to {current_row['mpEnd']} °C<br>MW: {'{:.2f}'.format(current_row['MW'])} g mol<sup>-1</sup><br>Q<sub>DSC</sub>: {current_row['Q_dsc']} {current_row['Qunits']}<br>T<sub>onset</sub>: {current_row['onsetT']} °C<br>T<sub>init</sub>: {current_row['initT']} °C<br>Oxygen Balance: {'{:.2f}'.format(current_row['OB_val'])} {current_row['OB_des']}<br>Rule of Six: {current_row['RoS_val']} {current_row['RoS_des']}<br>Impact Sensitivity: {'{:.2f}'.format(current_row['IS_val'])} {current_row['IS_des']}<br>Explosive Propagation: {'{:.2f}'.format(current_row['EP_val'])} {current_row['EP_des']}<br>Yosida Calculation Method Used: {current_row['yoshidaMethod']}<br>T<sub>D24</sub>: {current_row['Td24']} °C<br>Hammer Drop Test: {current_row['hammerDrop']}<br>Friction Test: {current_row['friction']}<br>Project: {current_row['proj']}"
                   result_label.setText(result_text)
                   result_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
                   result_label.setWordWrap(True)
@@ -1259,6 +1265,7 @@ class MolDrawer(QWidget):
                   prev_next_layout.addWidget(prev_button)
                   prev_next_layout.addWidget(next_button)
                   search_layout.addLayout(prev_next_layout)
+                  export_button.show()
                   edit_button.show()
                   del_button.show()
                   make_plot_label.show()
@@ -1325,9 +1332,12 @@ class MolDrawer(QWidget):
         btn_search = QPushButton('Search', clicked=search_database)
         edit_button = QPushButton('Edit')
         del_button = QPushButton('Delete')
+        export_button = QPushButton('Export Results')
         edit_button.hide()
         del_button.hide()
+        export_button.hide()
         eddel_sublayout = QHBoxLayout()
+        eddel_sublayout.addWidget(export_button)
         eddel_sublayout.addWidget(del_button)
         eddel_sublayout.addWidget(edit_button)
         prev_button = QPushButton('Previous')
@@ -1336,7 +1346,8 @@ class MolDrawer(QWidget):
         next_button.clicked.connect(lambda: next_result(self, self.selectedDatabase))
         edit_button.clicked.connect(self.changeTabForEditing)
         del_button.clicked.connect(lambda: subFunctionForDeletion(self.plot_current_value,defaultDB))
-        
+        export_button.clicked.connect(lambda: self.exportSearchResults(self.selectedDatabase))
+
         results_table_Label = QLabel('O.R.E.O.S. Assessment of Hazard by Scale:')
         results_table = QTableWidget(1, 4)
         results_table.setHorizontalHeaderLabels(['<5 g', '5 to <100 g', '100 to 500 g', '>500 g'])
@@ -1406,21 +1417,23 @@ class MolDrawer(QWidget):
         #any_layout.addWidget(QPushButton("Button in Section", section))
         QDSCDefaultsLayout = QHBoxLayout()
         QDSCDefaultsLabel = QLabel('Select Q<sub>DSC</sub> Units: ')
-        QDSCDefaultsCombo = QComboBox()
-        QDSCDefaultsCombo.addItems(['J g⁻¹', 'cal g⁻¹'])
+        self.QDSCDefaultsCombo = QComboBox()
+        self.QDSCDefaultsCombo.addItems(['J g⁻¹', 'cal g⁻¹'])
         QDSCApplyButton = QPushButton('Apply')
+        QDSCApplyButton.clicked.connect(self.save_units_settings)
         QDSCDefaultsLayout.addWidget(QDSCDefaultsLabel)
-        QDSCDefaultsLayout.addWidget(QDSCDefaultsCombo)
+        QDSCDefaultsLayout.addWidget(self.QDSCDefaultsCombo)
         QDSCDefaultsLayout.addWidget(QDSCApplyButton)
         defaults_layout.addLayout(QDSCDefaultsLayout)
 
         yoshidaDefaultsLayout = QHBoxLayout()
         yoshidaDefaultsLabel = QLabel('Yoshia Method: ')
-        yoshidaDefaultsCombo = QComboBox()
-        yoshidaDefaultsCombo.addItems(['Pfizer', 'Yoshida'])
+        self.yoshidaDefaultsCombo = QComboBox()
+        self.yoshidaDefaultsCombo.addItems(['Pfizer', 'Yoshida'])
         yoshidaApplyButton = QPushButton('Apply')
+        yoshidaApplyButton.clicked.connect(self.save_yoshidacal_settings)
         yoshidaDefaultsLayout.addWidget(yoshidaDefaultsLabel)
-        yoshidaDefaultsLayout.addWidget(yoshidaDefaultsCombo)
+        yoshidaDefaultsLayout.addWidget(self.yoshidaDefaultsCombo)
         yoshidaDefaultsLayout.addWidget(yoshidaApplyButton)
         defaults_layout.addLayout(yoshidaDefaultsLayout)
 
@@ -1515,6 +1528,7 @@ class MolDrawer(QWidget):
         settings_layout.addWidget(core_section)
         settings_layout.addWidget(apperance_section)
 
+        # User Reload of Config
         reload_sublayout = QHBoxLayout()
         reload_config_label = QLabel('Configuration changes will take effect the next time ThermalDex is opened.<br> To force changes to take effect now, click:')
         reload_config_button = QPushButton('Reload Config')
@@ -1522,6 +1536,23 @@ class MolDrawer(QWidget):
         reload_sublayout.addWidget(reload_config_label)
         reload_sublayout.addWidget(reload_config_button)
         settings_layout.addLayout(reload_sublayout)
+
+        # Import Database -> a merge of current database with existing file
+        import_sublayout = QHBoxLayout()
+        import_heading = QLabel('<h2>Bulk Import</h2>')
+        import_db_label = QLabel('To bulk import molecules into ThermalDex click:')
+        import_explain_label = QLabel('<p>Note these compounds will be added directly to your database. You will be warned for any molecule which would overwrite an existing entry in you database. Please ensure the correct .csv format is used. To import molecules with no other imformation availible, simlpy create a .csv with a column heading of "SMILES" and a new line between the SMILES of the molecules.</p>')
+        #import_explain_label.setMaximumWidth(400)
+        import_explain_label.setWordWrap(True)
+        import_db_button = QPushButton('Import Database File')
+        import_db_button.setMaximumWidth(190)
+        import_db_button.clicked.connect(self.import_external_database)
+        import_sublayout.addWidget(import_db_label)
+        import_sublayout.addWidget(import_db_button)
+        settings_layout.addSpacing(40)
+        settings_layout.addWidget(import_heading)
+        settings_layout.addLayout(import_sublayout)
+        settings_layout.addWidget(import_explain_label)
 
         settings_layout.addStretch()
 
@@ -1595,8 +1626,15 @@ class MolDrawer(QWidget):
         global highEnergyGroups
         global expEnergyGroups
         global yoshidaMethod
+        global qdscUnits
 
-        defaultDB, highEnergyGroups, expEnergyGroups, yoshidaMethod = altImportConfig()
+        defaultDB, highEnergyGroups, expEnergyGroups, yoshidaMethod, qdscUnits = altImportConfig()
+        QMessageBox.information(self, "Config Settings", "Settings have been loaded successfully.")
+
+    def exportSearchResults(self, Database):
+        savefile, _ = QFileDialog.getSaveFileName(self, "Export Search Results as CSV", "ThermalDexResults.csv", "CSV Files (*.csv)")
+        if savefile:
+            Database.to_csv(savefile, index=False)
 
     def delCurrentEntry(self, currentResult, Database):
         errorInfo = "Really? Delete this entry? Are you sure?"
@@ -1673,11 +1711,42 @@ class MolDrawer(QWidget):
         self.searchSubType.clear()
         self.searchSubType.addItems(self.listOfSearchTypes[subIndex])
 
+    def import_external_database(self):
+        options = QFileDialog.Options()
+        import_file, _ = QFileDialog.getOpenFileName(self, "Select Database to Import:", "", "CSV Files (*.csv)", options=options)
+        if import_file:
+                  importedDB = pd.read_csv(import_file)
+                  for index, row in importedDB.iterrows():
+                    dictRow = row.to_dict()
+                    readMolecule = thermalDexMolecule(**dictRow)
+                    self.writeToDatabase(readMolecule, defaultDB)
+                
+                  QMessageBox.information(self, "Database Import", "Import has completed.")
+                  
+            
+
     def select_database(self):
         options = QFileDialog.Options()
         default_file, _ = QFileDialog.getOpenFileName(self, "Select Database to Use:", "", "CSV Files (*.csv)", options=options)
         if default_file:
-            self.databaseCoreInput.setText(default_file)
+            rel_file = path.relpath(default_file)
+            self.databaseCoreInput.setText(rel_file)
+
+    def save_yoshidacal_settings(self):
+        self.config.set('Calculations', 'yoshidacalcs', self.yoshidaDefaultsCombo.currentText())
+
+        with open('./_core/ThermalDex.ini', 'w') as configfile:
+            self.config.write(configfile)
+
+        QMessageBox.information(self, "Settings Saved", "Settings have been saved.")
+
+    def save_units_settings(self):
+        self.config.set('Default Values', 'qdscunits', str(self.QDSCDefaultsCombo.currentIndex()))
+
+        with open('./_core/ThermalDex.ini', 'w') as configfile:
+            self.config.write(configfile)
+
+        QMessageBox.information(self, "Settings Saved", "Settings have been saved.")
 
     def save_database_settings(self):
         self.config.set('Database', 'defaultDB', self.databaseCoreInput.text())
@@ -1691,7 +1760,8 @@ class MolDrawer(QWidget):
         options = QFileDialog.Options()
         default_file, _ = QFileDialog.getOpenFileName(self, "Select List to Use:", "", "CSV Files (*.csv)", options=options)
         if default_file:
-            self.hegCoreInput.setText(default_file)
+            rel_file = path.relpath(default_file)
+            self.hegCoreInput.setText(rel_file)
 
     def save_heglist_settings(self):
         self.config.set('Lists of Groups', 'highenergygroups', self.hegCoreInput.text())
@@ -1705,7 +1775,8 @@ class MolDrawer(QWidget):
         options = QFileDialog.Options()
         default_file, _ = QFileDialog.getOpenFileName(self, "Select List to Use:", "", "CSV Files (*.csv)", options=options)
         if default_file:
-            self.efgCoreInput.setText(default_file)
+            rel_file = path.relpath(default_file)
+            self.efgCoreInput.setText(rel_file)
 
     def save_efglist_settings(self):
         self.config.set('Lists of Groups', 'expenergygroups', self.efgCoreInput.text())
@@ -1749,7 +1820,7 @@ class MolDrawer(QWidget):
         self.EFGlabel.setText('Number of Explosive Functional Groups: ' + str(readMolecule.EFG)) 
         self.eleLabel.setText('Elemental Composition: ' + readMolecule.eleComp)
         self.RoSLabel.setText('Rule of Six: ' + str(readMolecule.RoS_val) + readMolecule.RoS_des)
-        self.obLabel.setText('Oxygen Balance: ' + str(readMolecule.obStr) + ' ' + readMolecule.OB_des)
+        self.obLabel.setText('Oxygen Balance: ' + '{:.2f}'.format(readMolecule.OB_val) + ' ' + readMolecule.OB_des)
         self.table.clearContents()
         hazardList = [readMolecule.oreoSmallScale_des, readMolecule.oreoTensScale_des, readMolecule.oreoHundsScale_des, readMolecule.oreoLargeScale_des]
         # Add values to cells
@@ -1890,6 +1961,7 @@ class MolDrawer(QWidget):
         self.mp_input.setText('')
         self.mpEnd_input.setText('')
         self.Qdsc_input.setText('')
+        self.QUnitsSelection.setCurrentIndex(int(qdscUnits))
         self.TE_input.setText('')
         self.Tinit_input.setText('')
         self.proj_input.setText('')
@@ -1997,7 +2069,7 @@ class MolDrawer(QWidget):
         print('\n\n\n')
         if selectedMolData['SMILES'][0] in storedData.index:
             print('found')
-            userInteract = self.interactiveErrorMessage('Molecule Already in Database. Would you like to overwrite it?')
+            userInteract = self.interactiveErrorMessage(f'{selectedMolData["SMILES"][0]}\n\nMolecule Already in Database. Would you like to overwrite it?')
             if userInteract == QMessageBox.Yes:
                 storedData.update(selectedMolData)
                 outputData = storedData
@@ -2149,11 +2221,13 @@ class MolDrawer(QWidget):
             self.error_flag = 100
 
 if __name__ == '__main__':
-    defaultDB, highEnergyGroups, expEnergyGroups, yoshidaMethod = altImportConfig()
-    app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon('.\\_core\\ThermalDexIcon.ico'))
-    window = MolDrawer()
-    window.show()
-    window.raise_()
-    window.activateWindow()
-    sys.exit(app.exec_())
+    with open('./_core/ThermalDex.log', 'w', encoding='utf-8') as logFile:
+        with redirect_stdout(logFile):
+            defaultDB, highEnergyGroups, expEnergyGroups, yoshidaMethod, qdscUnits = altImportConfig()
+            app = QApplication(sys.argv)
+            app.setWindowIcon(QIcon('.\\_core\\ThermalDexIcon.ico'))
+            window = MolDrawer()
+            window.show()
+            window.raise_()
+            window.activateWindow()
+            sys.exit(app.exec_())

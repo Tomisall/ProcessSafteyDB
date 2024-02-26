@@ -64,8 +64,22 @@ class FileManagementWindow(QWidget):
         #files = ["file1.txt", "file2.txt", "file3.txt"]
         print(self.fileDir)
         if self.fileDir != None and self.fileDir != '' and self.fileDir != 'nan':
-            files = [f for f in listdir(self.fileDir) if isfile(join(self.fileDir, f))]
-            self.file_list_widget.addItems(files)
+            try:
+                files = [f for f in listdir(self.fileDir) if isfile(join(self.fileDir, f))]
+                self.file_list_widget.addItems(files)
+            except:
+                tempMolForFolderGen = thermalDexMolecule(SMILES=self.molecule)
+                tempMolForFolderGen.genMol()
+                tempMolForFolderGen.eleCompFromMol()
+                folderName = tempMolForFolderGen.makeFolderForMolData()
+                storedData = pd.read_csv(self.database)
+                row_index = storedData.index[storedData['SMILES'] == self.molecule].tolist()
+                storedData['dataFolder'][row_index[0]] = folderName
+                print(storedData)
+                storedData.to_csv(self.database, index=False)
+                self.fileDir = folderName
+                self.load_files()
+
         else:
             tempMolForFolderGen = thermalDexMolecule(SMILES=self.molecule)
             tempMolForFolderGen.genMol()
