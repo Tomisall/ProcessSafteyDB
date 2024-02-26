@@ -1,28 +1,28 @@
 #import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTableWidget, QTableWidgetItem, QTabWidget, QGraphicsPixmapItem,  QMessageBox, QComboBox #, QTableView, QToolTip
-from PyQt5.QtGui import QPixmap, QColor, QIcon, QRegExpValidator #QValidator #, QCursor
-from PyQt5.QtCore import Qt, QRegExp, pyqtSignal, QCoreApplication
 #from rdkit.Chem import Draw, Descriptors, rdMolDescriptors, Mol, MolFromSmiles, MolFromSmarts, rdmolfiles
 #from io import BytesIO
 #from numpy import log10
 #from pubchempy import get_compounds
 #from dataclasses import dataclass, field, asdict
-from thermDex.thermDexMolecule import * #thermalDexMolecule
+#import re
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTableWidget, QTableWidgetItem, QTabWidget, QGraphicsPixmapItem,  QMessageBox, QComboBox #, QTableView, QToolTip
+from PyQt5.QtGui import QPixmap, QColor, QIcon, QRegExpValidator #QValidator #, QCursor
+from PyQt5.QtCore import Qt, QRegExp, pyqtSignal #, QCoreApplication
 #from thermDex.thermDexReport import *
+from thermDex.thermDexMolecule import * #thermalDexMolecule
 from thermDex.thermDexHTMLRep import *
 from thermDex.attachedFileManager import *
 from thermDex.Section import Section
 from thermDex.thermDexPlots import *
-#clea
-#import re
+from thermDex.thermDexPandasTools import *
 import pyperclip
-from pandasTests import *
 import configparser
 from numpy import log10
 from contextlib import redirect_stdout
 from os import path
+from shutil import copy2
 
-versionNumber = "0.9.8"
+versionNumber = "1.0.0"
 
 try:
     import pyi_splash
@@ -324,6 +324,11 @@ class MolDrawer(QWidget):
         msg_button.clicked.connect(self.createReport)
         msg_button.setMaximumWidth(180)
         buttonContainLayout.addWidget(msg_button)
+        ''' Button for error testing/Debugging.
+        error_testing_button = QPushButton('SecretErrorButton')
+        error_testing_button.clicked.connect(self.errorTestingTool)
+        buttonContainLayout.addWidget(error_testing_button)       
+        '''
         molecule_layout.addLayout(buttonContainLayout)
 
         self.molecule_tab.setLayout(molecule_layout)
@@ -340,7 +345,8 @@ class MolDrawer(QWidget):
 
         # Entry widget for searching
         lbl_search = QLabel('Search:')
-        entry_search = QLineEdit()
+        entry_search = ClickableLineEdit(self) #QLineEdit()
+        entry_search.clicked.connect(self.mrvToSMILES)
         self.searchTypeSelection = QComboBox(self)
         self.searchTypeSelection.addItems(['SMILES', 'Name', 'Project', 'MW', 'Qdsc', 'Tinit', 'Tonset', 'Td24', 'O.R.E.O.S. at >500 g'])
         smilesSearchList = ['Substructure', 'Exact']
@@ -1220,7 +1226,7 @@ class MolDrawer(QWidget):
                   readMolecule = thermalDexMolecule(**dictRow)
                   print(readMolecule.MW)
                   self.result_smiles = current_row['SMILES']
-                  result_text = f"SMILES: {current_row['SMILES']}<br>Name: {current_row['name']}<br>High Energy Groups: {current_row['HEG']}<br>Explosive Functional Groups: {current_row['EFG']}<br>mp: {current_row['mp']} to {current_row['mpEnd']} °C<br>MW: {'{:.2f}'.format(current_row['MW'])} g mol<sup>-1</sup><br>Q<sub>DSC</sub>: {current_row['Q_dsc']} {current_row['Qunits']}<br>T<sub>onset</sub>: {current_row['onsetT']} °C<br>T<sub>init</sub>: {current_row['initT']} °C<br>Oxygen Balance: {'{:.2f}'.format(current_row['OB_val'])} {current_row['OB_des']}<br>Rule of Six: {current_row['RoS_val']} {current_row['RoS_des']}<br>Impact Sensitivity: {'{:.2f}'.format(current_row['IS_val'])} {current_row['IS_des']}<br>Explosive Propagation: {'{:.2f}'.format(current_row['EP_val'])} {current_row['EP_des']}<br>Yosida Calculation Method Used: {current_row['yoshidaMethod']}<br>T<sub>D24</sub>: {current_row['Td24']} °C<br>Hammer Drop Test: {current_row['hammerDrop']}<br>Friction Test: {current_row['friction']}<br>Project: {current_row['proj']}"
+                  result_text = f"SMILES: {current_row['SMILES']}<br>Name: {current_row['name']}<br>High Energy Groups: {current_row['HEG']}<br>Explosive Functional Groups: {current_row['EFG']}<br>mp: {current_row['mp']} to {current_row['mpEnd']} °C<br>MW: {'{:.2f}'.format(current_row['MW'])} g mol<sup>-1</sup><br>Q<sub>DSC</sub>: {current_row['Q_dsc']} {current_row['Qunits']}<br>T<sub>onset</sub>: {current_row['onsetT']} °C<br>T<sub>init</sub>: {current_row['initT']} °C<br>Oxygen Balance: {'{:.2f}'.format(current_row['OB_val'])} {current_row['OB_des']}<br>Rule of Six: {current_row['RoS_val']} {current_row['RoS_des']}<br>Impact Sensitivity: {'{:.2f}'.format(current_row['IS_val'])} {current_row['IS_des']}<br>Explosive Propagation: {'{:.2f}'.format(current_row['EP_val'])} {current_row['EP_des']}<br>Yosida Calculation Method Used: {current_row['yoshidaMethod']}<br>T<sub>D24</sub>: {'{:.1f}'.format(current_row['Td24'])} °C<br>Hammer Drop Test: {current_row['hammerDrop']}<br>Friction Test: {current_row['friction']}<br>Project: {current_row['proj']}"
                   result_label.setText(result_text)
                   result_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
                   result_label.setWordWrap(True)
@@ -1569,7 +1575,7 @@ class MolDrawer(QWidget):
         about_tab = QWidget()
         about_layout = QVBoxLayout()
         about_title = QLabel("<b>About ThermalDex</b>\n\n")
-        about_blank = QLabel("\nVersion: " + versionNumber + " (This is currently an alpha build)\n")
+        about_blank = QLabel("\nVersion: " + versionNumber + "\n")
         about_text = QLabel("\n\nThis is a simple tool for assessing and recording the potential thermal hazards assoicated with a molecule. It uses the <b>'O.R.E.O.S.'</b> assement scale and other ideas that can be read about in <a href=\"https://pubs.acs.org/doi/10.1021/acs.oprd.0c00467\"><em>Org. Process Res. Dev.</em> 2021, 25, 2, 212–224</a> by Jeffrey B. Sperry et. al.")
         iconLabel = QLabel()
         iconImage = QPixmap(".\\_core\\ThermalDexIcon.jpg")
@@ -1919,10 +1925,18 @@ class MolDrawer(QWidget):
         self.msg = QMessageBox()
         self.msg.setIcon(QMessageBox.Warning)
         self.msg.setText("An error has occured")
-        self.msg.setInformativeText("The source of the problem seems to be with: " + errorCode + "\nTry again and contact developer if the problem persists.")
+        self.msg.setInformativeText("The source of the problem seems to be with: " + errorCode + "\nTry again and contact developer if the problem persists.\n\n Select 'OK' to export an error log or 'Cancel' to dismiss this message.")
         self.msg.setWindowTitle("ThermalDex Error")
         self.msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
         returnValue = self.msg.exec()
+
+        if returnValue == QMessageBox.Ok:
+            self.exportErrorLog()
+
+    def exportErrorLog(self):
+        saveLog, _ = QFileDialog.getSaveFileName(self, "Export Error Log", "ThermalDex.log", "Text Files (*.log)")
+        if saveLog:
+            copy2('./_core/ThermalDex.log',saveLog)
 
     def interactiveErrorMessage(self, errorInfo):
         self.interactMsg = QMessageBox()
@@ -2041,19 +2055,19 @@ class MolDrawer(QWidget):
             window.showErrorMessage("Making Folder to Hold Molecule Data Files.")
 
     def createReport(self):
-        #try:
-        moleculeData = self.render_molecule()
-           #img = moleculeData.molToIMG()
-           #results = asdict(moleculeData)
-           #create_pdf(results["name"], results, img) #results["molIMG"]) 
-        imageData = moleculeData.molToBytes()
-        dataURL = 'data:image/png;base64,' + imageData
-        mdReportCreation(moleculeData, dataURL)
-        if self.error_flag is not None:
-            self.error_message.setText('')
-            layout.removeWidget(self.error_message)
-        #except:
-            #window.showErrorMessage("Generating Memo PDF from given values.")
+        try:
+            moleculeData = self.render_molecule()
+            #img = moleculeData.molToIMG()
+            #results = asdict(moleculeData)
+            #create_pdf(results["name"], results, img) #results["molIMG"]) 
+            imageData = moleculeData.molToBytes()
+            dataURL = 'data:image/png;base64,' + imageData
+            mdReportCreation(moleculeData, dataURL)
+            if self.error_flag is not None:
+                self.error_message.setText('')
+                layout.removeWidget(self.error_message)
+        except:
+            window.showErrorMessage("Generating Memo PDF from given values.")
 
     def writeToDatabase(self, molecule, Database):
         #molecule.genAdditionalValues()
