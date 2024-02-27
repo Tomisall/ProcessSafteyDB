@@ -15,7 +15,7 @@ ThermalDex is an application developed in Python using RDKit and PyQt5 that faci
 
 - **DSC Data Analysis**: The application can record and analyze the results from Differential Scanning Calorimetry (DSC), enabling users to determine critical parameters such as T<sub>D24</sub> (Temperature of Decomposition),<sup>2</sup> Yoshida Impact Sensitivity, and Yoshida Explosive Propagation.<sup>3</sup>
 
-- **Graphical Visualization**: ThermalDex features a Qt GUI that displays molecular structures graphically, allowing users to visualize the chemical composition and hazard potential of each molecule. Hazard levels color-coded for intuitive interpretation.
+- **Graphical Visualization**: ThermalDex features a Qt GUI that displays molecular structures graphically, and the calculated hazard levels are color-coded for intuitive interpretation.
 
 - **PDF Report Generation**: The application generates detailed PDF reports of thermal hazard assessments for each molecule, providing comprehensive documentation of the analysis results.
 
