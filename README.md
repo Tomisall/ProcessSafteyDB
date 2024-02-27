@@ -28,7 +28,7 @@ ThermalDex is an application developed in Python using RDKit and PyQt5 that faci
 ## Getting Started
 
 ### Executable Releases 
-Exicutables will be Released via Github Releases. (Currently we are testing internally but will release in near future). These executables have be generated thanks to Pyinstaller. ThermalDex has been a Windows first project due to the nature of the devices used for testing, but I will get a MacOS exicutable shortly and aim to generate at least a .deb package for Linux down the line. If compatabliity issues are encountered I would recomemend looking to running in Python. 
+Executables will be released via Github Releases. (Currently we are testing internally but will release in near future). These executables have be generated thanks to Pyinstaller. ThermalDex has been a Windows first project due to the nature of the devices used for testing, but I will get a MacOS exicutable shortly and aim to generate at least a .deb package for Linux down the line. If compatabliity issues are encountered I would recomemend looking to running in Python. 
 
 ### Python Code
 
