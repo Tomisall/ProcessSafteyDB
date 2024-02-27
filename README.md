@@ -11,15 +11,19 @@ ThermalDex is an application developed in Python using RDKit and PyQt5 that faci
 
 - **High Energy and Explosive Group Identification**: The application identifies high-energy and potentially explosive groups within molecules, providing valuable insights into their thermal stability and safety. This is achived via a substructure search and a .csv of the relavent groups.
 
-- **O.R.E.O.S. Assessment**: ThermalDex calculates O.R.E.O.S. assessment values, incorporating safety metrics such as Oxygen Balance and Rule of Six to evaluate the potential hazards associated with a molecule.
+- **O.R.E.O.S. Assessment**: ThermalDex calculates O.R.E.O.S. assessment values,<sup>1</sup> incorporating safety metrics such as Oxygen Balance and Rule of Six to evaluate the potential hazards associated with a molecule.
 
-- **DSC Data Analysis**: The application can record and analyze the results from Differential Scanning Calorimetry (DSC), enabling users to determine critical parameters such as T<sub>D24</sub> (Temperature of Decomposition), Yoshida Impact Sensitivity, and Yoshida Explosive Propagation.
+- **DSC Data Analysis**: The application can record and analyze the results from Differential Scanning Calorimetry (DSC), enabling users to determine critical parameters such as T<sub>D24</sub> (Temperature of Decomposition),<sup>2</sup> Yoshida Impact Sensitivity, and Yoshida Explosive Propagation.<sup>3</sup>
 
 - **Graphical Visualization**: ThermalDex features a Qt GUI that displays molecular structures graphically, allowing users to visualize the chemical composition and hazard potential of each molecule. Hazard levels color-coded for intuitive interpretation.
 
 - **PDF Report Generation**: The application generates detailed PDF reports of thermal hazard assessments for each molecule, providing comprehensive documentation of the analysis results.
 
 - **Local Storage**: ThermalDex maintains a user-friendly local .csv file 'database' (cough) that stores all assessment results, making it easy to track and manage data over time.
+
+<p><small>[1]: <i>Org. Proc. Res. Dev.,</i> 2021, 25, 2, 212-224</small><br>
+<small>[2]: <i>Angew. Chem. Int. Ed.,</i> 2020, 59, 15798-15802</small><br>
+<small>[3]: <i>Org. Proc. Res. Dev.,</i> 2020, 24, 1, 67-84</small></p>
 
 ## Getting Started
 
@@ -42,7 +46,7 @@ To get started with ThermalDex, follow these steps:
 
 3. Launch the application:
    ```
-   python main.py
+   python ThermalDex.py
    ```
 
 4. Input the SMILES notation of the molecule you wish to analyze and explore the various features and tools offered by ThermalDex.
@@ -52,6 +56,10 @@ To get started with ThermalDex, follow these steps:
 Contributions to ThermalDex are welcome! If you encounter any issues, have suggestions for improvements, or would like to contribute new features, please feel free to submit a pull request or open an issue on GitHub.
 
 Please get in touch if you have any issues or would like to see any additional features. I want ThermalDex to be a really useful tool for those thinking about (and those who don't want to but should think about) Thermal Hazards in organic synthesis.
+
+## Disclaimer
+
+This python code was written entirely by a synthetic organic chemist who was also working in the lab ('aka his actual job') and raising his new Son (who his about 2 weeks older than this project and is adorable). It could do with being neater and having a good old refactor. My ability to name variables/methods/functions consistently is admittedly not great (Its hard to stick to snake or camel case when you use functions from different import modules which use different standards, but the blame is all mine). I will work on getting the code base tidied up so please bare with me.
 
 ## License
 
