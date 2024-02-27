@@ -1,0 +1,68 @@
+CNF
+CNCl
+CNBr
+CNI
+CN(C)F
+CN(C)Cl
+CN(C)Br
+CN(C)I
+COF
+COCl
+COBr
+COI
+[Li]N(C)C
+[Cu]N(C)C
+[Mg]N(C)C
+[K]N(C)C
+[Na]N(C)C
+[Zn]N(C)C
+[Pd]N(C)C
+[Zr]N(C)C
+[Cr]N(C)C
+[B]N(C)C
+[Al]N(C)C
+[Li]C
+[Na]C
+[K]C
+[Mg]C
+[Cu]C
+[Zn]C
+[Zr]C
+[Pd]C
+[Cr]C
+[B]C
+[Al]C
+[N-]=[N+]=C
+C#C
+CC(C)=CC=C(C)C
+CS(=O)(=O)NN
+CN=[N+]=S
+CNSC
+CN(C)N(C)C
+CC1(C)N=N1 |c:3|
+CC1=NN=NN1 |c:3,t:1|
+CN(C)N=C
+CN=[N+]=[N-]
+C[N+]#N
+CN=NC
+C1=CN=CN=C1 |c:0,2,4|
+C1=NC=NC=N1 |c:0,2,4|
+N1C=CN=N1 |c:1,3|
+N1C=NN=C1 |c:1,3|
+CC(=O)OO
+COO
+COOOC
+COOC
+CO[Cl]=O
+CO[Cl](=O)(=O)=O
+CON(C)C(C)=O
+CC(=O)O[N+]([O-])=O
+CN[N+]([O-])=O
+C[N+](=C)N[N+]([O-])=O
+CN=O
+CNO
+ON=C
+CON=O
+CON
+c1cnoc1
+C[N+](=O)[O-]
