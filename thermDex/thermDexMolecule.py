@@ -141,7 +141,7 @@ class thermalDexMolecule:
 
         alkylOximeCount = self.HEG_list.count('C=NOC')
         alkylOximeCorrection = -2*alkylOximeCount
-        if alkylOximeCorrection >= 1:
+        if alkylOximeCount >= 1:
             for alkylOxime in range(0, alkylOximeCount):
                 self.HEG_list.remove('ON=C')
                 self.HEG_list.remove('CON')
@@ -169,7 +169,7 @@ class thermalDexMolecule:
 
         alkylOximeCount = self.EFG_list.count('C=NOC')
         alkylOximeCorrection = -2*alkylOximeCount
-        if alkylOximeCorrection >= 1:
+        if alkylOximeCount >= 1:
             for alkylOxime in range(0, alkylOximeCount):
                 self.EFG_list.remove('ON=C')
                 self.EFG_list.remove('CON')
