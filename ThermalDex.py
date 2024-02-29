@@ -379,10 +379,10 @@ class MolDrawer(QWidget):
                  elif self.searchSubType.currentText() == 'Substructure':
                     try:
                         searchTest = MolFromSmiles(entry_search.text())
-                        checkifrealbyMW = Descriptors.MolWt(searchTest)
+                        #checkifrealbyMW = Descriptors.MolWt(searchTest)
                         if entry_search.text() != '' and entry_search.text() != None and searchTest is not None:
                             smilesList = self.readDatabase['SMILES'].tolist()  #.index.values
-                            print(smilesList)
+                            #print(smilesList)
                             foundList = []
                             for smile in smilesList:
                                 searchStructure = MolFromSmiles(smile)
@@ -390,14 +390,14 @@ class MolDrawer(QWidget):
                                 if len(fullmatchList) > 0:
                                     print('Substructure Match Found: ' + smile)
                                     foundList += [smile]
-                            print('\n\n')
+                            #print('\n\n')
                             print(foundList)
                             indexList = []
                             for foundMatch in foundList:
                                 row_index = self.readDatabase.index[self.readDatabase['SMILES'] == foundMatch].tolist()
                                 indexList += row_index
-                            print(indexList)
-                            print('\n\n')
+                            #print(indexList)
+                            #print('\n\n')
                             foundDataFrame = self.readDatabase.iloc[indexList]
                             print(foundDataFrame)
                             print('\n\n')
@@ -429,8 +429,9 @@ class MolDrawer(QWidget):
                          print(name)
                          if searchName.lower() in name.lower():
                              foundList += [name]
-                     print('\n\n')
-                     print(foundList)
+                     #print('\n\n')
+                     #print(foundList)
+                     foundList = list(dict.fromkeys(foundList))
                      indexList = []
                      for foundMatch in foundList:
                          row_index = self.readDatabase.index[self.readDatabase['name'] == foundMatch].tolist()
@@ -463,8 +464,9 @@ class MolDrawer(QWidget):
                          print(name)
                          if searchName.lower() in name.lower():
                              foundList += [name]
-                     print('\n\n')
-                     print(foundList)
+                     #print('\n\n')
+                     #print(foundList)
+                     foundList = list(dict.fromkeys(foundList))
                      indexList = []
                      for foundMatch in foundList:
                          row_index = self.readDatabase.index[self.readDatabase['proj'] == foundMatch].tolist()

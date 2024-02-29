@@ -139,7 +139,14 @@ class thermalDexMolecule:
                 self.HEG_list.remove('CNO')
                 self.HEG_list.remove('CN=O')
 
-        self.HEG = fullMatch + nitroCorrection
+        alkylOximeCount = self.HEG_list.count('C=NOC')
+        alkylOximeCorrection = -2*alkylOximeCount
+        if alkylOximeCorrection >= 1:
+            for alkylOxime in range(0, alkylOximeCount):
+                self.HEG_list.remove('ON=C')
+                self.HEG_list.remove('CON')
+
+        self.HEG = fullMatch + nitroCorrection + alkylOximeCorrection
 
     def EFGFromMol(self, expEnergyGroups):
         expMatch= 0
@@ -160,6 +167,13 @@ class thermalDexMolecule:
                 self.EFG_list.remove('CNO')
                 self.EFG_list.remove('CN=O')
 
+        alkylOximeCount = self.EFG_list.count('C=NOC')
+        alkylOximeCorrection = -2*alkylOximeCount
+        if alkylOximeCorrection >= 1:
+            for alkylOxime in range(0, alkylOximeCount):
+                self.EFG_list.remove('ON=C')
+                self.EFG_list.remove('CON')
+
         self.EFG = expMatch + nitroCorrection
 
         if self.EFG >= 1:
@@ -167,7 +181,9 @@ class thermalDexMolecule:
         elif self.EFG == 0:
             self.oreo += 1
         else:
-            print("Error: O.R.E.O.S. EFG number gives unexpected value: " + EFG)   
+            print("Error: O.R.E.O.S. EFG number gives unexpected value: " + EFG)
+
+        print(f'| OREOS | EFG: {self.EFG} -> OREOS SubTotal: {self.oreo}')
 
     def eleCompFromMol(self):
         self.molForm = rdMolDescriptors.CalcMolFormula(self.mol)
@@ -247,6 +263,7 @@ class thermalDexMolecule:
             self.oreo += 2 
         self.RoS_val = ruleSixCrit
         self.RoS_des = ruleSix
+        print(f'| OREOS | RoS: {self.RoS_des} -> OREOS SubTotal: {self.oreo}')
 
     def OBFromEleComp(self):
         oxygenBalance = (-1600*((2*self.Catoms)+(self.Hatoms/2)-self.Oatoms))/self.MW
@@ -268,6 +285,7 @@ class thermalDexMolecule:
         self.OB_val = oxygenBalance
         self.OB_des = obRisk
         self.obStr = "{:.2f}".format(oxygenBalance)
+        print(f'| OREOS | OB: {self.OB_des} -> OREOS SubTotal: {self.oreo}')
 
     def oreoOnsetTadjustment(self):
         if self.onsetT != 'nan' and self.onsetT != '' and self.onsetT != None:
@@ -275,14 +293,15 @@ class thermalDexMolecule:
             self.onsetT = float(self.onsetT)
             if self.onsetT <= 125:
                 self.oreo += 8
-            elif self.onsetT in range(126,200):
+            elif 125 < self.onsetT <= 200:
                 self.oreo += 4
-            elif self.onsetT in range(200,300):
+            elif 200 < self.onsetT <= 300:
                 self.oreo += 2
-            elif self.onsetT >= 300:
+            elif self.onsetT > 300:
                 self.oreo += 1
         else:
             self.onsetT = None
+        print(f'| OREOS | Tonset: {self.onsetT} -> OREOS SubTotal: {self.oreo}')
              
     def oreoSafeScaleCal(self):
         self.oreoSmallScale_val = self.oreo + 1
