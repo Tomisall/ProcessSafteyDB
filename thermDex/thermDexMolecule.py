@@ -174,7 +174,7 @@ class thermalDexMolecule:
                 self.EFG_list.remove('ON=C')
                 self.EFG_list.remove('CON')
 
-        self.EFG = expMatch + nitroCorrection
+        self.EFG = expMatch + nitroCorrection + alkylOximeCorrection
 
         if self.EFG >= 1:
             self.oreo += 8
