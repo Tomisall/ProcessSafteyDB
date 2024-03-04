@@ -22,7 +22,7 @@ from contextlib import redirect_stdout
 from os import path
 from shutil import copy2
 
-versionNumber = "1.0.1b"
+versionNumber = "1.0.3"
 
 try:
     import pyi_splash
@@ -60,8 +60,12 @@ def altImportConfig():
     expEnergyGroups = config.get('Lists of Groups', 'expenergygroups')
     yoshidaMethod = config.get('Calculations', 'yoshidacalcs')
     qdscUnits = config.get('Default Values', 'qdscunits')
+    ambertd24limit = config.get('Warnings', 'ambertd24limit')
+    redtd24limit = config.get('Warnings', 'redtd24limit')
+    oreohazardlimit = config.get('Warnings', 'oreohazardlimit')
+    oreohazardwarningscale = config.get('Warnings', 'oreohazardwarningscale')
 
-    return defaultDB, highEnergyGroups, expEnergyGroups, yoshidaMethod, qdscUnits
+    return defaultDB, highEnergyGroups, expEnergyGroups, yoshidaMethod, qdscUnits, ambertd24limit, redtd24limit, oreohazardlimit, oreohazardwarningscale
 
 class QHLine(QFrame):
     def __init__(self):
@@ -107,7 +111,13 @@ class MolDrawer(QWidget):
 
         # Display area for the molecular drawing
         self.mol_display = QGraphicsView(self)
-        molecule_layout.addWidget(QLabel('Molecule:'))
+        top_info_sublayout = QHBoxLayout()
+        top_info_sublayout.addWidget(QLabel('Molecule:'))
+        top_info_sublayout.addStretch()
+        self.approval_needed = QLabel("<h3 style='color: red;'>Seek Approval Before Use</h3>")
+        top_info_sublayout.addWidget(self.approval_needed)
+        self.approval_needed.hide()
+        molecule_layout.addLayout(top_info_sublayout)
         molecule_layout.addWidget(self.mol_display)
 
         ResultsContainLayout = QHBoxLayout()
@@ -1208,6 +1218,7 @@ class MolDrawer(QWidget):
                       next_button.hide()
                       results_table_Label.hide()
                       results_table.hide()
+                      results_approval_warning.hide()
                   except:
                       print('Not shown')
              if self.error_flag is not None:
@@ -1228,7 +1239,26 @@ class MolDrawer(QWidget):
                   readMolecule = thermalDexMolecule(**dictRow)
                   print(readMolecule.MW)
                   self.result_smiles = current_row['SMILES']
-                  result_text = f"SMILES: {current_row['SMILES']}<br>Name: {current_row['name']}<br>High Energy Groups: {current_row['HEG']}<br>Explosive Functional Groups: {current_row['EFG']}<br>mp: {current_row['mp']} to {current_row['mpEnd']} °C<br>MW: {'{:.2f}'.format(current_row['MW'])} g mol<sup>-1</sup><br>Q<sub>DSC</sub>: {current_row['Q_dsc']} {current_row['Qunits']}<br>T<sub>onset</sub>: {current_row['onsetT']} °C<br>T<sub>init</sub>: {current_row['initT']} °C<br>Oxygen Balance: {'{:.2f}'.format(current_row['OB_val'])} {current_row['OB_des']}<br>Rule of Six: {current_row['RoS_val']} {current_row['RoS_des']}<br>Impact Sensitivity: {'{:.2f}'.format(current_row['IS_val'])} {current_row['IS_des']}<br>Explosive Propagation: {'{:.2f}'.format(current_row['EP_val'])} {current_row['EP_des']}<br>Yosida Calculation Method Used: {current_row['yoshidaMethod']}<br>T<sub>D24</sub>: {'{:.1f}'.format(current_row['Td24'])} °C<br>Hammer Drop Test: {current_row['hammerDrop']}<br>Friction Test: {current_row['friction']}<br>Project: {current_row['proj']}"
+
+                  if current_row['Td24'] != None and current_row['Td24'] != '':
+                    d24Str = "{:.1f}".format(current_row['Td24'])
+                    if int(ambertd24limit) >= current_row['Td24'] > int(redtd24limit):
+                        formTd24 = f"T<sub>D24</sub>: <b style='color: orange;'> {d24Str} °C</b>"
+                    elif current_row['Td24'] <= int(redtd24limit):
+                        formTd24 = f"<h3 style='color: red;'>T<sub>D24</sub>: {d24Str} °C<br>Approval Needed Before Use</h3>"
+
+                    else:
+                        formTd24 = 'T<sub>D24</sub>: <b>' + d24Str + ' °C</b>'
+                  else:
+                    formTd24 = f"T<sub>D24</sub>: current_row['Td24']"
+
+                  if self.check_if_oreos_need_approval(readMolecule) == 'Show Approval Message':
+                      oreoApprovalWarning = "<h3 style='color: red;'>Approval Needed Before Use</h3>"
+                  else:
+                      oreoApprovalWarning = ''
+                  results_approval_warning.setText(oreoApprovalWarning)
+
+                  result_text = f"SMILES: {current_row['SMILES']}<br>Name: {current_row['name']}<br>High Energy Groups: {current_row['HEG']}<br>Explosive Functional Groups: {current_row['EFG']}<br>mp: {current_row['mp']} to {current_row['mpEnd']} °C<br>MW: {'{:.2f}'.format(current_row['MW'])} g mol<sup>-1</sup><br>Q<sub>DSC</sub>: {current_row['Q_dsc']} {current_row['Qunits']}<br>T<sub>onset</sub>: {current_row['onsetT']} °C<br>T<sub>init</sub>: {current_row['initT']} °C<br>Oxygen Balance: {'{:.2f}'.format(current_row['OB_val'])} {current_row['OB_des']}<br>Rule of Six: {current_row['RoS_val']} {current_row['RoS_des']}<br>Impact Sensitivity: {'{:.2f}'.format(current_row['IS_val'])} {current_row['IS_des']}<br>Explosive Propagation: {'{:.2f}'.format(current_row['EP_val'])} {current_row['EP_des']}<br>Yosida Calculation Method Used: {current_row['yoshidaMethod']}<br>{formTd24}<br>Hammer Drop Test: {current_row['hammerDrop']}<br>Friction Test: {current_row['friction']}<br>Project: {current_row['proj']}"
                   result_label.setText(result_text)
                   result_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
                   result_label.setWordWrap(True)
@@ -1268,6 +1298,7 @@ class MolDrawer(QWidget):
                   search_layout.insertWidget(5, result_label)
                   search_layout.insertWidget(6, results_table_Label)
                   search_layout.insertWidget(7, results_table)
+                  search_layout.insertWidget(8, results_approval_warning)
                   search_layout.addWidget(counter_label)
                   prev_next_layout = QHBoxLayout()
                   prev_next_layout.addWidget(prev_button)
@@ -1364,6 +1395,7 @@ class MolDrawer(QWidget):
         results_table.setMaximumWidth(402)
         results_table.setMinimumHeight(53)
         results_table.setMinimumWidth(402)
+        results_approval_warning = QLabel('')
 
         sub_search_layout = QHBoxLayout()
         search_layout.addWidget(lbl_search)
@@ -1446,6 +1478,73 @@ class MolDrawer(QWidget):
         defaults_layout.addLayout(yoshidaDefaultsLayout)
 
         defaults_section.setContentLayout(defaults_layout)
+
+        # Warnings
+        warnings_section = Section("Warnings", 100, self)
+        warnings_layout = QVBoxLayout()
+        warnings_layout.addWidget(QLabel("Set Warning Behaviour for ThermalDex", warnings_section))
+        #any_layout.addWidget(QPushButton("Button in Section", section))
+        Td24WarnLayout = QHBoxLayout()
+        Td24WarnLabel = QLabel('Select T<sub>D24</sub> temperature warning limits:')
+        Td24WarnUpperLabel = QLabel('Upper Limit (°C) = ')
+        self.amberTd24Combo = QComboBox()
+        self.amberTd24Combo.addItems([str(n) for n in range(1, 500)])
+        self.amberTd24Combo.setMaximumWidth(75)
+        self.amberTd24Combo.setCurrentText(ambertd24limit)
+        Td24WarnLowerLabel = QLabel('Lower Limit (°C) = ')
+        self.amberTd24LowerCombo = QComboBox()
+        self.amberTd24LowerCombo.addItems([str(n) for n in range(1, 300)])
+        self.amberTd24LowerCombo.setMaximumWidth(75)
+        self.amberTd24LowerCombo.setCurrentText(redtd24limit)
+        Td24WarnApplyButton = QPushButton('Apply')
+        Td24WarnApplyButton.setMaximumWidth(100)
+        Td24WarnApplyButton.clicked.connect(self.save_td24_warn_settings)
+        warnings_layout.addWidget(Td24WarnLabel)
+        warnings_layout.addSpacing(10)
+        Td24WarnLayout.addWidget(Td24WarnUpperLabel)
+        Td24WarnLayout.addWidget(self.amberTd24Combo)
+        Td24WarnLayout.addSpacing(10)
+        Td24WarnLayout.addWidget(Td24WarnLowerLabel)
+        Td24WarnLayout.addWidget(self.amberTd24LowerCombo)
+        Td24WarnLayout.addStretch()
+        Td24WarnLayout.addWidget(Td24WarnApplyButton)
+        warnings_layout.addLayout(Td24WarnLayout)
+        warnings_layout.addSpacing(10)
+
+
+        oreoWarnLayout = QHBoxLayout()
+        oreoWarnLabel = QLabel('Select O.R.E.O. warning behavour:')
+        oreoWarnFirstLabel = QLabel('Warn if scale = ')
+        #oreoWarnLabel.setWordWrap(True)
+        oreoWarnFirstLabel.setMaximumWidth(75)
+        #oreoWarnLabel.setFixedHeight(40)
+        self.oreoWarnScaleCombo = QComboBox()
+        self.oreoWarnScaleCombo.addItems(['<5 g', '5 to <100 g', '100 to 500 g', '>500 g'])
+        self.oreoWarnScaleCombo.setCurrentText(oreohazardwarningscale)
+        self.oreoWarnScaleCombo.setMaximumWidth(90)
+        oreoWarnContLabel = QLabel('has hazard rating of =<br>(or greater)')
+        oreoWarnContLabel.setWordWrap(True)
+        oreoWarnContLabel.setFixedHeight(40)
+        self.oreoWarnHazCombo = QComboBox()
+        self.oreoWarnHazCombo.addItems(["Low Hazard","Medium Hazard","High Hazard"])
+        self.oreoWarnHazCombo.setCurrentText(oreohazardlimit)
+        self.oreoWarnHazCombo.setMaximumWidth(100)
+        oreoWarnApplyButton = QPushButton('Apply')
+        oreoWarnApplyButton.setMaximumWidth(100)
+        oreoWarnApplyButton.clicked.connect(self.save_oreo_warn_settings)
+        warnings_layout.addWidget(oreoWarnLabel)
+        oreoWarnLayout.addWidget(oreoWarnFirstLabel)
+        oreoWarnLayout.addWidget(self.oreoWarnScaleCombo)
+        oreoWarnLayout.addSpacing(10)
+        oreoWarnLayout.addWidget(oreoWarnContLabel)
+        oreoWarnLayout.addWidget(self.oreoWarnHazCombo)
+        oreoWarnLayout.addStretch()
+        oreoWarnLayout.addWidget(oreoWarnApplyButton)
+        warnings_layout.addLayout(oreoWarnLayout)
+        warnings_layout.addSpacing(10)
+
+        warnings_section.setContentLayout(warnings_layout)       
+
 
         # Core Settings
         core_section = Section("Core Settings", 100, self)
@@ -1533,6 +1632,7 @@ class MolDrawer(QWidget):
         apperance_section.setContentLayout(apperance_layout)       
 
         settings_layout.addWidget(defaults_section)
+        settings_layout.addWidget(warnings_section)
         settings_layout.addWidget(core_section)
         settings_layout.addWidget(apperance_section)
 
@@ -1624,7 +1724,7 @@ class MolDrawer(QWidget):
 
         # Set up the main window
         self.setLayout(layout)
-        self.setGeometry(100, 100, 600, 875)
+        self.setGeometry(100, 100, 600, 895)
         self.setWindowTitle('ThermalDex')
 
     def reload_config_func(self):
@@ -1635,8 +1735,12 @@ class MolDrawer(QWidget):
         global expEnergyGroups
         global yoshidaMethod
         global qdscUnits
+        global ambertd24limit
+        global redtd24limit
+        global oreohazardlimit
+        global oreohazardwarningscale
 
-        defaultDB, highEnergyGroups, expEnergyGroups, yoshidaMethod, qdscUnits = altImportConfig()
+        defaultDB, highEnergyGroups, expEnergyGroups, yoshidaMethod, qdscUnits, ambertd24limit, redtd24limit, oreohazardlimit, oreohazardwarningscale = altImportConfig()
         QMessageBox.information(self, "Config Settings", "Settings have been loaded successfully.")
 
     def exportSearchResults(self, Database):
@@ -1740,6 +1844,25 @@ class MolDrawer(QWidget):
             rel_file = path.relpath(default_file)
             self.databaseCoreInput.setText(rel_file)
 
+    def save_oreo_warn_settings(self):
+        self.config.set('Warnings', 'oreohazardwarningscale', self.oreoWarnScaleCombo.currentText())
+        self.config.set('Warnings', 'oreohazardlimit', self.oreoWarnHazCombo.currentText())
+
+        with open('./_core/ThermalDex.ini', 'w') as configfile:
+            self.config.write(configfile)
+
+    def save_td24_warn_settings(self):
+        if int(self.amberTd24Combo.currentText()) > int(self.amberTd24LowerCombo.currentText()):
+            self.config.set('Warnings', 'ambertd24limit', self.amberTd24Combo.currentText())
+            self.config.set('Warnings', 'redtd24limit', self.amberTd24LowerCombo.currentText())
+
+            with open('./_core/ThermalDex.ini', 'w') as configfile:
+                self.config.write(configfile)
+
+            QMessageBox.information(self, "Settings Saved", "Settings have been saved.")
+        else:
+            self.interactiveErrorMessage('T<sub>D24</sub> lower limit must be smaller than the upper limit!')
+
     def save_yoshidacal_settings(self):
         self.config.set('Calculations', 'yoshidacalcs', self.yoshidaDefaultsCombo.currentText())
 
@@ -1797,6 +1920,7 @@ class MolDrawer(QWidget):
 
     def changeTabForEditing(self):
         #try:
+        self.approval_needed.hide()
         editDB = self.selectedDatabase.fillna('')
         current_row = editDB.iloc[self.current_index]
         dictRow = current_row.to_dict()
@@ -1864,6 +1988,9 @@ class MolDrawer(QWidget):
         self.attachedFilesLabel.show()
         self.filesCount.show()
         self.attach_button.show()
+
+        if self.check_if_oreos_need_approval(readMolecule) == 'Show Approval Message':
+            self.approval_needed.show()
     
         try:
             isStr = "{:.2f}".format(readMolecule.IS_val)
@@ -1877,7 +2004,13 @@ class MolDrawer(QWidget):
         self.EPLabel.setText('Yoshida Explosive Propagation: ' + epStr + readMolecule.EP_des)
         try:
             d24Str = "{:.1f}".format(readMolecule.Td24)
-            self.Td24Label.setText('T<sub>D24</sub>: <b>' + d24Str + ' °C</b>')        
+            if int(ambertd24limit) >= readMolecule.Td24 > int(redtd24limit):
+                self.Td24Label.setText(f"T<sub>D24</sub>: <b style='color: orange;'> {d24Str} °C</b>")
+            elif readMolecule.Td24 <= int(redtd24limit):
+                self.Td24Label.setText(f"<h3 style='color: red;'>T<sub>D24</sub>: {d24Str} °C</h3>")
+                self.approval_needed.show()
+            else:
+                self.Td24Label.setText('T<sub>D24</sub>: <b>' + d24Str + ' °C</b>')       
         except:
             pass
         self.tab_widget.setCurrentWidget(self.molecule_tab)   #0) #self.tab_widget.findChild(QWidget, "Add"))
@@ -1955,6 +2088,7 @@ class MolDrawer(QWidget):
 
     def clearTheCalcdValues(self):
         scene = QGraphicsScene()
+        self.approval_needed.hide()
         self.mol_display.setScene(scene)
         self.mwLabel.setText(self.mwText)
         self.HEGlabel.setText(self.HEGText)
@@ -2064,7 +2198,7 @@ class MolDrawer(QWidget):
             #create_pdf(results["name"], results, img) #results["molIMG"]) 
             imageData = moleculeData.molToBytes()
             dataURL = 'data:image/png;base64,' + imageData
-            mdReportCreation(moleculeData, dataURL)
+            mdReportCreation(moleculeData, dataURL, int(ambertd24limit), int(redtd24limit))
             if self.error_flag is not None:
                 self.error_message.setText('')
                 layout.removeWidget(self.error_message)
@@ -2140,6 +2274,50 @@ class MolDrawer(QWidget):
         # Create an RDKit molecule from the SMILES string
         addedMolecule = thermalDexMolecule(SMILES=smiles, name=name, mp=mp, mpEnd=mpEnd, Q_dsc=Qdsc, Qunits=QUnits, onsetT=TE, initT=Tinit, proj=proj, hammerDrop=hammerDrop, friction=friction, dataFolder=dataFolder, yoshidaMethod=yoshidaMethod)
         return addedMolecule
+    
+    def check_if_oreos_need_approval(self, molecule):
+            
+            print(f'oreohazardlimit: {oreohazardlimit}')
+            if oreohazardlimit == 'High Hazard':
+                checkOreoHazards = ['High Hazard']
+            
+            elif oreohazardlimit == 'Medium Hazard':
+                checkOreoHazards = ['High Hazard', 'Medium Hazard']
+
+            elif oreohazardlimit == 'Low Hazard':
+                checkOreoHazards = ['High Hazard', 'Medium Hazard', 'Low Hazard']
+
+            else:
+                self.showErrorMessage('Error Reading Config Warning Settings.')
+            
+            print(f'oreohazardwarningscale: {oreohazardwarningscale}')
+            if oreohazardwarningscale == '<5 g':
+                for hazardRating in checkOreoHazards:
+                    if molecule.oreoSmallScale_des == hazardRating:
+                        #self.approval_needed.show()
+                        return('Show Approval Message')
+
+            elif oreohazardwarningscale == '5 to <100 g':
+                for hazardRating in checkOreoHazards:
+                    if molecule.oreoTensScale_des == hazardRating:
+                        #self.approval_needed.show()
+                        return('Show Approval Message')
+
+            elif oreohazardwarningscale == '100 to 500 g':
+                for hazardRating in checkOreoHazards:
+                    if molecule.oreoHundsScale_des == hazardRating:
+                        #self.approval_needed.show()
+                        return('Show Approval Message')
+
+            elif oreohazardwarningscale == '>500 g':
+                for hazardRating in checkOreoHazards:
+                    if molecule.oreoLargeScale_des == hazardRating:
+                        #self.approval_needed.show()
+                        return('Show Approval Message')
+
+            else:
+                self.showErrorMessage('Error Reading Config Warning Settings.')
+
 
     def checkIfSMILESAreValid(self, molecule):
         if molecule.SMILES != '' and molecule.SMILES is not None:
@@ -2170,6 +2348,7 @@ class MolDrawer(QWidget):
         
         if addedMolecule.mol is not None:
             # Make Pixmap Image to Display.
+            self.clearTheCalcdValues()
             self.displayTheMolecule(addedMolecule, self.mol_display)
 
             # Calculate Core Properties
@@ -2194,13 +2373,23 @@ class MolDrawer(QWidget):
                 print(classColor)
                 item.setBackground(classColor)
 
+            if self.check_if_oreos_need_approval(addedMolecule) == 'Show Approval Message':
+                self.approval_needed.show()
+
             if addedMolecule.isStr != None:
                 self.ISLabel.setText('Yoshida Impact Sensitivity: ' + addedMolecule.isStr + addedMolecule.IS_des)
             if addedMolecule.epStr != None:
                 self.EPLabel.setText('Yoshida Explosive Propagation: ' + addedMolecule.epStr + addedMolecule.EP_des)
             if addedMolecule.Td24 != '' and addedMolecule.Td24 != 'nan' and addedMolecule.Td24 != None:
                 d24Str = "{:.1f}".format(addedMolecule.Td24)
-                self.Td24Label.setText('T<sub>D24</sub>: <b>' + d24Str + ' °C</b>')
+                if int(ambertd24limit) >= addedMolecule.Td24 > int(redtd24limit):
+                    self.Td24Label.setText(f"T<sub>D24</sub>: <b style='color: orange;'> {d24Str} °C</b>")
+                elif addedMolecule.Td24 <= int(redtd24limit):
+                    self.Td24Label.setText(f"<h3 style='color: red;'>T<sub>D24</sub>: {d24Str} °C</h3>")
+                    self.approval_needed.show()
+                else:
+                    self.Td24Label.setText('T<sub>D24</sub>: <b>' + d24Str + ' °C</b>')
+                
             if addedMolecule.onsetT != 'nan' and addedMolecule.onsetT != '' and addedMolecule.onsetT != None and addedMolecule.onsetT <= 24.99:
                 self.error_message = QLabel('Sub-Ambient Onset Temperature? Are you sure? Yoshida values will not be accurate.')
                 layout.addWidget(self.error_message)
@@ -2239,7 +2428,7 @@ class MolDrawer(QWidget):
 if __name__ == '__main__':
     with open('./_core/ThermalDex.log', 'w', encoding='utf-8') as logFile:
         with redirect_stdout(logFile):
-            defaultDB, highEnergyGroups, expEnergyGroups, yoshidaMethod, qdscUnits = altImportConfig()
+            defaultDB, highEnergyGroups, expEnergyGroups, yoshidaMethod, qdscUnits, ambertd24limit, redtd24limit, oreohazardlimit, oreohazardwarningscale = altImportConfig()
             app = QApplication(sys.argv)
             app.setWindowIcon(QIcon('.\\_core\\ThermalDexIcon.ico'))
             window = MolDrawer()

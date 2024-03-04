@@ -42,13 +42,18 @@ CN(C)N(C)C
 CC1(C)N=N1 |c:3|
 CC1=NN=NN1 |c:3,t:1|
 CN(C)N=C
-CN=[N+]=[N-]
+N=[N+]=[N-]
 C[N+]#N
 CN=NC
 C1=CN=CN=C1 |c:0,2,4|
 C1=NC=NC=N1 |c:0,2,4|
 N1C=CN=N1 |c:1,3|
 N1C=NN=C1 |c:1,3|
+c1nn=ncc1
+n1nn=nnn1
+c1nn=ncn1
+c1nn=nnc1
+N1N=CN=N1
 CC(=O)OO
 COO
 COOOC
@@ -64,5 +69,6 @@ CNO
 ON=C
 CON=O
 CON
+C=NOC
 c1cnoc1
 C[N+](=O)[O-]
