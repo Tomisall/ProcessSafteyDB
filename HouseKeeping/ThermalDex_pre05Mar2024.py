@@ -1,7 +1,15 @@
+#import sys
+#from rdkit.Chem import Draw, Descriptors, rdMolDescriptors, Mol, MolFromSmiles, MolFromSmarts, rdmolfiles
+#from io import BytesIO
+#from numpy import log10
+#from pubchempy import get_compounds
+#from dataclasses import dataclass, field, asdict
+#import re
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTableWidget, QTableWidgetItem, QTabWidget, QGraphicsPixmapItem,  QMessageBox, QComboBox #, QTableView, QToolTip
-from PyQt5.QtGui import QPixmap, QColor, QIcon, QRegExpValidator, QFont
-from PyQt5.QtCore import Qt, QRegExp, pyqtSignal
-from thermDex.thermDexMolecule import *
+from PyQt5.QtGui import QPixmap, QColor, QIcon, QRegExpValidator #QValidator #, QCursor
+from PyQt5.QtCore import Qt, QRegExp, pyqtSignal #, QCoreApplication
+#from thermDex.thermDexReport import *
+from thermDex.thermDexMolecule import * #thermalDexMolecule
 from thermDex.thermDexHTMLRep import *
 from thermDex.attachedFileManager import *
 from thermDex.Section import Section
@@ -11,10 +19,10 @@ import pyperclip
 import configparser
 from numpy import log10
 from contextlib import redirect_stdout
-from os import path, environ
+from os import path
 from shutil import copy2
 
-versionNumber = "1.0.4"
+versionNumber = "1.0.3b"
 
 try:
     import pyi_splash
@@ -23,15 +31,6 @@ try:
 except:
     pass
 
-os.environ["QT_ENABLE_HIGHDPI_SCALING"]   = "1"
-os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
-os.environ["QT_SCALE_FACTOR"]             = "1"
-
-if hasattr(Qt, 'AA_DisableHighDpiScaling'): #'AA_EnableHighDpiScaling'
-    QApplication.setAttribute(Qt.AA_DisableHighDpiScaling, True)
-
-if hasattr(Qt, 'AA_UseHighDpiPixmaps'):
-    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
 
 def importConfig():
     conf = open('.\\_core\\ThermalDex.config', 'r')
@@ -102,14 +101,6 @@ class MolDrawer(QWidget):
         self.error_flag = None
         # Set up the main layout
         layout = QVBoxLayout()
-        
-        # Set up the main window
-        self.setLayout(layout)
-        self.setGeometry(100, 100, 600, 895)
-        self.setWindowTitle('ThermalDex')
-        #self.setMinimumSize(450,810)
-        self.resize(int(screen.size().width()*0.33), int(screen.size().height()*0.85))
-        #self.setFixedSize(int(screen.size().width()*0.33), int(screen.size().height()*0.85))
 
         # Create a tab widget
         self.tab_widget = QTabWidget()
@@ -189,8 +180,8 @@ class MolDrawer(QWidget):
         #self.table.setStyleSheet("QTableWidget::item { border-bottom: 2px solid black; }")
         self.table.setMaximumHeight(53)
         self.table.setMaximumWidth(402)
-        #self.table.setMinimumHeight(53)
-        #self.table.setMinimumWidth(402)
+        self.table.setMinimumHeight(53)
+        self.table.setMinimumWidth(402)
         #self.table.setAlignment(Qt.AlignVCenter)
         tableLayout.addWidget(self.table)
 
@@ -215,7 +206,9 @@ class MolDrawer(QWidget):
         InputLeftLayout.addWidget(QLabel('Name:'))
         nameUnitsSubLayout = QHBoxLayout()
         nameUnitsSubLayout.addWidget(self.name_input)
-        nameUnitsSubLayout.addSpacing(37)
+        nameUnitLabel = QLabel('°C    ')
+        nameUnitLabel.setStyleSheet('color: white')
+        nameUnitsSubLayout.addWidget(nameUnitLabel)
         InputLeftLayout.addLayout(nameUnitsSubLayout)
 
         # Input field for mp string
@@ -231,7 +224,6 @@ class MolDrawer(QWidget):
         mpUnitsSubLayout.addWidget(QLabel('  to  '))
         mpUnitsSubLayout.addWidget(self.mpEnd_input)
         mpUnitsSubLayout.addWidget(QLabel('°C    '))
-        mpUnitsSubLayout.addStretch()
         InputLeftLayout.addLayout(mpUnitsSubLayout)
 
         # Input field for Q_DSC string
@@ -253,8 +245,7 @@ class MolDrawer(QWidget):
         InputRightLayout.addWidget(QLabel('Onset Temperature:'))
         TEUnitsSubLayout = QHBoxLayout()
         TEUnitsSubLayout.addWidget(self.TE_input)
-        TEUnitsSubLayout.addWidget(QLabel('°C'))
-        TEUnitsSubLayout.addSpacing(45)
+        TEUnitsSubLayout.addWidget(QLabel('°C       '))
         InputRightLayout.addLayout(TEUnitsSubLayout)
 
         # Input field for Init string
@@ -263,8 +254,7 @@ class MolDrawer(QWidget):
         InputRightLayout.addWidget(QLabel('Initiation Temperature:'))
         TinitUnitsSubLayout = QHBoxLayout()
         TinitUnitsSubLayout.addWidget(self.Tinit_input)
-        TinitUnitsSubLayout.addWidget(QLabel('°C'))
-        TinitUnitsSubLayout.addSpacing(45)
+        TinitUnitsSubLayout.addWidget(QLabel('°C       '))
         InputRightLayout.addLayout(TinitUnitsSubLayout)
 
         # Input field for proj string
@@ -272,7 +262,9 @@ class MolDrawer(QWidget):
         InputLeftLayout.addWidget(QLabel('Project:'))
         projUnitsSubLayout = QHBoxLayout()
         projUnitsSubLayout.addWidget(self.proj_input)
-        projUnitsSubLayout.addSpacing(37)
+        projUnitLabel = QLabel('°C    ')
+        projUnitLabel.setStyleSheet('color: white')
+        projUnitsSubLayout.addWidget(projUnitLabel)
         InputLeftLayout.addLayout(projUnitsSubLayout)
 
         # Input field for Hammer Drop Test
@@ -281,7 +273,9 @@ class MolDrawer(QWidget):
         self.hamSelection = QComboBox(self)
         self.hamSelection.addItems(['Not Performed', 'Positive', 'Negative'])
         hamSubLayout.addWidget(self.hamSelection)
-        hamSubLayout.addSpacing(37)
+        hamUnitLabel = QLabel('°C    ')
+        hamUnitLabel.setStyleSheet('color: white')
+        hamSubLayout.addWidget(hamUnitLabel)
         InputLeftLayout.addLayout(hamSubLayout)
 
         # Input field for Friction Test
@@ -290,7 +284,9 @@ class MolDrawer(QWidget):
         self.fricSelection = QComboBox(self)
         self.fricSelection.addItems(['Not Performed', 'Positive', 'Negative'])
         fricSubLayout.addWidget(self.fricSelection)
-        fricSubLayout.addSpacing(62)
+        fricUnitLabel = QLabel('°C    ')
+        fricUnitLabel.setStyleSheet('color: white')
+        fricSubLayout.addWidget(fricUnitLabel)
         InputRightLayout.addLayout(fricSubLayout)
 
         InputContainLayout.addLayout(InputLeftLayout)
@@ -355,101 +351,1090 @@ class MolDrawer(QWidget):
 
         # Tab for Search
         search_tab = QWidget()
-        self.search_layout = QVBoxLayout()
+        search_layout = QVBoxLayout()
 
         # Entry widget for searching
         lbl_search = QLabel('Search:')
-        self.entry_search = ClickableLineEdit(self) #QLineEdit()
-        self.entry_search.clicked.connect(self.mrvToSMILES)
+        entry_search = ClickableLineEdit(self) #QLineEdit()
+        entry_search.clicked.connect(self.mrvToSMILES)
         self.searchTypeSelection = QComboBox(self)
-        self.searchTypeSelection.addItems(['SMILES', 'Name', 'Project', 'MW', 'Qdsc', 'Tinit', 'Tonset', 'Td24', 'O.R.E.O.S. at >500 g', 'Rule of Six', 'Oxygen Balance'])
+        self.searchTypeSelection.addItems(['SMILES', 'Name', 'Project', 'MW', 'Qdsc', 'Tinit', 'Tonset', 'Td24', 'O.R.E.O.S. at >500 g'])
         smilesSearchList = ['Substructure', 'Exact']
-        nameProjSearchList = ['is', 'contains', 'is not', 'does not contain']
+        nameProjSearchList = ['is', 'contains']
         valuesSearchList = ['=', '<', '>', '</=', '>/=']
-        self.listOfSearchTypes = [smilesSearchList, nameProjSearchList, nameProjSearchList, valuesSearchList, valuesSearchList, valuesSearchList, valuesSearchList, valuesSearchList, valuesSearchList, valuesSearchList, valuesSearchList]
+        self.listOfSearchTypes = [smilesSearchList, nameProjSearchList, nameProjSearchList, valuesSearchList, valuesSearchList, valuesSearchList, valuesSearchList, valuesSearchList, valuesSearchList]
         self.searchSubType = QComboBox(self)
         self.searchSubType.addItems(smilesSearchList)
         self.searchTypeSelection.currentIndexChanged.connect(self.set_sub_search)
-        self.result_label = QLabel('click search')
-        self.counter_label = QLabel('none')
+
+        result_label = QLabel('click search')
+        counter_label = QLabel('none')
+
+        def search_database():
+             self.readDatabase = pd.read_csv(defaultDB) #, index_col=0) #, encoding='mbcs')
+
+             if entry_search.text() == '' or entry_search.text() == None:    
+                 self.selectedDatabase = self.readDatabase
+                 show_result(self, self.readDatabase, True)
+
+             elif self.searchTypeSelection.currentText() == 'SMILES':
+                 if self.searchSubType.currentText() == 'Exact':
+                     searchSMILES = entry_search.text()
+                     row_index = self.readDatabase.index[self.readDatabase['SMILES'] == searchSMILES].tolist()
+                     foundDataFrame = self.readDatabase.iloc[row_index]
+                     foundDataFrame.reset_index(drop=True)
+                     self.selectedDatabase = foundDataFrame
+                     show_result(self, foundDataFrame, True)
+
+                 elif self.searchSubType.currentText() == 'Substructure':
+                    try:
+                        searchTest = MolFromSmiles(entry_search.text())
+                        #checkifrealbyMW = Descriptors.MolWt(searchTest)
+                        if entry_search.text() != '' and entry_search.text() != None and searchTest is not None:
+                            smilesList = self.readDatabase['SMILES'].tolist()  #.index.values
+                            #print(smilesList)
+                            foundList = []
+                            for smile in smilesList:
+                                searchStructure = MolFromSmiles(smile)
+                                fullmatchList = Mol.GetSubstructMatches(searchStructure, searchTest)
+                                if len(fullmatchList) > 0:
+                                    print('Substructure Match Found: ' + smile)
+                                    foundList += [smile]
+                            #print('\n\n')
+                            print(foundList)
+                            indexList = []
+                            for foundMatch in foundList:
+                                row_index = self.readDatabase.index[self.readDatabase['SMILES'] == foundMatch].tolist()
+                                indexList += row_index
+                            #print(indexList)
+                            #print('\n\n')
+                            foundDataFrame = self.readDatabase.iloc[indexList]
+                            print(foundDataFrame)
+                            print('\n\n')
+                            foundDataFrame.reset_index(drop=True)
+                            self.selectedDatabase = foundDataFrame
+                            show_result(self, foundDataFrame, True)
+                    except:
+                        errorInfo = "Enter Valid SMILES"
+                        self.interactiveErrorMessage(errorInfo)
+
+             elif self.searchTypeSelection.currentText() == 'Name':
+                 if self.searchSubType.currentText() == 'is':
+                     searchName = entry_search.text()
+                     row_index = self.readDatabase.index[self.readDatabase['name'] == searchName].tolist()
+                     foundDataFrame = self.readDatabase.iloc[row_index]
+                     foundDataFrame.reset_index(drop=True)
+                     self.selectedDatabase = foundDataFrame
+                     show_result(self, foundDataFrame, True)
+
+                 elif self.searchSubType.currentText() == 'contains':
+                     searchName = entry_search.text()
+                     nameList = self.readDatabase['name'].tolist()  #.index.values
+                     cleanNameList = []
+                     foundList = []
+                     for name in nameList:
+                         if name == name: # a check to remove nan values
+                             cleanNameList += [name]
+                     for name in cleanNameList:
+                         print(name)
+                         if searchName.lower() in name.lower():
+                             foundList += [name]
+                     #print('\n\n')
+                     #print(foundList)
+                     foundList = list(dict.fromkeys(foundList))
+                     indexList = []
+                     for foundMatch in foundList:
+                         row_index = self.readDatabase.index[self.readDatabase['name'] == foundMatch].tolist()
+                         indexList += row_index
+                     foundDataFrame = self.readDatabase.iloc[indexList]
+                     print(foundDataFrame)
+                     print('\n\n')
+                     foundDataFrame.reset_index(drop=True)
+                     self.selectedDatabase = foundDataFrame
+                     show_result(self, foundDataFrame, True)
+
+             elif self.searchTypeSelection.currentText() == 'Project':
+                 if self.searchSubType.currentText() == 'is':
+                     searchName = entry_search.text()
+                     row_index = self.readDatabase.index[self.readDatabase['proj'] == searchName].tolist()
+                     foundDataFrame = self.readDatabase.iloc[row_index]
+                     foundDataFrame.reset_index(drop=True)
+                     self.selectedDatabase = foundDataFrame
+                     show_result(self, foundDataFrame, True)
+
+                 elif self.searchSubType.currentText() == 'contains':
+                     searchName = entry_search.text()
+                     nameList = self.readDatabase['proj'].tolist()  #.index.values
+                     cleanNameList = []
+                     foundList = []
+                     for name in nameList:
+                         if name == name: # a check to remove nan values
+                             cleanNameList += [name]
+                     for name in cleanNameList:
+                         print(name)
+                         if searchName.lower() in name.lower():
+                             foundList += [name]
+                     #print('\n\n')
+                     #print(foundList)
+                     foundList = list(dict.fromkeys(foundList))
+                     indexList = []
+                     for foundMatch in foundList:
+                         row_index = self.readDatabase.index[self.readDatabase['proj'] == foundMatch].tolist()
+                         indexList += row_index
+                     foundDataFrame = self.readDatabase.iloc[indexList]
+                     print(foundDataFrame)
+                     print('\n\n')
+                     foundDataFrame.reset_index(drop=True)
+                     self.selectedDatabase = foundDataFrame
+                     show_result(self, foundDataFrame, True)
+
+             elif self.searchTypeSelection.currentText() == 'MW':
+                 if self.searchSubType.currentText() == '=':
+                     try:
+                        searchName = float(entry_search.text())
+                        row_index = self.readDatabase.index[self.readDatabase['MW'] == searchName].tolist()
+                        foundDataFrame = self.readDatabase.iloc[row_index]
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo) 
+
+                 elif self.searchSubType.currentText() == '<':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['MW'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value < float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['MW'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '>':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['MW'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value > float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['MW'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '</=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['MW'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value <= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['MW'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)           
+
+                 elif self.searchSubType.currentText() == '>/=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['MW'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value >= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['MW'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)  
+
+             elif self.searchTypeSelection.currentText() == 'Qdsc':
+                 if self.searchSubType.currentText() == '=':
+                     try:
+                        searchName = float(entry_search.text())
+                        row_index = self.readDatabase.index[self.readDatabase['Q_dsc'] == searchName].tolist()
+                        foundDataFrame = self.readDatabase.iloc[row_index]
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo) 
+
+                 elif self.searchSubType.currentText() == '<':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['Q_dsc'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value < float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['Q_dsc'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '>':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['Q_dsc'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value > float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['Q_dsc'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '</=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['Q_dsc'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value <= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['Q_dsc'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)           
+
+                 elif self.searchSubType.currentText() == '>/=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['Q_dsc'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value >= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['Q_dsc'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)  
+
+             elif self.searchTypeSelection.currentText() == 'Tinit':
+                 if self.searchSubType.currentText() == '=':
+                     try:
+                        searchName = float(entry_search.text())
+                        row_index = self.readDatabase.index[self.readDatabase['initT'] == searchName].tolist()
+                        foundDataFrame = self.readDatabase.iloc[row_index]
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo) 
+
+                 elif self.searchSubType.currentText() == '<':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['initT'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value < float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['initT'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '>':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['initT'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value > float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['initT'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        foundList = list(dict.fromkeys(foundList))
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '</=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['initT'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value <= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['initT'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        foundList = list(dict.fromkeys(foundList))
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)           
+
+                 elif self.searchSubType.currentText() == '>/=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['initT'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value >= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['initT'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)               
+
+             elif self.searchTypeSelection.currentText() == 'Tonset':
+                 if self.searchSubType.currentText() == '=':
+                     try:
+                        searchName = float(entry_search.text())
+                        row_index = self.readDatabase.index[self.readDatabase['onsetT'] == searchName].tolist()
+                        foundDataFrame = self.readDatabase.iloc[row_index]
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo) 
+
+                 elif self.searchSubType.currentText() == '<':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['onsetT'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value < float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['onsetT'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '>':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['onsetT'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value > float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['onsetT'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '</=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['onsetT'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value <= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['onsetT'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)           
+
+                 elif self.searchSubType.currentText() == '>/=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['onsetT'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value >= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['onsetT'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)     
+
+             elif self.searchTypeSelection.currentText() == 'Td24':
+                 if self.searchSubType.currentText() == '=':
+                     try:
+                        searchName = float(entry_search.text())
+                        row_index = self.readDatabase.index[self.readDatabase['Td24'] == searchName].tolist()
+                        foundDataFrame = self.readDatabase.iloc[row_index]
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo) 
+
+                 elif self.searchSubType.currentText() == '<':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['Td24'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value < float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['Td24'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '>':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['Td24'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value > float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['Td24'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '</=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['Td24'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value <= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['Td24'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)           
+
+                 elif self.searchSubType.currentText() == '>/=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['Td24'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value >= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['Td24'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)     
+
+             elif self.searchTypeSelection.currentText() == 'O.R.E.O.S. at >500 g':
+                 if self.searchSubType.currentText() == '=':
+                     try:
+                        searchName = float(entry_search.text())
+                        row_index = self.readDatabase.index[self.readDatabase['oreoLargeScale_val'] == searchName].tolist()
+                        foundDataFrame = self.readDatabase.iloc[row_index]
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo) 
+
+                 elif self.searchSubType.currentText() == '<':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['oreoLargeScale_val'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value < float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['oreoLargeScale_val'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '>':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['oreoLargeScale_val'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value > float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        foundList = list(dict.fromkeys(foundList))
+                        indexList = []
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['oreoLargeScale_val'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+                 elif self.searchSubType.currentText() == '</=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['oreoLargeScale_val'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value <= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        indexList = []
+                        foundList = list(dict.fromkeys(foundList))
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['oreoLargeScale_val'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)           
+
+                 elif self.searchSubType.currentText() == '>/=':
+                     try:
+                        searchName = entry_search.text()
+                        valueList = self.readDatabase['oreoLargeScale_val'].tolist()  #.index.values
+                        foundList = []
+                        for value in valueList:
+                            print(value)
+                            if value >= float(searchName):
+                                foundList += [value]
+                        print('\n\n')
+                        print(foundList)
+                        indexList = []
+                        foundList = list(dict.fromkeys(foundList))
+                        for foundMatch in foundList:
+                            row_index = self.readDatabase.index[self.readDatabase['oreoLargeScale_val'] == foundMatch].tolist()
+                            indexList += row_index
+                        foundDataFrame = self.readDatabase.iloc[indexList]
+                        print(foundDataFrame)
+                        print('\n\n')
+                        foundDataFrame.reset_index(drop=True)
+                        self.selectedDatabase = foundDataFrame
+                        show_result(self, foundDataFrame, True)
+
+                     except:
+                        errorInfo = "Enter a Valid number"
+                        self.interactiveErrorMessage(errorInfo)   
+
+             else:
+                 errorInfo = "How!? How have you gotten to this error message... I... Ugh... Report this to the developer okay?"
+                 self.interactiveErrorMessage(errorInfo)   
+
+        def show_result(self, Database, resetIndex):
+             #print(self)
+             layout = self.layout()
+             if Database.empty:
+                  errorInfo = "No matches found. Try a diffrent search?"
+                  self.interactiveErrorMessage(errorInfo)
+                  counter_label.setText("")
+                  result_label.setText("")
+                  self.mol_result_display.hide()
+                  self.molLabel.hide()
+                  make_plot_label.hide()
+                  make_plot_button.hide()
+                  self.select_x_values.hide()
+                  vs_label.hide()
+                  self.select_y_values.hide()
+                  try:
+                      export_button.hide()
+                      edit_button.hide()
+                      del_button.hide()
+                      prev_button.hide()
+                      next_button.hide()
+                      results_table_Label.hide()
+                      results_table.hide()
+                      results_approval_warning.hide()
+                  except:
+                      print('Not shown')
+             if self.error_flag is not None:
+                  self.error_message.setText('')
+                  layout.removeWidget(self.error_message)
+                  self.error_flag = None
+             if resetIndex == True:
+                  self.current_index = 0             
+             if Database is not None and not Database.empty:
+                  self.mol_result_display.show()
+                  self.molLabel.show()
+                  current_row = Database.iloc[self.current_index]
+                  print(current_row)
+                  print('\n\n')
+                  dictRow = current_row.to_dict()
+                  print(dictRow)
+                  print('\n\n')
+                  readMolecule = thermalDexMolecule(**dictRow)
+                  print(readMolecule.MW)
+                  self.result_smiles = current_row['SMILES']
+
+                  if current_row['Td24'] != None and current_row['Td24'] != '':
+                    d24Str = "{:.1f}".format(current_row['Td24'])
+                    if int(ambertd24limit) >= current_row['Td24'] > int(redtd24limit):
+                        formTd24 = f"T<sub>D24</sub>: <b style='color: orange;'> {d24Str} °C</b>"
+                    elif current_row['Td24'] <= int(redtd24limit):
+                        formTd24 = f"<h3 style='color: red;'>T<sub>D24</sub>: {d24Str} °C<br>Approval Needed Before Use</h3>"
+
+                    else:
+                        formTd24 = 'T<sub>D24</sub>: <b>' + d24Str + ' °C</b>'
+                  else:
+                    formTd24 = f"T<sub>D24</sub>: current_row['Td24']"
+
+                  if self.check_if_oreos_need_approval(readMolecule) == 'Show Approval Message':
+                      oreoApprovalWarning = "<h3 style='color: red;'>Approval Needed Before Use</h3>"
+                  else:
+                      oreoApprovalWarning = ''
+                  results_approval_warning.setText(oreoApprovalWarning)
+
+                  result_text = f"SMILES: {current_row['SMILES']}<br>Name: {current_row['name']}<br>High Energy Groups: {current_row['HEG']}<br>Explosive Functional Groups: {current_row['EFG']}<br>mp: {current_row['mp']} to {current_row['mpEnd']} °C<br>MW: {'{:.2f}'.format(current_row['MW'])} g mol<sup>-1</sup><br>Q<sub>DSC</sub>: {current_row['Q_dsc']} {current_row['Qunits']}<br>T<sub>onset</sub>: {current_row['onsetT']} °C<br>T<sub>init</sub>: {current_row['initT']} °C<br>Oxygen Balance: {'{:.2f}'.format(current_row['OB_val'])} {current_row['OB_des']}<br>Rule of Six: {current_row['RoS_val']} {current_row['RoS_des']}<br>Impact Sensitivity: {'{:.2f}'.format(current_row['IS_val'])} {current_row['IS_des']}<br>Explosive Propagation: {'{:.2f}'.format(current_row['EP_val'])} {current_row['EP_des']}<br>Yosida Calculation Method Used: {current_row['yoshidaMethod']}<br>{formTd24}<br>Hammer Drop Test: {current_row['hammerDrop']}<br>Friction Test: {current_row['friction']}<br>Project: {current_row['proj']}"
+                  result_label.setText(result_text)
+                  result_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+                  result_label.setWordWrap(True)
+
+                  results_table.clearContents()
+
+                  oreoSmall = current_row['oreoSmallScale_des']
+                  oreoTens = current_row['oreoTensScale_des']
+                  oreoHunds = current_row['oreoHundsScale_des']
+                  oreoLarge = current_row['oreoLargeScale_des']
+
+                  smallEntry = QTableWidgetItem(oreoSmall)
+                  results_table.setItem(0, 0, smallEntry)
+                  classColor = self.getColorForValue(oreoSmall)
+                  smallEntry.setBackground(classColor)
+
+                  tensEntry = QTableWidgetItem(oreoTens)
+                  results_table.setItem(0, 1, tensEntry)
+                  classColor = self.getColorForValue(oreoTens)
+                  tensEntry.setBackground(classColor)
+
+                  hundsEntry = QTableWidgetItem(oreoHunds)
+                  results_table.setItem(0, 2, hundsEntry)
+                  classColor = self.getColorForValue(oreoHunds)
+                  hundsEntry.setBackground(classColor)
+
+                  largeEntry = QTableWidgetItem(oreoLarge)
+                  results_table.setItem(0, 3, largeEntry)
+                  classColor = self.getColorForValue(oreoLarge)
+                  largeEntry.setBackground(classColor)
+
+                  counter_label.setText(f"Result {self.current_index + 1} of {len(Database)}")
+                  #search_layout.insertWidget(4, edit_button) #  .addWidget(edit_button)
+                  #search_layout.insertWidget(5, del_button)
+                  edit_button.show()
+                  del_button.show()
+                  search_layout.insertWidget(5, result_label)
+                  search_layout.insertWidget(6, results_table_Label)
+                  search_layout.insertWidget(7, results_table)
+                  search_layout.insertWidget(8, results_approval_warning)
+                  search_layout.addWidget(counter_label)
+                  prev_next_layout = QHBoxLayout()
+                  prev_next_layout.addWidget(prev_button)
+                  prev_next_layout.addWidget(next_button)
+                  search_layout.addLayout(prev_next_layout)
+                  export_button.show()
+                  edit_button.show()
+                  del_button.show()
+                  make_plot_label.show()
+                  make_plot_button.show()
+                  self.plot_database = Database
+                  self.plot_current_value = dictRow
+                  self.select_x_values.show()
+                  vs_label.show()
+                  self.select_y_values.show()
+                  results_table_Label.show()
+                  results_table.show()
+                  prev_button.show()
+                  next_button.show()
+
+                  if self.result_smiles is not None:
+                      mol = MolFromSmiles(self.result_smiles)
+
+                  else: 
+                      mol = None
+
+                  if mol is not None:
+
+                      # Generate a molecular drawing as a PNG image
+                      opts = Draw.MolDrawOptions()
+                      opts.bondLineWidth = 2.
+                      img = Draw.MolToImage(mol, size=(400, 150), options=opts)
+
+                      # Convert the image to a byte array
+                      byte_array = BytesIO()
+                      img.save(byte_array, format='PNG')
+
+                      # Convert the byte array to a QPixmap and display it
+                      pixmap = QPixmap()
+                      pixmap.loadFromData(byte_array.getvalue())
+                      scene = QGraphicsScene()
+                      scene.addPixmap(pixmap)
+                      #scene.setSceneRect(0,50,500,300)
+                      self.mol_result_display.setScene(scene)
+
+        def prev_result(self):
+             if self.current_index > 0:
+                  #search_layout.removeWidget(self.mol_result_display)
+                  #search_layout.removeWidget(self.molLabel)
+                  self.current_index -= 1
+                  show_result(self, self.selectedDatabase, False)
+
+        def next_result(self, Database):
+             if Database is not None:
+                  if self.current_index < len(Database) - 1:
+                       #search_layout.removeWidget(self.mol_result_display)
+                       #search_layout.removeWidget(self.molLabel)
+                       self.current_index += 1
+                       show_result(self, self.selectedDatabase, False)
 
         # Search Buttons & display area for the molecular drawing
         self.mol_result_display = QGraphicsView(self)
         #self.mol_result_display.scale(0.7,0.7)
         self.molLabel = QLabel('Molecule:')
-        self.search_layout.addWidget(self.molLabel)
-        self.search_layout.addWidget(self.mol_result_display)
+        search_layout.addWidget(self.molLabel)
+        search_layout.addWidget(self.mol_result_display)
         self.mol_result_display.hide()
         self.molLabel.hide()
 
-        btn_search = QPushButton('Search')
-        self.edit_button = QPushButton('Edit')
-        self.del_button = QPushButton('Delete')
-        self.export_button = QPushButton('Export Results')
-        self.edit_button.hide()
-        self.del_button.hide()
-        self.export_button.hide()
+        btn_search = QPushButton('Search', clicked=search_database)
+        edit_button = QPushButton('Edit')
+        del_button = QPushButton('Delete')
+        export_button = QPushButton('Export Results')
+        edit_button.hide()
+        del_button.hide()
+        export_button.hide()
         eddel_sublayout = QHBoxLayout()
-        eddel_sublayout.addWidget(self.export_button)
-        eddel_sublayout.addWidget(self.del_button)
-        eddel_sublayout.addWidget(self.edit_button)
-        self.prev_button = QPushButton('Previous')
-        self.next_button = QPushButton('Next')
-        self.first_button = QPushButton('First')
-        self.last_button = QPushButton('Last')
-        btn_search.clicked.connect(lambda: self.search_database(self.entry_search.text()))
-        self.prev_button.clicked.connect(self.prev_result)
-        self.next_button.clicked.connect(lambda: self.next_result(self.selectedDatabase))
-        self.first_button.clicked.connect(self.first_result)
-        self.last_button.clicked.connect(lambda: self.last_result(self.selectedDatabase))
-        self.edit_button.clicked.connect(self.changeTabForEditing)
-        self.del_button.clicked.connect(lambda: self.subFunctionForDeletion(self.plot_current_value,defaultDB))
-        self.export_button.clicked.connect(lambda: self.exportSearchResults(self.selectedDatabase))
+        eddel_sublayout.addWidget(export_button)
+        eddel_sublayout.addWidget(del_button)
+        eddel_sublayout.addWidget(edit_button)
+        prev_button = QPushButton('Previous')
+        next_button = QPushButton('Next')
+        prev_button.clicked.connect(lambda: prev_result(self))
+        next_button.clicked.connect(lambda: next_result(self, self.selectedDatabase))
+        edit_button.clicked.connect(self.changeTabForEditing)
+        del_button.clicked.connect(lambda: subFunctionForDeletion(self.plot_current_value,defaultDB))
+        export_button.clicked.connect(lambda: self.exportSearchResults(self.selectedDatabase))
 
-        self.results_table_Label = QLabel('O.R.E.O.S. Assessment of Hazard by Scale:')
-        self.results_table = QTableWidget(1, 4)
-        self.results_table.setHorizontalHeaderLabels(['<5 g', '5 to <100 g', '100 to 500 g', '>500 g'])
-        self.results_table.verticalHeader().setVisible(False)
-        self.results_table.setMaximumHeight(53)
-        self.results_table.setMaximumWidth(402)
-        #self.results_table.setMinimumHeight(53)
-        #self.results_table.setMinimumWidth(402)
-        self.results_approval_warning = QLabel('')
+        results_table_Label = QLabel('O.R.E.O.S. Assessment of Hazard by Scale:')
+        results_table = QTableWidget(1, 4)
+        results_table.setHorizontalHeaderLabels(['<5 g', '5 to <100 g', '100 to 500 g', '>500 g'])
+        results_table.verticalHeader().setVisible(False)
+        results_table.setMaximumHeight(53)
+        results_table.setMaximumWidth(402)
+        results_table.setMinimumHeight(53)
+        results_table.setMinimumWidth(402)
+        results_approval_warning = QLabel('')
 
         sub_search_layout = QHBoxLayout()
-        self.search_layout.addWidget(lbl_search)
+        search_layout.addWidget(lbl_search)
         sub_search_layout.addWidget(self.searchTypeSelection)
         sub_search_layout.addWidget(self.searchSubType)
-        sub_search_layout.addWidget(self.entry_search)
+        sub_search_layout.addWidget(entry_search)
         sub_search_layout.addWidget(btn_search)
-        self.search_layout.addLayout(sub_search_layout)
-        self.search_layout.addLayout(eddel_sublayout)
-        self.search_layout.addStretch()
+        search_layout.addLayout(sub_search_layout)
+        search_layout.addLayout(eddel_sublayout)
+        search_layout.addStretch()
 
-        self.make_plot_label = QLabel('For search results: ')
-        self.make_plot_button = QPushButton('Plot')
+        make_plot_label = QLabel('For search results: ')
+        make_plot_button = QPushButton('Plot')
         self.select_x_values = QComboBox(self)
-        self.vs_label = QLabel('<em>vs</em>')
+        vs_label = QLabel('<em>vs</em>')
         self.select_y_values = QComboBox(self)
         selectable_xy_values = ['Qdsc', 'Tonset', 'Tinit', 'Td24', 'IS', 'EP', 'OB', 'RoS', 'OREOS', 'MW', 'Log(Qdsc)', 'Log(Tonset-25)', 'Log(Tinit-25)']
         self.select_x_values.addItems(selectable_xy_values)
         self.select_y_values.addItems(selectable_xy_values)
         make_plot_layout = QHBoxLayout()
-        make_plot_layout.addWidget(self.make_plot_label)
-        make_plot_layout.addWidget(self.make_plot_button)
+        make_plot_layout.addWidget(make_plot_label)
+        make_plot_layout.addWidget(make_plot_button)
         make_plot_layout.addWidget(self.select_x_values)
-        make_plot_layout.addWidget(self.vs_label)
+        make_plot_layout.addWidget(vs_label)
         make_plot_layout.addWidget(self.select_y_values)
         make_plot_layout.addStretch()
-        self.search_layout.addLayout(make_plot_layout)
-        self.make_plot_label.hide()
-        self.make_plot_button.hide()
+        search_layout.addLayout(make_plot_layout)
+        make_plot_label.hide()
+        make_plot_button.hide()
         self.select_x_values.hide()
-        self.vs_label.hide()
+        vs_label.hide()
         self.select_y_values.hide()
-        self.make_plot_button.clicked.connect(lambda: self.plotSearchResults(self.plot_database, self.plot_current_value))
+        make_plot_button.clicked.connect(lambda: self.plotSearchResults(self.plot_database, self.plot_current_value))
 
-        search_tab.setLayout(self.search_layout)
+        def subFunctionForDeletion(Entry, Database):
+            self.delCurrentEntry(Entry, Database)
+            search_database()
+
+        search_tab.setLayout(search_layout)
         self.tab_widget.addTab(search_tab, "Search")
 
         # Tab for Settings
@@ -457,8 +1442,13 @@ class MolDrawer(QWidget):
         settings_layout = QVBoxLayout()
         self.config = configparser.ConfigParser()
         self.config.read('./_core/ThermalDex.ini')
+
         settings_intro = QLabel('<h1>ThermalDex Settings</h1><p>This pane contains the settings for this application. Change relavent settings as needed.</p>')
         settings_layout.addWidget(settings_intro)
+        #settings_layout.addWidget(self.default_file_label)
+        #settings_layout.addWidget(self.default_file_input)
+        #settings_layout.addWidget(self.default_file_button)
+        #settings_layout.addWidget(self.save_button)
 
         # Defaults
         defaults_section = Section("Defaults", 100, self)
@@ -521,6 +1511,7 @@ class MolDrawer(QWidget):
         warnings_layout.addLayout(Td24WarnLayout)
         warnings_layout.addSpacing(10)
 
+
         oreoWarnLayout = QHBoxLayout()
         oreoWarnLabel = QLabel('Select O.R.E.O. warning behavour:')
         oreoWarnFirstLabel = QLabel('Warn if scale = ')
@@ -553,6 +1544,7 @@ class MolDrawer(QWidget):
         warnings_layout.addSpacing(10)
 
         warnings_section.setContentLayout(warnings_layout)       
+
 
         # Core Settings
         core_section = Section("Core Settings", 100, self)
@@ -729,6 +1721,12 @@ class MolDrawer(QWidget):
         layout.addWidget(self.tab_widget)
 
 
+
+        # Set up the main window
+        self.setLayout(layout)
+        self.setGeometry(100, 100, 600, 895)
+        self.setWindowTitle('ThermalDex')
+
     def reload_config_func(self):
         #sys.exit(app.exec_())
         #QCoreApplication.quit()
@@ -744,281 +1742,6 @@ class MolDrawer(QWidget):
 
         defaultDB, highEnergyGroups, expEnergyGroups, yoshidaMethod, qdscUnits, ambertd24limit, redtd24limit, oreohazardlimit, oreohazardwarningscale = altImportConfig()
         QMessageBox.information(self, "Config Settings", "Settings have been loaded successfully.")
-
-
-    def search_database(self, search_text):
-            self.readDatabase = pd.read_csv(defaultDB) #, index_col=0) #, encoding='mbcs')
-
-            if search_text == '' or search_text == None:    
-                self.selectedDatabase = self.readDatabase
-                self.show_result(self.selectedDatabase, True)
-
-            elif self.searchTypeSelection.currentText() == 'SMILES':
-                if self.searchSubType.currentText() == 'Exact':
-                    searchSMILES = search_text
-                    row_index = self.readDatabase.index[self.readDatabase['SMILES'] == searchSMILES].tolist()
-                    foundDataFrame = self.readDatabase.iloc[row_index]
-                    foundDataFrame.reset_index(drop=True)
-                    self.selectedDatabase = foundDataFrame
-                    self.show_result(self.selectedDatabase, True)
-
-                elif self.searchSubType.currentText() == 'Substructure':
-                    try:
-                        searchTest = MolFromSmiles(search_text)
-                        #checkifrealbyMW = Descriptors.MolWt(searchTest)
-                        if search_text != '' and search_text != None and searchTest is not None:
-                            smilesList = self.readDatabase['SMILES'].tolist()  #.index.values
-                            #print(smilesList)
-                            foundList = []
-                            for smile in smilesList:
-                                searchStructure = MolFromSmiles(smile)
-                                fullmatchList = Mol.GetSubstructMatches(searchStructure, searchTest)
-                                if len(fullmatchList) > 0:
-                                    print('Substructure Match Found: ' + smile)
-                                    foundList += [smile]
-                            print(foundList)
-                            indexList = []
-                            for foundMatch in foundList:
-                                row_index = self.readDatabase.index[self.readDatabase['SMILES'] == foundMatch].tolist()
-                                indexList += row_index
-                            foundDataFrame = self.readDatabase.iloc[indexList]
-                            print(foundDataFrame)
-                            print('\n\n')
-                            foundDataFrame.reset_index(drop=True)
-                            self.selectedDatabase = foundDataFrame
-                            self.show_result(self.selectedDatabase, True)
-                    except:
-                        errorInfo = "Enter Valid SMILES"
-                        self.interactiveErrorMessage(errorInfo)
-
-            elif self.searchTypeSelection.currentText() == 'Name':
-                self.text_search_type('name',search_text)
-                self.show_result(self.selectedDatabase, True)
-
-            elif self.searchTypeSelection.currentText() == 'Project':
-                self.text_search_type('proj',search_text)
-                self.show_result(self.selectedDatabase, True)              
-
-            elif self.searchTypeSelection.currentText() == 'MW':
-                self.value_search_type('MW',search_text)
-                self.show_result(self.selectedDatabase, True)
-
-            elif self.searchTypeSelection.currentText() == 'Qdsc':
-                self.value_search_type('Q_dsc',search_text)
-                self.show_result(self.selectedDatabase, True)
-                
-            elif self.searchTypeSelection.currentText() == 'Tinit':
-                self.value_search_type('initT',search_text)
-                self.show_result(self.selectedDatabase, True)   
-
-            elif self.searchTypeSelection.currentText() == 'Tonset':
-                self.value_search_type('onsetT',search_text)
-                self.show_result(self.selectedDatabase, True)               
-
-            elif self.searchTypeSelection.currentText() == 'Td24':
-                self.value_search_type('Td24',search_text)
-                self.show_result(self.selectedDatabase, True)                   
-
-            elif self.searchTypeSelection.currentText() == 'O.R.E.O.S. at >500 g':
-                self.value_search_type('oreoLargeScale_val',search_text)
-                self.show_result(self.selectedDatabase, True)
-
-            elif self.searchTypeSelection.currentText() == 'Rule of Six':
-                self.value_search_type('RoS_val',search_text)
-                self.show_result(self.selectedDatabase, True)
-
-            elif self.searchTypeSelection.currentText() == 'Oxygen Balance':
-                self.value_search_type('OB_val',search_text)
-                self.show_result(self.selectedDatabase, True)
-
-            else:
-                errorInfo = "How!? How have you gotten to this error message... I... Ugh... Report this to the developer okay?"
-                self.interactiveErrorMessage(errorInfo)   
-
-    def show_result(self, Database, resetIndex):
-            #print(f'show_result run with args: Database={Database} and resetIndex={resetIndex}')
-            print(f'\nshow_result run, resetIndex = {resetIndex}')
-            layout = self.layout()
-            if Database.empty:
-                print('Database empty')
-                errorInfo = "No matches found. Try a diffrent search?"
-                self.interactiveErrorMessage(errorInfo)
-                self.counter_label.setText("")
-                self.result_label.setText("")
-                self.mol_result_display.hide()
-                self.molLabel.hide()
-                self.make_plot_label.hide()
-                self.make_plot_button.hide()
-                self.select_x_values.hide()
-                self.vs_label.hide()
-                self.select_y_values.hide()
-                try:
-                    self.export_button.hide()
-                    self.edit_button.hide()
-                    self.del_button.hide()
-                    self.prev_button.hide()
-                    self.next_button.hide()
-                    self.first_button.hide()
-                    self.last_button.hide()
-                    self.results_table_Label.hide()
-                    self.results_table.hide()
-                    self.results_approval_warning.hide()
-                except:
-                    print('Not shown')
-            if self.error_flag is not None:
-                self.error_message.setText('')
-                layout.removeWidget(self.error_message)
-                self.error_flag = None
-            if resetIndex == True:
-                self.current_index = 0             
-            if Database is not None and not Database.empty:
-                print(f'Database not empty, current index = {self.current_index}\n')
-                """try:
-                    self.search_layout.removeWidget(self.results_table_Label)
-                    self.search_layout.removeWidget(self.result_label)
-                    self.search_layout.removeWidget(self.results_table)
-                    self.search_layout.removeWidget(self.results_approval_warning)
-                    self.search_layout.removeWidget(self.counter_label)
-                    #self.search_layout.removaddLayout(prev_next_layout)
-                except:
-                    print('Not in layout for valid dataframe') """
-                self.mol_result_display.show()
-                self.molLabel.show()
-                current_row = Database.iloc[self.current_index]
-                dictRow = current_row.to_dict()
-                print(f'The current row (as a dict) is: {dictRow}')
-                readMolecule = thermalDexMolecule(**dictRow)
-                self.result_smiles = current_row['SMILES']
-
-                if current_row['Td24'] != None and current_row['Td24'] != '':
-                    d24Str = "{:.1f}".format(current_row['Td24'])
-                    if int(ambertd24limit) >= current_row['Td24'] > int(redtd24limit):
-                        formTd24 = f"T<sub>D24</sub>: <b style='color: orange;'> {d24Str} °C</b>"
-                    elif current_row['Td24'] <= int(redtd24limit):
-                        formTd24 = f"<h3 style='color: red;'>T<sub>D24</sub>: {d24Str} °C<br>Approval Needed Before Use</h3>"
-
-                    else:
-                        formTd24 = 'T<sub>D24</sub>: <b>' + d24Str + ' °C</b>'
-                else:
-                    formTd24 = f"T<sub>D24</sub>: current_row['Td24']"
-
-                if self.check_if_oreos_need_approval(readMolecule) == 'Show Approval Message':
-                    oreoApprovalWarning = "<h3 style='color: red;'>Approval Needed Before Use</h3>"
-                else:
-                    oreoApprovalWarning = ''
-                self.results_approval_warning.setText(oreoApprovalWarning)
-
-                result_text = f"SMILES: {current_row['SMILES']}<br>Name: {current_row['name']}<br>High Energy Groups: {current_row['HEG']}<br>Explosive Functional Groups: {current_row['EFG']}<br>mp: {current_row['mp']} to {current_row['mpEnd']} °C<br>MW: {'{:.2f}'.format(current_row['MW'])} g mol<sup>-1</sup><br>Q<sub>DSC</sub>: {current_row['Q_dsc']} {current_row['Qunits']}<br>T<sub>onset</sub>: {current_row['onsetT']} °C<br>T<sub>init</sub>: {current_row['initT']} °C<br>Oxygen Balance: {'{:.2f}'.format(current_row['OB_val'])} {current_row['OB_des']}<br>Rule of Six: {current_row['RoS_val']} {current_row['RoS_des']}<br>Impact Sensitivity: {'{:.2f}'.format(current_row['IS_val'])} {current_row['IS_des']}<br>Explosive Propagation: {'{:.2f}'.format(current_row['EP_val'])} {current_row['EP_des']}<br>Yosida Calculation Method Used: {current_row['yoshidaMethod']}<br>{formTd24}<br>Hammer Drop Test: {current_row['hammerDrop']}<br>Friction Test: {current_row['friction']}<br>Project: {current_row['proj']}"
-                self.result_label.setText(result_text)
-                self.result_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
-                self.result_label.setWordWrap(True)
-                self.results_table.clearContents()
-                oreoSmall = current_row['oreoSmallScale_des']
-                oreoTens = current_row['oreoTensScale_des']
-                oreoHunds = current_row['oreoHundsScale_des']
-                oreoLarge = current_row['oreoLargeScale_des']
-
-                smallEntry = QTableWidgetItem(oreoSmall)
-                self.results_table.setItem(0, 0, smallEntry)
-                classColor = self.getColorForValue(oreoSmall)
-                smallEntry.setBackground(classColor)
-
-                tensEntry = QTableWidgetItem(oreoTens)
-                self.results_table.setItem(0, 1, tensEntry)
-                classColor = self.getColorForValue(oreoTens)
-                tensEntry.setBackground(classColor)
-
-                hundsEntry = QTableWidgetItem(oreoHunds)
-                self.results_table.setItem(0, 2, hundsEntry)
-                classColor = self.getColorForValue(oreoHunds)
-                hundsEntry.setBackground(classColor)
-
-                largeEntry = QTableWidgetItem(oreoLarge)
-                self.results_table.setItem(0, 3, largeEntry)
-                classColor = self.getColorForValue(oreoLarge)
-                largeEntry.setBackground(classColor)
-
-                self.counter_label.setText(f"Result {self.current_index + 1} of {len(Database)}")
-                self.edit_button.show()
-                self.del_button.show()
-                self.search_layout.insertWidget(5, self.result_label)#5
-                self.search_layout.insertWidget(6, self.results_table_Label)#6
-                self.search_layout.insertWidget(7, self.results_table)#7
-                self.search_layout.insertWidget(8, self.results_approval_warning)#8
-                self.search_layout.addWidget(self.counter_label)
-                prev_next_layout = QHBoxLayout()
-                prev_next_layout.addWidget(self.first_button)
-                prev_next_layout.addWidget(self.prev_button)
-                prev_next_layout.addWidget(self.next_button)
-                prev_next_layout.addWidget(self.last_button)
-                self.search_layout.addLayout(prev_next_layout)
-                self.export_button.show()
-                self.edit_button.show()
-                self.del_button.show()
-                self.make_plot_label.show()
-                self.make_plot_button.show()
-                self.plot_database = Database
-                self.plot_current_value = dictRow
-                self.select_x_values.show()
-                self.vs_label.show()
-                self.select_y_values.show()
-                self.results_table_Label.show()
-                self.results_table.show()
-                self.first_button.show()
-                self.prev_button.show()
-                self.next_button.show()
-                self.last_button.show()
-
-                if self.result_smiles is not None:
-                    mol = MolFromSmiles(self.result_smiles)
-
-                else: 
-                    mol = None
-
-                if mol is not None:
-                    # Generate a molecular drawing as a PNG image
-                    opts = Draw.MolDrawOptions()
-                    opts.bondLineWidth = 2.
-                    img = Draw.MolToImage(mol, size=(400, 150), options=opts)
-
-                    # Convert the image to a byte array
-                    byte_array = BytesIO()
-                    img.save(byte_array, format='PNG')
-
-                    # Convert the byte array to a QPixmap and display it
-                    pixmap = QPixmap()
-                    pixmap.loadFromData(byte_array.getvalue())
-                    scene = QGraphicsScene()
-                    scene.addPixmap(pixmap)
-                    #scene.setSceneRect(0,50,500,300)
-                    self.mol_result_display.setScene(scene)
-
-    def prev_result(self):
-        if self.current_index > 0:
-            #search_layout.removeWidget(self.mol_result_display)
-            #search_layout.removeWidget(self.molLabel)
-            self.current_index -= 1
-            self.show_result(self.selectedDatabase, False)
-
-    def next_result(self, Database):
-        if Database is not None:
-            if self.current_index < len(Database) - 1:
-                #search_layout.removeWidget(self.mol_result_display)
-                #search_layout.removeWidget(self.molLabel)
-                self.current_index += 1
-                self.show_result(self.selectedDatabase, False)
-
-    def first_result(self):
-        self.current_index = 0
-        self.show_result(self.selectedDatabase, False)
-
-    def last_result(self, Database):
-        self.current_index = len(Database)-1
-        self.show_result(self.selectedDatabase, False)
-
-    def subFunctionForDeletion(self, Entry, Database):
-        self.delCurrentEntry(Entry, Database)
-        self.search_database(self.entry_search.text())
 
     def exportSearchResults(self, Database):
         savefile, _ = QFileDialog.getSaveFileName(self, "Export Search Results as CSV", "ThermalDexResults.csv", "CSV Files (*.csv)")
@@ -1095,6 +1818,7 @@ class MolDrawer(QWidget):
 
         scatterSelection(x_values,y_values,self.select_x_values.currentText(),self.select_y_values.currentText(),current_x,current_y)
 
+
     def set_sub_search(self, subIndex):
         self.searchSubType.clear()
         self.searchSubType.addItems(self.listOfSearchTypes[subIndex])
@@ -1110,128 +1834,8 @@ class MolDrawer(QWidget):
                     self.writeToDatabase(readMolecule, defaultDB)
                 
                   QMessageBox.information(self, "Database Import", "Import has completed.")
-
-    def text_search_type(self, search_column, search_text):
-        if self.searchSubType.currentText() == 'is':
-            searchName = search_text
-            row_index = self.readDatabase.index[self.readDatabase[search_column] == searchName].tolist()
-            foundDataFrame = self.readDatabase.iloc[row_index]
-            foundDataFrame.reset_index(drop=True)
-            self.selectedDatabase = foundDataFrame
-            #show_result(self, foundDataFrame, True)
-
-        elif self.searchSubType.currentText() == 'contains':
-            searchName = search_text
-            nameList = self.readDatabase[search_column].tolist()
-            cleanNameList = []
-            foundList = []
-            for name in nameList:
-                if name == name: # a check to remove nan values
-                    cleanNameList += [name]
-            for name in cleanNameList:
-                print(name)
-                if searchName.lower() in name.lower():
-                    foundList += [name]
-            foundList = list(dict.fromkeys(foundList))
-            indexList = []
-            for foundMatch in foundList:
-                row_index = self.readDatabase.index[self.readDatabase[search_column] == foundMatch].tolist()
-                indexList += row_index
-            foundDataFrame = self.readDatabase.iloc[indexList]
-            #print(foundDataFrame)
-            #print('\n\n')
-            foundDataFrame.reset_index(drop=True)
-            self.selectedDatabase = foundDataFrame
-            #show_result(self, foundDataFrame, True)
-
-        elif self.searchSubType.currentText() == 'is not':
-            searchName = search_text
-            row_index = self.readDatabase.index[self.readDatabase[search_column] != searchName].tolist()
-            foundDataFrame = self.readDatabase.iloc[row_index]
-            foundDataFrame.reset_index(drop=True)
-            self.selectedDatabase = foundDataFrame
-
-        elif self.searchSubType.currentText() == 'does not contain':
-            searchName = search_text
-            nameList = self.readDatabase[search_column].tolist()
-            cleanNameList = []
-            foundList = []
-            for name in nameList:
-                if name == name: # check for nan values!
-                    if searchName.lower() in name.lower():
-                        foundList += [name]
-            foundList = list(dict.fromkeys(foundList))
-            indexList = []
-            if len(foundList) == 0:
-                foundDataFrame = self.readDatabase
-            else:    
-                for foundMatch in foundList:
-                    row_index = self.readDatabase.index[self.readDatabase[search_column] != foundMatch].tolist()
-                    indexList += row_index
-                foundDataFrame = self.readDatabase.iloc[indexList]
-                foundDataFrame.reset_index(drop=True)
-            self.selectedDatabase = foundDataFrame
-
-
-    def value_search_operator_selection(self, valueList, searchName):
-        foundList = []
-        if self.searchSubType.currentText() == '<':
-            for value in valueList:
-                #print(value)
-                if value < float(searchName):
-                    foundList += [value]
-
-        elif self.searchSubType.currentText() == '>':
-            for value in valueList:
-                #print(value)
-                if value > float(searchName):
-                    foundList += [value]
-
-        elif self.searchSubType.currentText() == '</=':
-            for value in valueList:
-                #print(value)
-                if value <= float(searchName):
-                    foundList += [value]
-
-        elif self.searchSubType.currentText() == '>/=':
-            for value in valueList:
-                #print(value)
-                if value >= float(searchName):
-                    foundList += [value]
-        return foundList
-
-    def value_search_type(self, search_column, search_text):
-        if self.searchSubType.currentText() == '=':
-            try:
-                searchName = float(search_text)
-                row_index = self.readDatabase.index[self.readDatabase[search_column] == searchName].tolist()
-                foundDataFrame = self.readDatabase.iloc[row_index]
-                foundDataFrame.reset_index(drop=True)
-                self.selectedDatabase = foundDataFrame
-                #show_result(self, foundDataFrame, True)
-            except:
-                errorInfo = "Enter a Valid number"
-                self.interactiveErrorMessage(errorInfo) 
-
-        else:
-            try:
-                searchName = search_text
-                foundList = self.value_search_operator_selection(self.readDatabase[search_column].tolist(),searchName)
-                print(foundList)
-                foundList = list(dict.fromkeys(foundList))
-                indexList = []
-                for foundMatch in foundList:
-                    row_index = self.readDatabase.index[self.readDatabase[search_column] == foundMatch].tolist()
-                    indexList += row_index
-                foundDataFrame = self.readDatabase.iloc[indexList]
-                #print(foundDataFrame)
-                #print('\n\n')
-                foundDataFrame.reset_index(drop=True)
-                self.selectedDatabase = foundDataFrame
-                #show_result(self, foundDataFrame, True)
-            except:
-                errorInfo = "Enter a Valid number"
-                self.interactiveErrorMessage(errorInfo)               
+                  
+            
 
     def select_database(self):
         options = QFileDialog.Options()
@@ -1587,19 +2191,19 @@ class MolDrawer(QWidget):
             window.showErrorMessage("Making Folder to Hold Molecule Data Files.")
 
     def createReport(self):
-        #try:
-        moleculeData = self.render_molecule()
-        #img = moleculeData.molToIMG()
-        #results = asdict(moleculeData)
-        #create_pdf(results["name"], results, img) #results["molIMG"]) 
-        imageData = moleculeData.molToBytes()
-        dataURL = 'data:image/png;base64,' + imageData
-        mdReportCreation(moleculeData, dataURL, int(ambertd24limit), int(redtd24limit))
-        if self.error_flag is not None:
-            self.error_message.setText('')
-            layout.removeWidget(self.error_message)
-        #except:
-         #   window.showErrorMessage("Generating Memo PDF from given values.")
+        try:
+            moleculeData = self.render_molecule()
+            #img = moleculeData.molToIMG()
+            #results = asdict(moleculeData)
+            #create_pdf(results["name"], results, img) #results["molIMG"]) 
+            imageData = moleculeData.molToBytes()
+            dataURL = 'data:image/png;base64,' + imageData
+            mdReportCreation(moleculeData, dataURL, int(ambertd24limit), int(redtd24limit))
+            if self.error_flag is not None:
+                self.error_message.setText('')
+                layout.removeWidget(self.error_message)
+        except:
+            window.showErrorMessage("Generating Memo PDF from given values.")
 
     def writeToDatabase(self, molecule, Database):
         #molecule.genAdditionalValues()
@@ -1825,21 +2429,9 @@ if __name__ == '__main__':
     with open('./_core/ThermalDex.log', 'w', encoding='utf-8') as logFile:
         with redirect_stdout(logFile):
             defaultDB, highEnergyGroups, expEnergyGroups, yoshidaMethod, qdscUnits, ambertd24limit, redtd24limit, oreohazardlimit, oreohazardwarningscale = altImportConfig()
-            font = QFont("Segoe UI")
-            font.setPixelSize(11)
             app = QApplication(sys.argv)
             app.setWindowIcon(QIcon('.\\_core\\ThermalDexIcon.ico'))
-            app.setFont(font, "QLabel")
-            app.setFont(font, "QLineEdit")
-            app.setFont(font, "QComboBox")
-            app.setFont(font, "QTableWidget")
-            app.setFont(font, "QTableWidget.horizontalHeader")
-            app.setFont(font, "QTabWidget")
-            app.setFont(font, "QWidget")
-            app.setFont(font, "QPushButton")
-            screen = app.primaryScreen()
             window = MolDrawer()
-            #window.layout().setSizeConstraint(QLayout.SetFixedSize
             window.show()
             window.raise_()
             window.activateWindow()
