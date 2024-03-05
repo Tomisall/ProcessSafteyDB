@@ -22,7 +22,7 @@ from contextlib import redirect_stdout
 from os import path
 from shutil import copy2
 
-versionNumber = "1.0.3"
+versionNumber = "1.0.3b"
 
 try:
     import pyi_splash
