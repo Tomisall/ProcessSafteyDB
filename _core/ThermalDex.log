@@ -1,3 +1,4 @@
+No mrv XML found.
 SMILES                                                  O=C(Cl)c1ccncc1
 name                                             isonicotinoyl chloride
 mp                                                                156.0
@@ -100,6 +101,7 @@ Name: 1, dtype: object
 104.5
 oreohazardlimit: High Hazard
 oreohazardwarningscale: <5 g
+No mrv XML found.
 SMILES                                                  O=C(Cl)c1ccncc1
 name                                             isonicotinoyl chloride
 mp                                                                156.0
@@ -151,159 +153,7 @@ Name: 0, dtype: object
 141.557
 oreohazardlimit: High Hazard
 oreohazardwarningscale: <5 g
-SMILES                                                     Clc1nn[nH]n1
-name                                                                NaN
-mp                                                                  NaN
-mpEnd                                                               NaN
-Q_dsc                                                             600.0
-Qunits                                                            J g⁻¹
-onsetT                                                            190.0
-initT                                                             170.0
-proj                                                                NaN
-MW                                                                104.5
-molForm                                                          CHClN4
-eleComp                                                    C, H, Cl, 4N
-HEG                                                                   1
-HEG_list                                                  ['N1N=CN=N1']
-EFG                                                                   1
-EFG_list                                                  ['N1N=CN=N1']
-RoS_val                                                               5
-RoS_des                                              <b>(Explosive)</b>
-OB_val                                                       -38.277512
-OB_des                                               <b>(High Risk)</b>
-IS_val                                                        -0.020882
-IS_des                                    <b>(Not Impact Sensitive)</b>
-EP_val                                                        -0.145423
-EP_des                                    <b>(Should Not Propagate)</b>
-Td24                                                               73.0
-oreo                                                                 28
-oreoSmallScale_val                                                   29
-oreoSmallScale_des                                          High Hazard
-oreoTensScale_val                                                    30
-oreoTensScale_des                                           High Hazard
-oreoHundsScale_val                                                   32
-oreoHundsScale_des                                          High Hazard
-oreoLargeScale_val                                                   36
-oreoLargeScale_des                                          High Hazard
-IUPAC_name                                                          NaN
-CAS_no                                                              NaN
-yoshidaMethod                                                    Pfizer
-dataFolder            ./_core/UserAddedData/CHClN4_04-Mar-2024_10-48-32
-hammerDrop                                                Not Performed
-friction                                                  Not Performed
-Name: 1, dtype: object
-
-
-
-{'SMILES': 'Clc1nn[nH]n1', 'name': nan, 'mp': nan, 'mpEnd': nan, 'Q_dsc': 600.0, 'Qunits': 'J g⁻¹', 'onsetT': 190.0, 'initT': 170.0, 'proj': nan, 'MW': 104.5, 'molForm': 'CHClN4', 'eleComp': 'C, H, Cl, 4N', 'HEG': 1, 'HEG_list': "['N1N=CN=N1']", 'EFG': 1, 'EFG_list': "['N1N=CN=N1']", 'RoS_val': 5, 'RoS_des': ' <b>(Explosive)</b>', 'OB_val': -38.27751196172249, 'OB_des': '<b>(High Risk)</b>', 'IS_val': -0.0208817553510836, 'IS_des': ' <b>(Not Impact Sensitive)</b>', 'EP_val': -0.1454233495765371, 'EP_des': ' <b>(Should Not Propagate)</b>', 'Td24': 72.99999999999999, 'oreo': 28, 'oreoSmallScale_val': 29, 'oreoSmallScale_des': 'High Hazard', 'oreoTensScale_val': 30, 'oreoTensScale_des': 'High Hazard', 'oreoHundsScale_val': 32, 'oreoHundsScale_des': 'High Hazard', 'oreoLargeScale_val': 36, 'oreoLargeScale_des': 'High Hazard', 'IUPAC_name': nan, 'CAS_no': nan, 'yoshidaMethod': 'Pfizer', 'dataFolder': './_core/UserAddedData/CHClN4_04-Mar-2024_10-48-32', 'hammerDrop': 'Not Performed', 'friction': 'Not Performed'}
-
-
-
-104.5
-oreohazardlimit: High Hazard
-oreohazardwarningscale: <5 g
-SMILES                                                  O=C(Cl)c1ccncc1
-name                                             isonicotinoyl chloride
-mp                                                                156.0
-mpEnd                                                             160.0
-Q_dsc                                                             520.0
-Qunits                                                            J g⁻¹
-onsetT                                                            225.0
-initT                                                             420.0
-proj                                                            RepTest
-MW                                                              141.557
-molForm                                                        C6H4ClNO
-eleComp                                                6C, 4H, Cl, N, O
-HEG                                                                   0
-HEG_list                                                             []
-EFG                                                                   0
-EFG_list                                                             []
-RoS_val                                                              -6
-RoS_des                                          <b>(Not Explosive)</b>
-OB_val                                                      -146.937276
-OB_des                                             <b>(Medium Risk)</b>
-IS_val                                                        -0.128145
-IS_des                                    <b>(Not Impact Sensitive)</b>
-EP_val                                                        -0.231382
-EP_des                                    <b>(Should Not Propagate)</b>
-Td24                                                              248.0
-oreo                                                                  9
-oreoSmallScale_val                                                   10
-oreoSmallScale_des                                           Low Hazard
-oreoTensScale_val                                                    11
-oreoTensScale_des                                            Low Hazard
-oreoHundsScale_val                                                   13
-oreoHundsScale_des                                           Low Hazard
-oreoLargeScale_val                                                   17
-oreoLargeScale_des                                           Low Hazard
-IUPAC_name                                                          NaN
-CAS_no                                                              NaN
-yoshidaMethod                                                    Pfizer
-dataFolder            ./_core/UserAddedData/C6H4ClNO_21-Feb-2024_15-...
-hammerDrop                                                Not Performed
-friction                                                  Not Performed
-Name: 0, dtype: object
-
-
-
-{'SMILES': 'O=C(Cl)c1ccncc1', 'name': 'isonicotinoyl chloride', 'mp': 156.0, 'mpEnd': 160.0, 'Q_dsc': 520.0, 'Qunits': 'J g⁻¹', 'onsetT': 225.0, 'initT': 420.0, 'proj': 'RepTest', 'MW': 141.557, 'molForm': 'C6H4ClNO', 'eleComp': '6C, 4H, Cl, N, O', 'HEG': 0, 'HEG_list': '[]', 'EFG': 0, 'EFG_list': '[]', 'RoS_val': -6, 'RoS_des': ' <b>(Not Explosive)</b>', 'OB_val': -146.93727615024338, 'OB_des': '<b>(Medium Risk)</b>', 'IS_val': -0.1281445298829684, 'IS_des': ' <b>(Not Impact Sensitive)</b>', 'EP_val': -0.2313818809886529, 'EP_des': ' <b>(Should Not Propagate)</b>', 'Td24': 248.0, 'oreo': 9, 'oreoSmallScale_val': 10, 'oreoSmallScale_des': 'Low Hazard', 'oreoTensScale_val': 11, 'oreoTensScale_des': 'Low Hazard', 'oreoHundsScale_val': 13, 'oreoHundsScale_des': 'Low Hazard', 'oreoLargeScale_val': 17, 'oreoLargeScale_des': 'Low Hazard', 'IUPAC_name': nan, 'CAS_no': nan, 'yoshidaMethod': 'Pfizer', 'dataFolder': './_core/UserAddedData/C6H4ClNO_21-Feb-2024_15-13-12', 'hammerDrop': 'Not Performed', 'friction': 'Not Performed'}
-
-
-
-141.557
-oreohazardlimit: Low Hazard
-oreohazardwarningscale: <5 g
-SMILES                                                  O=C(Cl)c1ccncc1
-name                                             isonicotinoyl chloride
-mp                                                                156.0
-mpEnd                                                             160.0
-Q_dsc                                                             520.0
-Qunits                                                            J g⁻¹
-onsetT                                                            225.0
-initT                                                             420.0
-proj                                                            RepTest
-MW                                                              141.557
-molForm                                                        C6H4ClNO
-eleComp                                                6C, 4H, Cl, N, O
-HEG                                                                   0
-HEG_list                                                             []
-EFG                                                                   0
-EFG_list                                                             []
-RoS_val                                                              -6
-RoS_des                                          <b>(Not Explosive)</b>
-OB_val                                                      -146.937276
-OB_des                                             <b>(Medium Risk)</b>
-IS_val                                                        -0.128145
-IS_des                                    <b>(Not Impact Sensitive)</b>
-EP_val                                                        -0.231382
-EP_des                                    <b>(Should Not Propagate)</b>
-Td24                                                              248.0
-oreo                                                                  9
-oreoSmallScale_val                                                   10
-oreoSmallScale_des                                           Low Hazard
-oreoTensScale_val                                                    11
-oreoTensScale_des                                            Low Hazard
-oreoHundsScale_val                                                   13
-oreoHundsScale_des                                           Low Hazard
-oreoLargeScale_val                                                   17
-oreoLargeScale_des                                           Low Hazard
-IUPAC_name                                                          NaN
-CAS_no                                                              NaN
-yoshidaMethod                                                    Pfizer
-dataFolder            ./_core/UserAddedData/C6H4ClNO_21-Feb-2024_15-...
-hammerDrop                                                Not Performed
-friction                                                  Not Performed
-Name: 0, dtype: object
-
-
-
-{'SMILES': 'O=C(Cl)c1ccncc1', 'name': 'isonicotinoyl chloride', 'mp': 156.0, 'mpEnd': 160.0, 'Q_dsc': 520.0, 'Qunits': 'J g⁻¹', 'onsetT': 225.0, 'initT': 420.0, 'proj': 'RepTest', 'MW': 141.557, 'molForm': 'C6H4ClNO', 'eleComp': '6C, 4H, Cl, N, O', 'HEG': 0, 'HEG_list': '[]', 'EFG': 0, 'EFG_list': '[]', 'RoS_val': -6, 'RoS_des': ' <b>(Not Explosive)</b>', 'OB_val': -146.93727615024338, 'OB_des': '<b>(Medium Risk)</b>', 'IS_val': -0.1281445298829684, 'IS_des': ' <b>(Not Impact Sensitive)</b>', 'EP_val': -0.2313818809886529, 'EP_des': ' <b>(Should Not Propagate)</b>', 'Td24': 248.0, 'oreo': 9, 'oreoSmallScale_val': 10, 'oreoSmallScale_des': 'Low Hazard', 'oreoTensScale_val': 11, 'oreoTensScale_des': 'Low Hazard', 'oreoHundsScale_val': 13, 'oreoHundsScale_des': 'Low Hazard', 'oreoLargeScale_val': 17, 'oreoLargeScale_des': 'Low Hazard', 'IUPAC_name': nan, 'CAS_no': nan, 'yoshidaMethod': 'Pfizer', 'dataFolder': './_core/UserAddedData/C6H4ClNO_21-Feb-2024_15-13-12', 'hammerDrop': 'Not Performed', 'friction': 'Not Performed'}
-
-
-
-141.557
-oreohazardlimit: High Hazard
-oreohazardwarningscale: <5 g
+No mrv XML found.
 SMILES                                                     Clc1nn[nH]n1
 name                                                                NaN
 mp                                                                  NaN
