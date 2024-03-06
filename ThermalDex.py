@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTableWidget, QTableWidgetItem, QTabWidget, QGraphicsPixmapItem,  QMessageBox, QComboBox #, QTableView, QToolTip
-from PyQt5.QtGui import QPixmap, QColor, QIcon, QRegExpValidator, QFont
-from PyQt5.QtCore import Qt, QRegExp, pyqtSignal
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTableWidget, QTableWidgetItem, QTabWidget, QGraphicsPixmapItem,  QMessageBox, QComboBox, QSpacerItem
+from PyQt5.QtGui import QPixmap, QColor, QIcon, QRegExpValidator, QFont, QWindow
+from PyQt5.QtCore import Qt, QRegExp, pyqtSignal, QEvent
 from thermDex.thermDexMolecule import *
 from thermDex.thermDexHTMLRep import *
 from thermDex.attachedFileManager import *
@@ -88,10 +88,20 @@ class ClickableLineEdit(QLineEdit):
         else: super().mousePressEvent(event)
 
 class MolDrawer(QWidget):
-    def __init__(self):
-        super().__init__()
-
+    def __init__(self, parent=None):
+        super(MolDrawer, self).__init__(parent)
+        app.installEventFilter(self)
         self.init_ui()
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.WindowStateChange:
+            if event.oldState() == Qt.WindowNoState or self.windowState() == Qt.WindowMaximized:
+                print("WindowMaximized")
+                self.give_max_layout()
+            else:
+                self.give_normal_layout()
+        return super(MolDrawer, self).eventFilter(obj, event)
+
 
     def init_ui(self):
         self.df = None
@@ -101,6 +111,7 @@ class MolDrawer(QWidget):
         self.selectedDatabase = None
         self.error_flag = None
         # Set up the main layout
+
         layout = QVBoxLayout()
         
         # Set up the main window
@@ -116,20 +127,22 @@ class MolDrawer(QWidget):
 
         # Tab for molecule rendering
         self.molecule_tab = QWidget()
-        molecule_layout = QVBoxLayout()
+        self.mol_overall_layout = QHBoxLayout()
+        self.mol_left_layout = QVBoxLayout()
+        self.molecule_layout = QVBoxLayout()
 
         # Display area for the molecular drawing
         self.mol_display = QGraphicsView(self)
-        top_info_sublayout = QHBoxLayout()
-        top_info_sublayout.addWidget(QLabel('Molecule:'))
-        top_info_sublayout.addStretch()
+        self.top_info_sublayout = QHBoxLayout()
+        self.top_info_sublayout.addWidget(QLabel('Molecule:'))
+        self.top_info_sublayout.addStretch()
         self.approval_needed = QLabel("<h3 style='color: red;'>Seek Approval Before Use</h3>")
-        top_info_sublayout.addWidget(self.approval_needed)
+        self.top_info_sublayout.addWidget(self.approval_needed)
         self.approval_needed.hide()
-        molecule_layout.addLayout(top_info_sublayout)
-        molecule_layout.addWidget(self.mol_display)
 
-        ResultsContainLayout = QHBoxLayout()
+
+
+        self.ResultsContainLayout = QHBoxLayout()
         ResultsLeftLayout = QVBoxLayout()
         ResultsRightLayout = QVBoxLayout()
 
@@ -172,17 +185,20 @@ class MolDrawer(QWidget):
         self.Td24Label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         ResultsRightLayout.addWidget(self.Td24Label)
 
-        ResultsContainLayout.addWidget(QVLine())
-        ResultsContainLayout.addLayout(ResultsLeftLayout)
-        ResultsContainLayout.addWidget(QVLine())
-        ResultsContainLayout.addLayout(ResultsRightLayout)
-        ResultsContainLayout.addWidget(QVLine())
-        molecule_layout.addLayout(ResultsContainLayout)
-        molecule_layout.addWidget(QHLine())
+        self.ResultsContainLayout.addWidget(QVLine())
+        self.ResultsContainLayout.addLayout(ResultsLeftLayout)
+        self.ResultsContainLayout.addWidget(QVLine())
+        self.ResultsContainLayout.addLayout(ResultsRightLayout)
+        self.ResultsContainLayout.addWidget(QVLine())
+
+
+        #self.molecule_layout.addLayout(self.ResultsContainLayout)
+        #self.molecule_layout.addWidget(QHLine())
+
 
         self.tableLabel = QLabel('O.R.E.O.S. Assessment of Hazard by Scale:')
-        molecule_layout.addWidget(self.tableLabel)
-        tableLayout = QHBoxLayout()
+        #self.molecule_layout.addWidget(self.tableLabel)
+        self.tableLayout = QHBoxLayout()
         self.table = QTableWidget(1, 4)
         self.table.setHorizontalHeaderLabels(['<5 g', '5 to <100 g', '100 to 500 g', '>500 g'])
         self.table.verticalHeader().setVisible(False)
@@ -192,19 +208,22 @@ class MolDrawer(QWidget):
         #self.table.setMinimumHeight(53)
         #self.table.setMinimumWidth(402)
         #self.table.setAlignment(Qt.AlignVCenter)
-        tableLayout.addWidget(self.table)
+        self.tableLayout.addWidget(self.table)
 
-        molecule_layout.addLayout(tableLayout)
-        molecule_layout.addWidget(QHLine())
+        #self.molecule_layout.addLayout(tableLayout)
+        #self.molecule_layout.addWidget(QHLine())
+
+
 
         # Input field for SMILES string
         #self.smiles_input = QLineEdit(self)
         self.smiles_input = ClickableLineEdit(self)
         self.smiles_input.clicked.connect(self.mrvToSMILES)
-        molecule_layout.addWidget(QLabel('Enter SMILES String:'))
-        molecule_layout.addWidget(self.smiles_input)
+        self.smiles_input_label = QLabel('Enter SMILES String:')
+        #self.molecule_layout.addWidget(self.smiles_input_label)
+        #self.molecule_layout.addWidget(self.smiles_input)
 
-        InputContainLayout = QHBoxLayout()
+        self.InputContainLayout = QHBoxLayout()
         InputLeftLayout = QVBoxLayout()
         InputRightLayout = QVBoxLayout()
         numValidator = QRegExpValidator(QRegExp(r'[-]?\d+[.]?\d*'))
@@ -293,59 +312,90 @@ class MolDrawer(QWidget):
         fricSubLayout.addSpacing(62)
         InputRightLayout.addLayout(fricSubLayout)
 
-        InputContainLayout.addLayout(InputLeftLayout)
+        self.InputContainLayout.addLayout(InputLeftLayout)
         #ResultsContainLayout.addWidget(QVLine())
-        InputContainLayout.addLayout(InputRightLayout)
+        self.InputContainLayout.addLayout(InputRightLayout)
         #ResultsContainLayout.addWidget(QVLine())
-        molecule_layout.addLayout(InputContainLayout)
+        #self.molecule_layout.addLayout(self.InputContainLayout)
+
+
 
         # Attach Data Files
-        filesSubLayout = QHBoxLayout()
+        self.filesSubLayout = QHBoxLayout()
         self.attachedFilesLabel = QLabel('Attached Files:')
         self.attachedFilesLabel.resize(120, 120)
-        filesSubLayout.addWidget(self.attachedFilesLabel)
+        self.filesSubLayout.addWidget(self.attachedFilesLabel)
         self.filesCount = QLabel('0 Attached Files')
         self.filesCount.resize(90, 120)
-        filesSubLayout.addWidget(self.filesCount)
+        self.filesSubLayout.addWidget(self.filesCount)
         self.attach_button = QPushButton('Add/View Files', self)
         self.attach_button.clicked.connect(self.openFileManager) 
         self.attach_button.setMaximumWidth(140)
-        filesSubLayout.addWidget(self.attach_button)
+        self.filesSubLayout.addWidget(self.attach_button)
         attachSpacerLabel = QLabel('hidden spacer')
         attachSpacerLabel.setStyleSheet('color: white')
-        filesSubLayout.addWidget(attachSpacerLabel)
+        self.filesSubLayout.addWidget(attachSpacerLabel)
         attachSpacerLabelTwo = QLabel('hidden spacer')
         attachSpacerLabelTwo.setStyleSheet('color: white')
-        filesSubLayout.addWidget(attachSpacerLabelTwo)
-        molecule_layout.addSpacing(15)
-        molecule_layout.addLayout(filesSubLayout)
+        self.filesSubLayout.addWidget(attachSpacerLabelTwo)
+        #self.molecule_layout.addSpacing(15)
+        self.file_spacer = QSpacerItem(15, 15)
+        #self.molecule_layout.addLayout(self.filesSubLayout)
+
+
 
         # Buttons
         buttonSpacerLabel = QLabel('hidden spacer')
         buttonSpacerLabel.setStyleSheet('color: white')
-        molecule_layout.addWidget(buttonSpacerLabel)
-        buttonContainLayout = QHBoxLayout()
+        self.molecule_layout.addWidget(buttonSpacerLabel)
+        self.buttonContainLayout = QHBoxLayout()
         render_button = QPushButton('Evaluate Molecule', self)
         render_button.clicked.connect(self.render_molecule)
         render_button.setMaximumWidth(180)
-        buttonContainLayout.addWidget(render_button)
+        self.buttonContainLayout.addWidget(render_button)
         clear_button = QPushButton('Clear Sheet', self)
         clear_button.clicked.connect(self.resetToDefaultState)
         clear_button.setMaximumWidth(180)
-        buttonContainLayout.addWidget(clear_button)
+        self.buttonContainLayout.addWidget(clear_button)
         #molecule_layout.addLayout(buttonContainLayout)
         msg_button = QPushButton('Save to PDF', self)
         msg_button.clicked.connect(self.createReport)
         msg_button.setMaximumWidth(180)
-        buttonContainLayout.addWidget(msg_button)
+        self.buttonContainLayout.addWidget(msg_button)
         ''' Button for error testing/Debugging.
         error_testing_button = QPushButton('SecretErrorButton')
         error_testing_button.clicked.connect(self.errorTestingTool)
         buttonContainLayout.addWidget(error_testing_button)       
         '''
-        molecule_layout.addLayout(buttonContainLayout)
+        #self.molecule_layout.addStretch(5)
+        #self.molecule_layout.addLayout(self.buttonContainLayout)
 
-        self.molecule_tab.setLayout(molecule_layout)
+        self.layout_spacer = QSpacerItem(20, 80)
+        self.hline = QHLine()
+        self.hlineTwo = QHLine()
+        self.hlineThree = QHLine()
+        self.strechBox = QVBoxLayout()
+        self.strechBox.addStretch()
+        self.strechBoxLabel = QLabel('')
+        self.strechBox.addWidget(self.strechBoxLabel)
+        self.give_normal_layout()
+
+        self.molecule_layout.addLayout(self.ResultsContainLayout)
+        self.molecule_layout.addWidget(self.hline)
+        self.molecule_layout.addWidget(self.tableLabel)
+        self.molecule_layout.addLayout(self.tableLayout)
+        self.molecule_layout.addWidget(self.hlineThree)
+        self.molecule_layout.addWidget(self.smiles_input_label)
+        self.molecule_layout.addWidget(self.smiles_input)
+        self.molecule_layout.addLayout(self.InputContainLayout)
+        self.molecule_layout.addSpacerItem(self.file_spacer)
+        self.molecule_layout.addLayout(self.filesSubLayout)
+        self.molecule_layout.addLayout(self.buttonContainLayout)
+
+        self.mol_left_layout_check()
+        self.mol_overall_layout.addLayout(self.mol_left_layout)
+        self.mol_overall_layout.addLayout(self.molecule_layout)
+        self.molecule_tab.setLayout(self.mol_overall_layout) #self.mol_left_layout_check())
         self.tab_widget.addTab(self.molecule_tab, "Add")
 
         # Hide File Handling Widgets 
@@ -745,6 +795,42 @@ class MolDrawer(QWidget):
         defaultDB, highEnergyGroups, expEnergyGroups, yoshidaMethod, qdscUnits, ambertd24limit, redtd24limit, oreohazardlimit, oreohazardwarningscale = altImportConfig()
         QMessageBox.information(self, "Config Settings", "Settings have been loaded successfully.")
 
+    def give_max_layout(self):
+        self.molecule_layout.removeItem(self.top_info_sublayout)
+        self.molecule_layout.removeWidget(self.mol_display)
+ 
+        self.mol_left_layout.insertItem(0, self.top_info_sublayout)
+        self.mol_left_layout.insertWidget(1, self.mol_display)
+        self.molecule_layout.insertWidget(0, self.hlineTwo)
+        self.hlineTwo.show()
+        self.molecule_layout.insertItem(20, self.strechBox)
+
+    def give_normal_layout(self):
+        try:
+            self.mol_left_layout.removeItem(self.top_info_sublayout)
+            self.mol_left_layout.removeWidget(self.mol_display)
+
+            self.molecule_layout.removeWidget(self.hlineTwo)
+            self.hlineTwo.hide()
+            self.molecule_layout.removeItem(self.strechBox)
+
+        except:
+            print('Layout adjustment not needed.')
+
+        self.molecule_layout.insertItem(0, self.top_info_sublayout)
+        self.molecule_layout.insertWidget(1, self.mol_display)
+
+
+    def mol_left_layout_check(self):
+        if self.mol_left_layout.isEmpty():
+            #masterLayout = self.molecule_layout
+            pass
+        else:
+            self.molecule_layout.addStretch()
+            #self.mol_overall_layout.addLayout(self.mol_left_layout)
+            #self.mol_overall_layout.addLayout(self.molecule_layout)
+            #masterLayout = self.mol_overall_layout
+        #return masterLayout
 
     def search_database(self, search_text):
             self.readDatabase = pd.read_csv(defaultDB) #, index_col=0) #, encoding='mbcs')
@@ -1840,6 +1926,7 @@ if __name__ == '__main__':
             screen = app.primaryScreen()
             window = MolDrawer()
             #window.layout().setSizeConstraint(QLayout.SetFixedSize
+            #window.showMaximized()
             window.show()
             window.raise_()
             window.activateWindow()
