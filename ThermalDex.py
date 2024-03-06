@@ -203,10 +203,12 @@ class MolDrawer(QWidget):
         self.table.setHorizontalHeaderLabels(['<5 g', '5 to <100 g', '100 to 500 g', '>500 g'])
         self.table.verticalHeader().setVisible(False)
         #self.table.setStyleSheet("QTableWidget::item { border-bottom: 2px solid black; }")
-        self.table.setMaximumHeight(53)
-        self.table.setMaximumWidth(402)
+        #self.table.setMaximumHeight(53)
+        #self.table.setMaximumWidth(402)
         #self.table.setMinimumHeight(53)
         #self.table.setMinimumWidth(402)
+        self.table.setMaximumHeight(int(screen.size().height()*0.0495)) #53) self.resize(int(screen.size().width()*0.33), int(screen.size().height()*0.85))
+        self.table.setMaximumWidth(int(screen.size().width()*0.2097))
         #self.table.setAlignment(Qt.AlignVCenter)
         self.tableLayout.addWidget(self.table)
 
@@ -343,11 +345,9 @@ class MolDrawer(QWidget):
         #self.molecule_layout.addLayout(self.filesSubLayout)
 
 
-
         # Buttons
         buttonSpacerLabel = QLabel('hidden spacer')
         buttonSpacerLabel.setStyleSheet('color: white')
-        self.molecule_layout.addWidget(buttonSpacerLabel)
         self.buttonContainLayout = QHBoxLayout()
         render_button = QPushButton('Evaluate Molecule', self)
         render_button.clicked.connect(self.render_molecule)
@@ -378,6 +378,8 @@ class MolDrawer(QWidget):
         self.strechBox.addStretch()
         self.strechBoxLabel = QLabel('')
         self.strechBox.addWidget(self.strechBoxLabel)
+        self.lhs_title = QLabel('Title')
+        self.lhs_title.setStyleSheet('color: white')
         self.give_normal_layout()
 
         self.molecule_layout.addLayout(self.ResultsContainLayout)
@@ -390,6 +392,7 @@ class MolDrawer(QWidget):
         self.molecule_layout.addLayout(self.InputContainLayout)
         self.molecule_layout.addSpacerItem(self.file_spacer)
         self.molecule_layout.addLayout(self.filesSubLayout)
+        self.molecule_layout.addWidget(buttonSpacerLabel)
         self.molecule_layout.addLayout(self.buttonContainLayout)
 
         self.mol_left_layout_check()
@@ -460,8 +463,8 @@ class MolDrawer(QWidget):
         self.results_table = QTableWidget(1, 4)
         self.results_table.setHorizontalHeaderLabels(['<5 g', '5 to <100 g', '100 to 500 g', '>500 g'])
         self.results_table.verticalHeader().setVisible(False)
-        self.results_table.setMaximumHeight(53)
-        self.results_table.setMaximumWidth(402)
+        self.results_table.setMaximumHeight(int(screen.size().height()*0.0495)) #53) self.resize(int(screen.size().width()*0.33), int(screen.size().height()*0.85))
+        self.results_table.setMaximumWidth(int(screen.size().width()*0.2097)) #402)
         #self.results_table.setMinimumHeight(53)
         #self.results_table.setMinimumWidth(402)
         self.results_approval_warning = QLabel('')
@@ -801,7 +804,9 @@ class MolDrawer(QWidget):
  
         self.mol_left_layout.insertItem(0, self.top_info_sublayout)
         self.mol_left_layout.insertWidget(1, self.mol_display)
-        self.molecule_layout.insertWidget(0, self.hlineTwo)
+        self.molecule_layout.insertWidget(0, self.lhs_title)
+        self.lhs_title.show()
+        self.molecule_layout.insertWidget(1, self.hlineTwo)
         self.hlineTwo.show()
         self.molecule_layout.insertItem(20, self.strechBox)
 
@@ -810,6 +815,8 @@ class MolDrawer(QWidget):
             self.mol_left_layout.removeItem(self.top_info_sublayout)
             self.mol_left_layout.removeWidget(self.mol_display)
 
+            self.molecule_layout.removeWidget(self.lhs_title)
+            self.lhs_title.hide()
             self.molecule_layout.removeWidget(self.hlineTwo)
             self.hlineTwo.hide()
             self.molecule_layout.removeItem(self.strechBox)
@@ -1403,6 +1410,7 @@ class MolDrawer(QWidget):
     def changeTabForEditing(self):
         #try:
         self.approval_needed.hide()
+        self.lhs_title.setText("Title")
         editDB = self.selectedDatabase.fillna('')
         current_row = editDB.iloc[self.current_index]
         dictRow = current_row.to_dict()
@@ -1473,6 +1481,7 @@ class MolDrawer(QWidget):
 
         if self.check_if_oreos_need_approval(readMolecule) == 'Show Approval Message':
             self.approval_needed.show()
+            self.lhs_title.setText("<h3>Title</h3>")
     
         try:
             isStr = "{:.2f}".format(readMolecule.IS_val)
@@ -1491,6 +1500,7 @@ class MolDrawer(QWidget):
             elif readMolecule.Td24 <= int(redtd24limit):
                 self.Td24Label.setText(f"<h3 style='color: red;'>T<sub>D24</sub>: {d24Str} °C</h3>")
                 self.approval_needed.show()
+                self.lhs_title.setText("<h3>Title</h3>")
             else:
                 self.Td24Label.setText('T<sub>D24</sub>: <b>' + d24Str + ' °C</b>')       
         except:
@@ -1857,6 +1867,9 @@ class MolDrawer(QWidget):
 
             if self.check_if_oreos_need_approval(addedMolecule) == 'Show Approval Message':
                 self.approval_needed.show()
+                self.lhs_title.setText("<h3>Title</h3>")
+            else:
+                self.lhs_title.setText("Title")
 
             if addedMolecule.isStr != None:
                 self.ISLabel.setText('Yoshida Impact Sensitivity: ' + addedMolecule.isStr + addedMolecule.IS_des)
@@ -1869,8 +1882,10 @@ class MolDrawer(QWidget):
                 elif addedMolecule.Td24 <= int(redtd24limit):
                     self.Td24Label.setText(f"<h3 style='color: red;'>T<sub>D24</sub>: {d24Str} °C</h3>")
                     self.approval_needed.show()
+                    self.lhs_title.setText("<h3>Title</h3>")
                 else:
                     self.Td24Label.setText('T<sub>D24</sub>: <b>' + d24Str + ' °C</b>')
+                    self.lhs_title.setText("Title")
                 
             if addedMolecule.onsetT != 'nan' and addedMolecule.onsetT != '' and addedMolecule.onsetT != None and addedMolecule.onsetT <= 24.99:
                 self.error_message = QLabel('Sub-Ambient Onset Temperature? Are you sure? Yoshida values will not be accurate.')
