@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QFrame, QTableWidget, QTableWidgetItem, QTabWidget, QGraphicsPixmapItem,  QMessageBox, QComboBox, QSpacerItem
-from PyQt5.QtGui import QPixmap, QColor, QIcon, QRegExpValidator, QFont, QWindow
+from PyQt5.QtGui import QPixmap, QColor, QIcon, QRegExpValidator, QFont
 from PyQt5.QtCore import Qt, QRegExp, pyqtSignal, QEvent
 from thermDex.thermDexMolecule import *
 from thermDex.thermDexHTMLRep import *
@@ -91,6 +91,8 @@ class MolDrawer(QWidget):
     def __init__(self, parent=None):
         super(MolDrawer, self).__init__(parent)
         app.installEventFilter(self)
+        self.activateWindow()
+        self.raise_()
         self.init_ui()
 
     def eventFilter(self, obj, event):
@@ -135,7 +137,8 @@ class MolDrawer(QWidget):
         # Display area for the molecular drawing
         self.mol_display = QGraphicsView(self)
         self.top_info_sublayout = QHBoxLayout()
-        self.top_info_sublayout.addWidget(QLabel('Molecule:'))
+        self.mol_view_title_label = QLabel('Molecule:')
+        self.top_info_sublayout.addWidget(self.mol_view_title_label)
         self.top_info_sublayout.addStretch()
         self.approval_needed = QLabel("<h3 style='color: red;'>Seek Approval Before Use</h3>")
         self.top_info_sublayout.addWidget(self.approval_needed)
@@ -833,7 +836,7 @@ class MolDrawer(QWidget):
         self.lhs_title.show()
         self.molecule_layout.insertWidget(1, self.hlineTwo)
         self.hlineTwo.show()
-        self.molecule_layout.insertItem(20, self.strechBox)
+        self.molecule_layout.insertItem(20, self.strechBox) #10 for buttons on bottom
 
         # Search Tab
         self.search_widget_index = 2
@@ -862,7 +865,7 @@ class MolDrawer(QWidget):
             print('Layout adjustment not needed.')
 
         # Molecule Tab
-        self.molecule_layout.insertItem(0, self.top_info_sublayout)
+        self.molecule_layout.insertLayout(0, self.top_info_sublayout)
         self.molecule_layout.insertWidget(1, self.mol_display)
 
         # Search Tab
