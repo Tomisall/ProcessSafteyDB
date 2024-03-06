@@ -207,9 +207,18 @@ class MolDrawer(QWidget):
         #self.table.setMaximumWidth(402)
         #self.table.setMinimumHeight(53)
         #self.table.setMinimumWidth(402)
-        self.table.setMaximumHeight(int(screen.size().height()*0.0495)) #53) self.resize(int(screen.size().width()*0.33), int(screen.size().height()*0.85))
-        self.table.setMaximumWidth(int(screen.size().width()*0.2097))
-        #self.table.setAlignment(Qt.AlignVCenter)
+        if dpi >= 150:
+            self.table.setMaximumHeight(int(screen.size().height()*0.069)) #53) self.resize(int(screen.size().width()*0.33), int(screen.size().height()*0.85))
+            self.table.setMaximumWidth(int(screen.size().width()*0.314))
+            self.table.setMinimumHeight(int(screen.size().height()*0.069)) #53) self.resize(int(screen.size().width()*0.33), int(screen.size().height()*0.85))
+            self.table.setMinimumWidth(int(screen.size().width()*0.314)) 
+
+        else:
+            self.table.setMaximumHeight(int(screen.size().height()*0.0495)) #53) self.resize(int(screen.size().width()*0.33), int(screen.size().height()*0.85))
+            self.table.setMaximumWidth(int(screen.size().width()*0.2097))
+            self.table.setMinimumHeight(int(screen.size().height()*0.0495)) #53) self.resize(int(screen.size().width()*0.33), int(screen.size().height()*0.85))
+            self.table.setMinimumWidth(int(screen.size().width()*0.2097))       
+       #self.table.setAlignment(Qt.AlignVCenter)
         self.tableLayout.addWidget(self.table)
 
         #self.molecule_layout.addLayout(tableLayout)
@@ -463,8 +472,18 @@ class MolDrawer(QWidget):
         self.results_table = QTableWidget(1, 4)
         self.results_table.setHorizontalHeaderLabels(['<5 g', '5 to <100 g', '100 to 500 g', '>500 g'])
         self.results_table.verticalHeader().setVisible(False)
-        self.results_table.setMaximumHeight(int(screen.size().height()*0.0495)) #53) self.resize(int(screen.size().width()*0.33), int(screen.size().height()*0.85))
-        self.results_table.setMaximumWidth(int(screen.size().width()*0.2097)) #402)
+
+        if dpi >= 150:
+            self.results_table.setMaximumHeight(int(screen.size().height()*0.069)) #53) self.resize(int(screen.size().width()*0.33), int(screen.size().height()*0.85))
+            self.results_table.setMaximumWidth(int(screen.size().width()*0.314))
+            self.results_table.setMinimumHeight(int(screen.size().height()*0.069)) #53) self.resize(int(screen.size().width()*0.33), int(screen.size().height()*0.85))
+            self.results_table.setMinimumWidth(int(screen.size().width()*0.314)) 
+
+        else:
+            self.results_table.setMaximumHeight(int(screen.size().height()*0.0495)) #53) self.resize(int(screen.size().width()*0.33), int(screen.size().height()*0.85))
+            self.results_table.setMaximumWidth(int(screen.size().width()*0.2097))
+            self.results_table.setMinimumHeight(int(screen.size().height()*0.0495)) #53) self.resize(int(screen.size().width()*0.33), int(screen.size().height()*0.85))
+            self.results_table.setMinimumWidth(int(screen.size().width()*0.2097))         
         #self.results_table.setMinimumHeight(53)
         #self.results_table.setMinimumWidth(402)
         self.results_approval_warning = QLabel('')
@@ -1939,6 +1958,8 @@ if __name__ == '__main__':
             app.setFont(font, "QWidget")
             app.setFont(font, "QPushButton")
             screen = app.primaryScreen()
+            dpi = screen.physicalDotsPerInch()
+            print(f'Screen DPI: {dpi}')
             window = MolDrawer()
             #window.layout().setSizeConstraint(QLayout.SetFixedSize
             #window.showMaximized()
