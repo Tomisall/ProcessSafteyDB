@@ -14,7 +14,7 @@ from contextlib import redirect_stdout
 from os import path, environ
 from shutil import copy2
 
-versionNumber = "1.0.5"
+versionNumber = "1.0.6"
 
 try:
     import pyi_splash
@@ -100,6 +100,7 @@ class MolDrawer(QWidget):
                 self.give_max_layout()
             else:
                 self.give_normal_layout()
+                self.setGeometry(100, 100, 600, 895)
         return super(MolDrawer, self).eventFilter(obj, event)
 
 
@@ -330,7 +331,6 @@ class MolDrawer(QWidget):
         #self.molecule_layout.addLayout(self.InputContainLayout)
 
 
-
         # Attach Data Files
         self.filesSubLayout = QHBoxLayout()
         self.attachedFilesLabel = QLabel('Attached Files:')
@@ -389,7 +389,6 @@ class MolDrawer(QWidget):
         self.strechBox.addWidget(self.strechBoxLabel)
         self.lhs_title = QLabel('Title')
         self.lhs_title.setStyleSheet('color: white')
-        self.give_normal_layout()
 
         self.molecule_layout.addLayout(self.ResultsContainLayout)
         self.molecule_layout.addWidget(self.hline)
@@ -404,7 +403,7 @@ class MolDrawer(QWidget):
         self.molecule_layout.addWidget(buttonSpacerLabel)
         self.molecule_layout.addLayout(self.buttonContainLayout)
 
-        self.mol_left_layout_check()
+        #self.mol_left_layout_check()
         self.mol_overall_layout.addLayout(self.mol_left_layout)
         self.mol_overall_layout.addLayout(self.molecule_layout)
         self.molecule_tab.setLayout(self.mol_overall_layout) #self.mol_left_layout_check())
@@ -418,6 +417,9 @@ class MolDrawer(QWidget):
         # Tab for Search
         search_tab = QWidget()
         self.search_layout = QVBoxLayout()
+        self.left_search_layout = QVBoxLayout()
+        self.overall_search_layout = QHBoxLayout()
+        self.search_widget_index = 0
 
         # Entry widget for searching
         lbl_search = QLabel('Search:')
@@ -439,10 +441,11 @@ class MolDrawer(QWidget):
         self.mol_result_display = QGraphicsView(self)
         #self.mol_result_display.scale(0.7,0.7)
         self.molLabel = QLabel('Molecule:')
-        self.search_layout.addWidget(self.molLabel)
-        self.search_layout.addWidget(self.mol_result_display)
+        #self.search_layout.addWidget(self.molLabel)
+        #self.search_layout.addWidget(self.mol_result_display)
         self.mol_result_display.hide()
         self.molLabel.hide()
+        self.give_normal_layout()        
 
         btn_search = QPushButton('Search')
         self.edit_button = QPushButton('Edit')
@@ -521,7 +524,9 @@ class MolDrawer(QWidget):
         self.select_y_values.hide()
         self.make_plot_button.clicked.connect(lambda: self.plotSearchResults(self.plot_database, self.plot_current_value))
 
-        search_tab.setLayout(self.search_layout)
+        self.overall_search_layout.addLayout(self.left_search_layout)
+        self.overall_search_layout.addLayout(self.search_layout)
+        search_tab.setLayout(self.overall_search_layout)
         self.tab_widget.addTab(search_tab, "Search")
 
         # Tab for Settings
@@ -818,6 +823,7 @@ class MolDrawer(QWidget):
         QMessageBox.information(self, "Config Settings", "Settings have been loaded successfully.")
 
     def give_max_layout(self):
+        # Molecule Tab
         self.molecule_layout.removeItem(self.top_info_sublayout)
         self.molecule_layout.removeWidget(self.mol_display)
  
@@ -829,8 +835,16 @@ class MolDrawer(QWidget):
         self.hlineTwo.show()
         self.molecule_layout.insertItem(20, self.strechBox)
 
+        # Search Tab
+        self.search_widget_index = 2
+        self.search_layout.removeWidget(self.molLabel)
+        self.search_layout.removeWidget(self.mol_result_display)
+        self.left_search_layout.insertWidget(0, self.molLabel)
+        self.left_search_layout.insertWidget(1, self.mol_result_display)        
+
     def give_normal_layout(self):
         try:
+            # Molecule Tab
             self.mol_left_layout.removeItem(self.top_info_sublayout)
             self.mol_left_layout.removeWidget(self.mol_display)
 
@@ -840,11 +854,21 @@ class MolDrawer(QWidget):
             self.hlineTwo.hide()
             self.molecule_layout.removeItem(self.strechBox)
 
+            # Search Tab
+            self.left_search_layout.removeWidget(self.molLabel)
+            self.left_search_layout.removeWidget(self.mol_result_display)
+
         except:
             print('Layout adjustment not needed.')
 
+        # Molecule Tab
         self.molecule_layout.insertItem(0, self.top_info_sublayout)
         self.molecule_layout.insertWidget(1, self.mol_display)
+
+        # Search Tab
+        self.search_widget_index = 0
+        self.search_layout.insertWidget(0, self.molLabel)
+        self.search_layout.insertWidget(1, self.mol_result_display)
 
 
     def mol_left_layout_check(self):
@@ -1053,10 +1077,10 @@ class MolDrawer(QWidget):
                 self.counter_label.setText(f"Result {self.current_index + 1} of {len(Database)}")
                 self.edit_button.show()
                 self.del_button.show()
-                self.search_layout.insertWidget(5, self.result_label)#5
-                self.search_layout.insertWidget(6, self.results_table_Label)#6
-                self.search_layout.insertWidget(7, self.results_table)#7
-                self.search_layout.insertWidget(8, self.results_approval_warning)#8
+                self.search_layout.insertWidget(5-self.search_widget_index, self.result_label)#5
+                self.search_layout.insertWidget(6-self.search_widget_index, self.results_table_Label)#6
+                self.search_layout.insertWidget(7-self.search_widget_index, self.results_table)#7
+                self.search_layout.insertWidget(8-self.search_widget_index, self.results_approval_warning)#8
                 self.search_layout.addWidget(self.counter_label)
                 prev_next_layout = QHBoxLayout()
                 prev_next_layout.addWidget(self.first_button)
