@@ -367,11 +367,11 @@ class thermalDexMolecule:
                 print(calQ)
              
                 # Impact Sensitvity (IS)
-                impactSens = log10(calQ) - ISConstant*(log10(abs(self.onsetT-25))) - 0.98
+                impactSens = log10(calQ) - ISConstant*(log10(abs(T_yoshida-25))) - 0.98
                 print('IS = ' + str(impactSens))
              
                 # Explosive Propagation (EP)
-                exProp = log10(calQ) - EPConstant*(log10(abs(self.onsetT-25))) - 1.67
+                exProp = log10(calQ) - EPConstant*(log10(abs(T_yoshida-25))) - 1.67
                 print('EP = ' + str(exProp))
           
                 # Warning Text
