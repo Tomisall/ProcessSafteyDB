@@ -14,7 +14,7 @@ from contextlib import redirect_stdout
 from os import path, environ
 from shutil import copy2
 
-versionNumber = "1.0.6"
+versionNumber = "1.0.7b"
 
 try:
     import pyi_splash
