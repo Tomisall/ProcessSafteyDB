@@ -102,7 +102,8 @@ class MolDrawer(QWidget):
                 self.give_max_layout()
             else:
                 self.give_normal_layout()
-                self.setGeometry(100, 100, 600, 895)
+                #self.setGeometry(100, 100, 633, 950)
+                self.resize(633, 950)
         return super(MolDrawer, self).eventFilter(obj, event)
 
 
@@ -617,7 +618,7 @@ class MolDrawer(QWidget):
         self.oreoWarnHazCombo = QComboBox()
         self.oreoWarnHazCombo.addItems(["Low Hazard","Medium Hazard","High Hazard"])
         self.oreoWarnHazCombo.setCurrentText(oreohazardlimit)
-        self.oreoWarnHazCombo.setMaximumWidth(100)
+        self.oreoWarnHazCombo.setMaximumWidth(110)
         oreoWarnApplyButton = QPushButton('Apply')
         oreoWarnApplyButton.setMaximumWidth(100)
         oreoWarnApplyButton.clicked.connect(self.save_oreo_warn_settings)
